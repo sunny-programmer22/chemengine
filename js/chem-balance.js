@@ -84,28 +84,42 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function parseCompound(formula) {
+  /* Pre-process hydrate: extract water of crystallization */
+  let hydrateWater = 0;
+  let baseFormula = formula;
+  if (typeof isHydrate !== 'undefined' && isHydrate(formula)) {
+    const info = parseHydrate(formula);
+    baseFormula = info.anhydrous;
+    hydrateWater = info.waterCount;
+  }
   const stack = [{}];
   let i = 0;
-  while (i < formula.length) {
-    if (formula[i] === '(') { stack.push({}); i++; }
-    else if (formula[i] === ')') {
+  while (i < baseFormula.length) {
+    if (baseFormula[i] === '(') { stack.push({}); i++; }
+    else if (baseFormula[i] === ')') {
       i++;
       let numStr = '';
-      while (i < formula.length && /\d/.test(formula[i])) { numStr += formula[i]; i++; }
+      while (i < baseFormula.length && /\d/.test(baseFormula[i])) { numStr += baseFormula[i]; i++; }
       const multiplier = numStr === '' ? 1 : parseInt(numStr);
       const top = stack.pop();
       for (const [el, cnt] of Object.entries(top))
         stack[stack.length - 1][el] = (stack[stack.length - 1][el] || 0) + cnt * multiplier;
-    } else if (/[A-Z]/.test(formula[i])) {
-      let el = formula[i]; i++;
-      while (i < formula.length && /[a-z]/.test(formula[i])) { el += formula[i]; i++; }
+    } else if (/[A-Z]/.test(baseFormula[i])) {
+      let el = baseFormula[i]; i++;
+      while (i < baseFormula.length && /[a-z]/.test(baseFormula[i])) { el += baseFormula[i]; i++; }
       let numStr = '';
-      while (i < formula.length && /\d/.test(formula[i])) { numStr += formula[i]; i++; }
+      while (i < baseFormula.length && /\d/.test(baseFormula[i])) { numStr += baseFormula[i]; i++; }
       const cnt = numStr === '' ? 1 : parseInt(numStr);
       stack[stack.length - 1][el] = (stack[stack.length - 1][el] || 0) + cnt;
     } else { i++; }
   }
-  return stack[0];
+  const result = stack[0];
+  /* Add water of crystallization */
+  if (hydrateWater > 0) {
+    result.H = (result.H || 0) + hydrateWater * 2;
+    result.O = (result.O || 0) + hydrateWater;
+  }
+  return result;
 }
 
 function parseEquation(str) {

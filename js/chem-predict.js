@@ -140,7 +140,6 @@ function handleSingleReactant(reactants, rTypes, rEls, steps) {
   const hasMetal = containsMetal(r);
   let type, products;
 
-  /* Check isomerisation — runs after specific decompositions (e.g. alcohol dehydration takes priority) */
   let isomResult = null;
 
   if (isUnsaturated(r) && !hasMetal) {
@@ -152,6 +151,9 @@ function handleSingleReactant(reactants, rTypes, rEls, steps) {
   if (isHydrocarbon(r) && els.C && !els.O && !els.N && !els.S) {
     const cCount = els.C, hCount = els.H;
     if (hCount === 2 * cCount + 2 && cCount >= 2) {
+      /* For saturated alkanes, try isomerisation first */
+      isomResult = handleIsomerisation(r, steps);
+      if (isomResult) return isomResult;
       type = 'Dehydrogenation (Alkane → Alkene + H₂)';
       products = ['C' + cCount + 'H' + (hCount - 2), 'H2'];
     } else {
@@ -250,6 +252,9 @@ function handleSingleReactant(reactants, rTypes, rEls, steps) {
   }
   /* Dehalogenation / Dehydrohalogenation: organic halide → alkene + X₂ / HX */
   else if (els.C && els.H) {
+    /* Try isomerisation first (e.g. C3H7Cl has positional isomers) */
+    isomResult = handleIsomerisation(r, steps);
+    if (isomResult) return isomResult;
     const halogens = {'Cl':1,'Br':1,'I':1,'F':1};
     const hKeys = Object.keys(els).filter(k => halogens[k]);
     if (hKeys.length === 1) {
@@ -274,7 +279,8 @@ function handleSingleReactant(reactants, rTypes, rEls, steps) {
     }
   }
 
-  else if (!isomResult) {
+  /* Generic isomerisation check for compounds not handled by specific decompositions */
+  if (!isomResult) {
     isomResult = handleIsomerisation(r, steps);
     if (isomResult) return isomResult;
   }
@@ -298,6 +304,74 @@ function handleSingleReactant(reactants, rTypes, rEls, steps) {
   steps.push('Reaction type: ' + type);
   const eqStr = tryBalanceOneWay(reactants, products, type);
   steps.push('Predicted equation: ' + eqStr);
+  return { type, equation: eqStr, predictions: [eqStr], steps };
+}
+
+const HYDRATE_DB = {
+  'CuSO4': 'CuSO4.5H2O',
+  'Na2CO3': 'Na2CO3.10H2O',
+  'FeSO4': 'FeSO4.7H2O',
+  'CoCl2': 'CoCl2.6H2O',
+  'NiCl2': 'NiCl2.6H2O',
+  'MgSO4': 'MgSO4.7H2O',
+  'CaSO4': 'CaSO4.2H2O',
+  'Na2SO4': 'Na2SO4.10H2O',
+  'BaCl2': 'BaCl2.2H2O',
+  'Cu(NO3)2': 'Cu(NO3)2.6H2O',
+  'FeCl3': 'FeCl3.6H2O',
+  'AlCl3': 'AlCl3.6H2O',
+  'Na2B4O7': 'Na2B4O7.10H2O',
+  'MgCl2': 'MgCl2.6H2O',
+  'CaCl2': 'CaCl2.6H2O',
+  'NiSO4': 'NiSO4.6H2O',
+  'ZnSO4': 'ZnSO4.7H2O',
+  'MnSO4': 'MnSO4.4H2O',
+};
+
+function getWaterCoefficient(f) {
+  const m = f.match(/^(\d+)(H2O)$/i);
+  return m ? parseInt(m[1]) : 1;
+}
+
+function isWaterCoefficient(f) {
+  return /^\d+H2O$/i.test(f);
+}
+
+function isHydrateFormation(reactants) {
+  const [r1, r2] = reactants;
+  const t1 = classifyCompound(r1), t2 = classifyCompound(r2);
+  const saltIdx = (t1 === 'salt' || t1 === 'carbonate' || t1 === 'hydroxide') ? 0 :
+                  ((t2 === 'salt' || t2 === 'carbonate' || t2 === 'hydroxide') ? 1 : -1);
+  if (saltIdx === -1) return false;
+  const waterIdx = saltIdx === 0 ? 1 : 0;
+  const waterR = reactants[waterIdx];
+  if (t1 === 'acid' || t2 === 'acid') return false;
+  if (!isWaterCoefficient(waterR)) return false;
+  return true;
+}
+
+function handleHydrateFormation(reactants) {
+  const [r1, r2] = reactants;
+  const t1 = classifyCompound(r1), t2 = classifyCompound(r2);
+  const steps = [];
+  let salt, waterR;
+  if (t1 === 'salt' || t1 === 'carbonate' || t1 === 'hydroxide') {
+    salt = r1; waterR = r2;
+  } else {
+    salt = r2; waterR = r1;
+  }
+  const n = getWaterCoefficient(waterR);
+  const hydrate = HYDRATE_DB[salt];
+  let product;
+  if (hydrate) {
+    product = hydrate;
+  } else {
+    product = salt + '.' + (n === 1 ? '' : n) + 'H2O';
+  }
+  const waterDisplay = n === 1 ? 'H2O' : n + 'H2O';
+  const eqStr = salt + ' + ' + waterDisplay + ' → ' + product;
+  steps.push('Hydrate formation: ' + eqStr);
+  const type = 'Hydrate Formation (Anhydrous Salt → Hydrated Salt)';
   return { type, equation: eqStr, predictions: [eqStr], steps };
 }
 
@@ -401,6 +475,16 @@ function handleTwoReactants(reactants, rTypes, rEls, steps) {
     return handleCondensationPolymerization([r2, r1]);
 
   /* 8. Acid + Base / Hydroxide → Neutralization */
+  /* 8a. Ester + Base/Hydroxide → Saponification (Salt + Alcohol) */
+  else if ((isEster(r1) && (t2 === 'base' || t2 === 'hydroxide' || containsMetal(r2))) ||
+           (isEster(r2) && (t1 === 'base' || t1 === 'hydroxide' || containsMetal(r1))))
+    return handleSaponification(reactants);
+
+  /* 9. Carboxylic acid + alcohol → Esterification */
+  else if (isCarboxylicAcid(r1) && isAlcohol(r2) || isCarboxylicAcid(r2) && isAlcohol(r1))
+    return handleEsterification(reactants);
+
+  /* 10. Acid + Base / Hydroxide → Neutralization */
   else if (t1 === 'acid' && t2 === 'base' || t1 === 'base' && t2 === 'acid')
     return handleAcidBase(reactants);
   else if (t1 === 'acid' && t2 === 'hydroxide' || t1 === 'hydroxide' && t2 === 'acid')
@@ -408,13 +492,9 @@ function handleTwoReactants(reactants, rTypes, rEls, steps) {
   else if ((t1 === 'acid' || isAcid(r1)) && hasHydroxide(r2) || (t2 === 'acid' || isAcid(r2)) && hasHydroxide(r1))
     return handleAcidBase(reactants);
 
-  /* 9. Carboxylic acid + hydroxide → Neutralization */
+  /* 11. Carboxylic acid + hydroxide → Neutralization */
   else if (isCarboxylicAcid(r1) && hasHydroxide(r2) || isCarboxylicAcid(r2) && hasHydroxide(r1))
     return handleAcidBase(reactants);
-
-  /* 10. Carboxylic acid + alcohol → Esterification */
-  else if (isCarboxylicAcid(r1) && isAlcohol(r2) || isCarboxylicAcid(r2) && isAlcohol(r1))
-    return handleEsterification(reactants);
 
   /* 11. Hydration: oxide + H2O → hydroxide / acid */
   else if ((t1 === 'monoxide' || t1 === 'dioxide' || t1 === 'trioxide' || t1 === 'tetraoxide' || t1 === 'pentoxide' || t1 === 'oxide') && isWater(r2))
@@ -523,6 +603,11 @@ function handleTwoReactants(reactants, rTypes, rEls, steps) {
     products = [r1.replace(/H(\d+)/, (m, n) => 'H' + (parseInt(n) - hRemoved)), 'H2'];
   }
 
+  /* 19a. Hydrate formation: anhydrous salt + water → hydrated salt */
+  else if (isHydrateFormation(reactants)) {
+    return handleHydrateFormation(reactants);
+  }
+
   /* 19b. Hydrolysis: salt + water */
   else if ((t1 === 'salt' || t1 === 'base' || t1 === 'compound' || t1 === 'carbonate') && isWater(r2))
     return handleHydrolysis(reactants);
@@ -617,6 +702,17 @@ function handleMultiReactant(reactants, rTypes, rEls, steps) {
     return { type, equation: eqStr, predictions: [eqStr], steps };
   }
 
+  /* K2Cr2O7 + FeSO4 + H2SO4 → redox (dichromate oxidises Fe²⁺ to Fe³⁺) */
+  const hasDichromate = reactants.some(r => r.toUpperCase().includes('CR2O7') || r.toUpperCase().includes('CR2O7'));
+  const hasFeSO4 = reactants.some(r => r.toUpperCase().includes('FESO4'));
+  if (hasDichromate && hasFeSO4 && hasH2SO4) {
+    type = 'Redox (Dichromate + Fe²⁺ → Cr³⁺ + Fe³⁺)';
+    products = ['K2SO4', 'Cr2(SO4)3', 'Fe2(SO4)3', 'H2O'];
+    const eqStr = tryBalanceOneWay(reactants, products, type);
+    steps.push('Predicted: ' + eqStr);
+    return { type, equation: eqStr, predictions: [eqStr], steps };
+  }
+
   /* FeSO4 + HNO3 + H2SO4 → Fe₂(SO₄)₃ + NO + H₂O (Redox) */
   const hasMetalSulfate = reactants.some(r => containsMetal(r) && r.includes('SO4') && r !== 'H2SO4');
   const hasHNO3 = reactants.some(r => r.toUpperCase() === 'HNO3');
@@ -672,59 +768,146 @@ function handleMultiReactant(reactants, rTypes, rEls, steps) {
     }
   }
 
-  /* Metal + acid + something else */
-  const metals = reactants.filter(r => containsMetal(r));
+  /* Metal + acid + something else (only for actual reactive metals, not salts) */
+  const isReactiveMetal = r => containsMetal(r) && !r.includes('SO4') && !r.includes('NO3') && !r.includes('Cl') && !r.includes('Br') && !r.includes('I') && !r.includes('CO3') && !r.includes('PO4') && !r.includes('Cr2O7') && !r.includes('CrO4') && !r.includes('C2O4');
+  const rMetals = reactants.filter(r => isReactiveMetal(r));
   const acids = reactants.filter(r => isAcid(r));
-  if (metals.length === 1 && acids.length >= 1) {
-    const metal = metals[0];
+  if (rMetals.length >= 1 && acids.length >= 1) {
+    const metal = rMetals[0];
     const acid = acids[0];
     steps.push('Detected metal + acid pattern among ' + reactants.length + ' reactants');
     return handleMetalAcid(metal, acid);
   }
 
-  /* Generic: try to combine all reactants into one product */
-  const allElements = new Set();
-  reactants.forEach(r => Object.keys(rEls[reactants.indexOf(r)]).forEach(el => allElements.add(el)));
-  const els = Array.from(allElements);
+  /* Fallback: try targeted pairwise decomposition */
+  steps.push('Trying pairwise decomposition...');
+  const pairResult = tryPairwise(reactants, rTypes, rEls, steps);
+  if (pairResult) return pairResult;
 
-  if (els.length === 2 && !containsMetal(reactants.join(''))) {
-    type = 'Synthesis (Multi-reactant)';
-    const product = els.join('').replace(/^(\w)(\w)$/, (_, a, b) => {
-      return a + b;
-    });
-    products = [product];
-  } else if (els.length <= 4) {
-    type = 'Complex Reaction';
-    steps.push('Attempting to find products by combining reactants...');
-    const allAtoms = {};
-    reactants.forEach(r => {
-      const parsed = rEls[reactants.indexOf(r)];
-      for (const [el, cnt] of Object.entries(parsed))
-        allAtoms[el] = (allAtoms[el] || 0) + cnt;
-    });
-    const totalO = allAtoms.O || 0;
-    const totalH = allAtoms.H || 0;
-    const totalC = allAtoms.C || 0;
-    const totalMetal = Object.keys(allAtoms).filter(e => METALS_LIST.includes(e));
-    const totalNonMetal = Object.keys(allAtoms).filter(e => !METALS_LIST.includes(e) && !['O','H'].includes(e));
+  /* Last-resort: generic oxide/salt formation */
+  const allAtoms = {};
+  reactants.forEach(r => {
+    const parsed = rEls[reactants.indexOf(r)];
+    for (const [el, cnt] of Object.entries(parsed))
+      allAtoms[el] = (allAtoms[el] || 0) + cnt;
+  });
+  const totalO = allAtoms.O || 0;
+  const totalH = allAtoms.H || 0;
+  const totalC = allAtoms.C || 0;
+  const totalMetal = Object.keys(allAtoms).filter(e => METALS_LIST.includes(e));
+  const totalNonMetal = Object.keys(allAtoms).filter(e => !METALS_LIST.includes(e) && !['O','H'].includes(e));
 
-    if (totalC && totalO >= 2) { products = ['CO2']; if (totalH >= 2) products.push('H2O'); }
-    else if (totalMetal.length && totalNonMetal.length) {
-      const cat = totalMetal[0];
-      const anion = totalNonMetal[0];
-      if (totalO >= 2 && totalH >= 2) products = [cat + anion, 'H2O'];
-      else products = [cat + anion];
-    } else {
-      throw new Error('Cannot predict products for this multi-reactant combination.');
-    }
+  if (totalC && totalO >= 2) { type = 'Combustion'; products = ['CO2']; if (totalH >= 2) products.push('H2O'); }
+  else if (totalMetal.length && totalNonMetal.length) {
+    type = 'Salt Formation';
+    const cat = totalMetal[0];
+    const anion = totalNonMetal[0];
+    if (totalO >= 2 && totalH >= 2) products = [cat + anion, 'H2O'];
+    else products = [cat + anion];
   } else {
-    throw new Error('Complex multi-reactant reaction. Please try reactants in pairs.');
+    throw new Error('Cannot predict products for this multi-reactant combination.');
   }
 
   steps.push('Reaction type: ' + type);
   const eqStr = tryBalanceOneWay(reactants, products, type);
   steps.push('Predicted equation: ' + eqStr);
   return { type, equation: eqStr, predictions: [eqStr], steps };
+}
+
+function tryPairwise(reactants, rTypes, rEls, steps) {
+  const n = reactants.length;
+
+  /* O2 + organic/hydrocarbon → combustion, others as spectators */
+  const oxyIdx = reactants.findIndex(r => isOxygen(r));
+  const orgIdx = reactants.findIndex(r => r !== 'H2O' && r !== 'CO2' && (isHydrocarbon(r) || (isOrganic(r) && !containsMetal(r))));
+  if (oxyIdx >= 0 && orgIdx >= 0) {
+    const fuel = reactants[orgIdx];
+    const fuelEls = parseCompoundElements(fuel);
+    const prod = [];
+    if (fuelEls.C) prod.push('CO2');
+    if (fuelEls.H) prod.push('H2O');
+    if (fuelEls.N) prod.push('N2');
+    if (fuelEls.S) prod.push('SO2');
+    if (prod.length === 0) return null;
+    const spectators = reactants.filter((_, k) => k !== oxyIdx && k !== orgIdx);
+    prod.push(...spectators);
+    const typ = 'Combustion (Multi-reactant)';
+    const eqStr = tryBalanceOneWay(reactants, prod, typ);
+    steps.push('Pairwise: combustion of ' + fuel + ' with O₂');
+    steps.push('Predicted: ' + eqStr);
+    return { type: typ, equation: eqStr, predictions: [eqStr], steps: steps.slice() };
+  }
+
+  /* Metal + H₂O + O₂ → hydroxide (e.g. Na + H₂O + O₂ → NaOH + H₂O₂) */
+  const metalIdx = reactants.findIndex(r => containsMetal(r) && !r.includes('OH'));
+  const h2oIdx = reactants.findIndex(r => isWater(r));
+  if (metalIdx >= 0 && h2oIdx >= 0 && oxyIdx >= 0) {
+    const metal = reactants[metalIdx];
+    const metalEl = getFirstMetal(metal);
+    const oxState = getOxidationState(metalEl) || 1;
+    const hydroxide = oxState === 1 ? metalEl + 'OH' : (oxState === 2 ? metalEl + '(OH)2' : metalEl + '(OH)3');
+    const spectators2 = reactants.filter((_, k) => k !== metalIdx && k !== h2oIdx && k !== oxyIdx);
+    const prod2 = [hydroxide, ...spectators2];
+    const typ2 = 'Redox (Metal Oxidation)';
+    const eqStr2 = tryBalanceOneWay(reactants, prod2, typ2);
+    if (eqStr2) {
+      steps.push('Pairwise: metal + H₂O + O₂ → hydroxide');
+      steps.push('Predicted: ' + eqStr2);
+      return { type: typ2, equation: eqStr2, predictions: [eqStr2], steps: steps.slice() };
+    }
+  }
+
+  /* Metal + acid + anything → metal-acid reaction, other as spectator */
+  const acidIdx = reactants.findIndex(r => isAcid(r));
+  if (metalIdx >= 0 && acidIdx >= 0) {
+    try {
+      const pairResult = handleTwoReactants(
+        [reactants[metalIdx], reactants[acidIdx]],
+        [rTypes[metalIdx], rTypes[acidIdx]],
+        [rEls[metalIdx], rEls[acidIdx]],
+        []
+      );
+      if (pairResult && pairResult.equation) {
+        const spectators3 = reactants.filter((_, k) => k !== metalIdx && k !== acidIdx);
+        const arrowIdx = pairResult.equation.search(/[→⇌]/);
+        let baseEq = arrowIdx >= 0 ? pairResult.equation.slice(0, arrowIdx).trim() : reactants[metalIdx] + ' + ' + reactants[acidIdx];
+        if (spectators3.length > 0) baseEq += ' + ' + spectators3.join(' + ');
+        baseEq += ' → ';
+        const prodList3 = arrowIdx >= 0 ? pairResult.equation.slice(arrowIdx + 1).trim().split('+').map(s => s.trim()).filter(s => s) : [];
+        baseEq += [...prodList3, ...spectators3].join(' + ');
+        steps.push('Pairwise: metal + acid, others as spectators');
+        steps.push('Predicted: ' + baseEq);
+        return { type: pairResult.type + ' (Multi-reactant)', equation: baseEq, predictions: [baseEq], steps: steps.slice() };
+      }
+    } catch (_) {}
+  }
+
+  /* Acid + base + anything → neutralization */
+  const baseIdx = reactants.findIndex(r => classifyCompound(r) === 'base' || (r.includes('OH') && containsMetal(r)));
+  if (acidIdx >= 0 && baseIdx >= 0) {
+    try {
+      const pairResult = handleTwoReactants(
+        [reactants[acidIdx], reactants[baseIdx]],
+        [rTypes[acidIdx], rTypes[baseIdx]],
+        [rEls[acidIdx], rEls[baseIdx]],
+        []
+      );
+      if (pairResult && pairResult.equation) {
+        const spectators4 = reactants.filter((_, k) => k !== acidIdx && k !== baseIdx);
+        const arrowIdx = pairResult.equation.search(/[→⇌]/);
+        let baseEq = arrowIdx >= 0 ? pairResult.equation.slice(0, arrowIdx).trim() : reactants[acidIdx] + ' + ' + reactants[baseIdx];
+        if (spectators4.length > 0) baseEq += ' + ' + spectators4.join(' + ');
+        baseEq += ' → ';
+        const prodList4 = arrowIdx >= 0 ? pairResult.equation.slice(arrowIdx + 1).trim().split('+').map(s => s.trim()).filter(s => s) : [];
+        baseEq += [...prodList4, ...spectators4].join(' + ');
+        steps.push('Pairwise: acid + base neutralization, others as spectators');
+        steps.push('Predicted: ' + baseEq);
+        return { type: 'Neutralization (Multi-reactant)', equation: baseEq, predictions: [baseEq], steps: steps.slice() };
+      }
+    } catch (_) {}
+  }
+
+  return null;
 }
 
 /* ==================== SECTION 13: REACTION HANDLERS ==================== */
@@ -1427,8 +1610,10 @@ function handleEsterification(reactants) {
   const known = {
     'CH3COOH+CH3OH': 'CH3COOCH3',
     'CH3COOH+CH3CH2OH': 'CH3COOCH2CH3',
+    'CH3COOH+C2H5OH': 'CH3COOCH2CH3',
     'HCOOH+CH3OH': 'HCOOCH3',
     'HCOOH+CH3CH2OH': 'HCOOCH2CH3',
+    'HCOOH+C2H5OH': 'HCOOCH2CH3',
   };
   const key = acid + '+' + alcohol;
   const ester = known[key] || 'RCOOR';
@@ -1436,6 +1621,28 @@ function handleEsterification(reactants) {
   steps.push('Products: ' + ester + ' + H₂O');
   const products = [ester, 'H2O'];
   const eqStr = tryBalanceOneWay([acid, alcohol], products, type);
+  steps.push('Balanced: ' + eqStr);
+  return { type, equation: eqStr, predictions: [eqStr], steps };
+}
+
+/* --- Saponification: ester + base/hydroxide → salt + alcohol --- */
+function handleSaponification(reactants) {
+  const steps = [];
+  const estIdx = reactants.findIndex(r => isEster(r));
+  const baseIdx = reactants.findIndex(r => r !== reactants[estIdx]);
+  const ester = reactants[estIdx], base = reactants[baseIdx];
+  steps.push('Ester: ' + ester + ', Base: ' + base);
+  const s = ester.replace(/[-=≡]/g, '');
+  const cooIdx = s.indexOf('COO');
+  const rGroup = s.substring(0, cooIdx);
+  let alkGroup = s.substring(cooIdx + 3);
+  const metal = getFirstMetal(base);
+  const salt = rGroup + 'COO' + metal;
+  const alcohol = alkGroup + 'OH';
+  const type = 'Saponification (Ester + Base → Salt + Alcohol)';
+  steps.push('Products: ' + salt + ' + ' + alcohol);
+  const products = [salt, alcohol];
+  const eqStr = tryBalanceOneWay([ester, base], products, type);
   steps.push('Balanced: ' + eqStr);
   return { type, equation: eqStr, predictions: [eqStr], steps };
 }
@@ -1804,6 +2011,7 @@ function gcd2(a, b) {
 function formatCoeff(c, formula) {
   c = Math.round(c);
   if (c <= 0) return '';
+  formula = formula.replace(/^\d+/, '');
   return c === 1 ? formula : c + formula;
 }
 
@@ -1931,11 +2139,14 @@ function detectIsomerisation(formula) {
   const groups = detectFunctionalGroups(formula);
 
   for (const entry of entries) {
+    /* Match by structural formula input */
     for (const input of entry.inputs) {
       if (input.toUpperCase() === formulaNorm) {
         return { match: entry, matchType: 'exact' };
       }
     }
+    /* Match by canonical formula (e.g. C4H10 matches all entries) */
+    return { match: entry, matchType: 'canonical' };
   }
 
   return null;

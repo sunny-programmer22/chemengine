@@ -123,7 +123,9 @@ function getHalogen(formula) {
 
 function validateFormula(formula) {
   if (!formula || formula.trim().length === 0) return { valid: false, error: 'Formula is empty.' };
-  if (/[^A-Za-z0-9()\]\[\-=≡#]/.test(formula.replace(/[\d]/g, ''))) return { valid: false, error: 'Contains invalid characters.' };
+  /* Strip hydrate suffix (e.g. .5H2O or ·5H2O) before validation */
+  const base = formula.replace(/[·.]\d*H2O$/i, '');
+  if (/[^A-Za-z0-9()\]\[\-=≡#]/.test(base.replace(/[\d]/g, ''))) return { valid: false, error: 'Contains invalid characters.' };
   let depth = 0;
   const openStack = [];
   for (let i = 0; i < formula.length; i++) {
@@ -242,6 +244,7 @@ function classifyCompound(formula) {
   }
 
   if (formula === 'H2O') return 'water';
+  if (/^\d*H2O$/i.test(formula)) return 'water';
   if (formula === 'H2O2') return 'peroxide';
   if (formula === 'NH3' || formula === 'NH4OH') return 'base';
   if (formula === 'CH4') return 'hydrocarbon';
@@ -346,7 +349,9 @@ function containsOxygen(f) { return hasElement(f, 'O'); }
 function isAcid(f) {
   if (containsMetal(f)) return false;
   if (f === 'H2O' || f === 'H2O2') return false;
+  if (/^\d*H2O$/i.test(f)) return false;
   if (!isCarboxylicAcid(f) && f.includes('OH')) return false;
+  if (isEster(f)) return false;
   const el = parseCompoundElements(f);
   const keys = Object.keys(el);
   if (!el.H) return false;
@@ -409,7 +414,16 @@ function isDiatomic(f) {
   return ['H2','N2','O2','F2','CL2','BR2','I2'].includes(f.toUpperCase());
 }
 
-function isHydrate(f) { return f.includes('.'); }
+function isHydrate(f) { return /[·.]\d*H2O$/i.test(f); }
+
+function parseHydrate(f) {
+  const match = f.match(/^(.+?)[·.](\d*)H2O$/i);
+  if (!match) return null;
+  return {
+    anhydrous: match[1],
+    waterCount: match[2] === '' ? 1 : parseInt(match[2])
+  };
+}
 
 function isMetalElement(el) { return METALS_LIST.includes(el); }
 
@@ -421,6 +435,44 @@ function extractPolyatomic(formula) {
     if (formula.includes(p)) return p;
   }
   return null;
+}
+
+function parseCompoundElements(formula) {
+  /* Pre-process hydrate: extract water of crystallization */
+  let hydrateWater = 0;
+  let baseFormula = formula;
+  if (isHydrate(formula)) {
+    const info = parseHydrate(formula);
+    baseFormula = info.anhydrous;
+    hydrateWater = info.waterCount;
+  }
+  const stack = [{}];
+  let i = 0;
+  while (i < baseFormula.length) {
+    if (baseFormula[i] === '(') { stack.push({}); i++; }
+    else if (baseFormula[i] === ')') {
+      i++; let numStr = '';
+      while (i < baseFormula.length && /\d/.test(baseFormula[i])) { numStr += baseFormula[i]; i++; }
+      const mult = numStr === '' ? 1 : parseInt(numStr);
+      const top = stack.pop();
+      for (const [el, cnt] of Object.entries(top))
+        stack[stack.length - 1][el] = (stack[stack.length - 1][el] || 0) + cnt * mult;
+    } else if (/[A-Z]/.test(baseFormula[i])) {
+      let el = baseFormula[i]; i++;
+      while (i < baseFormula.length && /[a-z]/.test(baseFormula[i])) { el += baseFormula[i]; i++; }
+      let numStr = '';
+      while (i < baseFormula.length && /\d/.test(baseFormula[i])) { numStr += baseFormula[i]; i++; }
+      const cnt = numStr === '' ? 1 : parseInt(numStr);
+      stack[stack.length - 1][el] = (stack[stack.length - 1][el] || 0) + cnt;
+    } else { i++; }
+  }
+  const result = stack[0];
+  /* Add water of crystallization */
+  if (hydrateWater > 0) {
+    result.H = (result.H || 0) + hydrateWater * 2;
+    result.O = (result.O || 0) + hydrateWater;
+  }
+  return result;
 }
 
 /* ==================== CANONICAL FORMULA ==================== */

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engine - Scientific Calculator</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
+<script src="https://3Dmol.org/build/3Dmol-min.js"></script>
+</head>
+<body>
+<div id="sidebar-overlay"></div>
+<aside id="sidebar">
+  <div id="sidebar-header">
+    <h1>ENGINE</h1>
+    <button id="theme-toggle" title="Toggle Dark/Light theme">🌓</button>
+  </div>
+  <nav id="main-nav">
+    <a href="#" class="tab active" data-tab="linear">Linear Eqs</a>
+    <a href="#" class="tab" data-tab="nonlinear">Non-Linear Eqs</a>
+    <a href="#" class="tab" data-tab="balance">Balance Eqn</a>
+    <a href="#" class="tab" data-tab="predict">Predict Rx</a>
+    <a href="#" class="tab" data-tab="structure">Structure</a>
+    <a href="#" class="tab" data-tab="stoichiometry">Stoichiometry</a>
+    <a href="#" class="tab" data-tab="periodic">Periodic Table</a>
+    <a href="#" class="tab" data-tab="ph">pH Calculator</a>
+
+  </nav>
+</aside>
+<div id="content">
+  <button id="hamburger">☰</button>
+<main>
+<section id="sec-linear" class="tab-content active">
+  <h2>Solve Linear Equations</h2>
+  <p class="desc">Enter a system of linear equations (one per line). Variables: x, y, z, w ...
+    <span class="help-tip" data-tip="Format: 2*x + y - z = 8. Use * for multiplication.">?</span>
+  </p>
+  <textarea id="linear-input" rows="6" placeholder="2*x + y - z = 8&#10;-3*x - y + 2*z = -11&#10;-2*x + y + 2*z = -3"></textarea>
+  <div class="btn-row">
+    <button id="linear-solve" class="btn primary">Solve</button>
+    <button id="linear-example" class="btn secondary">Load Example</button>
+    <button id="linear-clear" class="btn secondary">Clear</button>
+    <span id="linear-spinner" class="loading-overlay"><span class="spinner"></span> Solving...</span>
+  </div>
+  <div id="linear-output" class="output"></div>
+  <div class="history-panel" id="linear-history">
+    <h4 onclick="this.nextElementSibling.classList.toggle('show')">▼ History</h4>
+    <div id="linear-history-list"></div>
+  </div>
+  <div id="linear-steps" class="steps"></div>
+</section>
+
+<section id="sec-nonlinear" class="tab-content">
+  <h2>Solve Non-Linear Equations</h2>
+  <p class="desc">Enter a system of non-linear equations (one per line). Uses Newton-Raphson method.
+    <span class="help-tip" data-tip="Requires initial guesses. Example: x^2 + y^2 = 25, x - y = 1">?</span>
+  </p>
+  <textarea id="nonlinear-input" rows="6" placeholder="x^2 + y^2 - 25 = 0&#10;x - y - 1 = 0"></textarea>
+  <div class="eq-var-row">
+    <label>Variables (comma separated): <input type="text" id="nonlinear-vars" value="x,y" class="small-input"></label>
+    <label>Initial guesses: <input type="text" id="nonlinear-guess" value="3,2" class="small-input"></label>
+  </div>
+  <div class="btn-row">
+    <button id="nonlinear-solve" class="btn primary">Solve</button>
+    <button id="nonlinear-example" class="btn secondary">Load Example</button>
+    <button id="nonlinear-clear" class="btn secondary">Clear</button>
+    <span id="nonlinear-spinner" class="loading-overlay"><span class="spinner"></span> Solving...</span>
+  </div>
+  <div id="nonlinear-output" class="output"></div>
+  <div class="history-panel" id="nonlinear-history">
+    <h4 onclick="this.nextElementSibling.classList.toggle('show')">▼ History</h4>
+    <div id="nonlinear-history-list"></div>
+  </div>
+  <div id="nonlinear-steps" class="steps"></div>
+</section>
+
+<section id="sec-balance" class="tab-content">
+  <h2>Balance Chemical Equation</h2>
+  <p class="desc">Enter an unbalanced chemical equation. Use <code>-&gt;</code> or <code>→</code>.
+    <span class="help-tip" data-tip="Format: H2 + O2 -> H2O. Use parentheses for polyatomic ions.">?</span>
+  </p>
+  <input type="text" id="balance-input" placeholder="H2 + O2 -> H2O" class="wide-input">
+  <div class="btn-row">
+    <button id="balance-solve" class="btn primary">Balance</button>
+    <button id="balance-example" class="btn secondary">Load Example</button>
+    <button id="balance-clear" class="btn secondary">Clear</button>
+    <span id="balance-spinner" class="loading-overlay"><span class="spinner"></span> Balancing...</span>
+  </div>
+  <div id="balance-output" class="output"></div>
+  <div class="history-panel" id="balance-history">
+    <h4 onclick="this.nextElementSibling.classList.toggle('show')">▼ History</h4>
+    <div id="balance-history-list"></div>
+  </div>
+  <div id="balance-steps" class="steps"></div>
+</section>
+
+<section id="sec-predict" class="tab-content">
+  <h2>Predict Reaction Products</h2>
+  <p class="desc">Enter reactants (comma or + separated). Molecular formulas only.
+    <span class="help-tip" data-tip="Example: CH4, O2 → CO2 + H2O. Supports 1-3 reactants.">?</span>
+  </p>
+  <input type="text" id="predict-input" placeholder="CH4, O2" class="wide-input">
+  <div class="btn-row">
+    <button id="predict-solve" class="btn primary">Predict</button>
+    <button id="predict-example" class="btn secondary">Load Example</button>
+    <button id="predict-clear" class="btn secondary">Clear</button>
+    <span id="predict-spinner" class="loading-overlay"><span class="spinner"></span> Predicting...</span>
+  </div>
+  <div id="predict-output" class="output"></div>
+  <div class="history-panel" id="predict-history">
+    <h4 onclick="this.nextElementSibling.classList.toggle('show')">▼ History</h4>
+    <div id="predict-history-list"></div>
+  </div>
+  <div id="predict-rxns" class="steps"></div>
+</section>
+
+<section id="sec-structure" class="tab-content">
+  <h2>Molecular Structure Viewer</h2>
+  <p class="desc">Enter a molecular formula to view its 3D structure (via PubChem).
+    <span class="help-tip" data-tip="Fetches 3D structure from PubChem. Drag to rotate, scroll to zoom.">?</span>
+  </p>
+  <div class="struct-row">
+    <input type="text" id="structure-input" placeholder="C6H12O6" class="wide-input">
+    <button id="structure-fetch" class="btn primary">View</button>
+    <span id="structure-spinner" class="loading-overlay"><span class="spinner"></span> Fetching...</span>
+  </div>
+  <div id="structure-info" class="output"></div>
+  <div id="structure-viewer" style="width:100%;height:500px;position:relative;"></div>
+  <div class="history-panel" id="structure-history">
+    <h4 onclick="this.nextElementSibling.classList.toggle('show')">▼ History</h4>
+    <div id="structure-history-list"></div>
+  </div>
+</section>
+
+<section id="sec-stoichiometry" class="tab-content">
+  <h2>Stoichiometry Calculator</h2>
+  <p class="desc">Enter a balanced equation. Optionally set a known amount to scale — otherwise the smallest coefficient is normalised to&nbsp;1.
+    <span class="help-tip" data-tip="If no compound/value given, smallest coefficient → 1 mol. Works with moles (mol), grams (g), or volume (L at STP).">?</span>
+  </p>
+  <input type="text" id="stoich-eqn" placeholder="2H2 + O2 -> 2H2O" class="wide-input">
+  <div class="eq-var-row" style="align-items:end;">
+    <label>Compound (optional): <input type="text" id="stoich-cmp" placeholder="H2" class="small-input"></label>
+    <label>Amount: <input type="text" id="stoich-val" placeholder="4" class="small-input" style="width:70px;"></label>
+    <label>Unit:
+      <select id="stoich-unit" class="small-input">
+        <option value="mol">moles (mol)</option>
+        <option value="g">grams (g)</option>
+        <option value="L">volume (L at STP)</option>
+      </select>
+    </label>
+  </div>
+  <div class="btn-row">
+    <button id="stoich-solve" class="btn primary">Compute</button>
+    <span id="stoich-spinner" class="loading-overlay"><span class="spinner"></span> Computing...</span>
+  </div>
+  <div id="stoich-output" class="output"></div>
+  <div class="history-panel" id="stoich-history">
+    <h4 onclick="this.nextElementSibling.classList.toggle('show')">▼ History</h4>
+    <div id="stoich-history-list"></div>
+  </div>
+  <div id="stoich-steps" class="steps"></div>
+</section>
+
+<section id="sec-periodic" class="tab-content">
+  <h2>Periodic Table</h2>
+  <p class="desc">Click an element for details.</p>
+  <div class="periodic-filters">
+    <button class="periodic-filter active btn secondary" data-filter="all">All</button>
+    <button class="periodic-filter btn secondary" data-filter="nonmetal">Nonmetal</button>
+    <button class="periodic-filter btn secondary" data-filter="metal">Metal</button>
+    <button class="periodic-filter btn secondary" data-filter="transition">Transition</button>
+    <button class="periodic-filter btn secondary" data-filter="metalloid">Metalloid</button>
+    <button class="periodic-filter btn secondary" data-filter="halogen">Halogen</button>
+    <button class="periodic-filter btn secondary" data-filter="noble">Noble</button>
+  </div>
+  <div id="periodic-grid" class="periodic-grid"></div>
+  <div id="periodic-info" class="output"></div>
+</section>
+
+<section id="sec-ph" class="tab-content">
+  <h2>pH Calculator</h2>
+  <p class="desc">Enter a chemical formula and concentration — type (acid/base, strong/weak) is detected automatically.
+    <span class="help-tip" data-tip="e.g. HCl, NaOH, CH3COOH, NH3, H2SO4">?</span>
+  </p>
+  <div class="eq-var-row">
+    <label>Formula: <input type="text" id="ph-formula" placeholder="HCl" class="small-input" style="width:100px;"></label>
+    <label>Conc (M): <input type="text" id="ph-conc" placeholder="0.01" class="small-input" style="width:80px;"></label>
+  </div>
+  <div class="btn-row">
+    <button id="ph-calc" class="btn primary">Calculate pH</button>
+    <span id="ph-spinner" class="loading-overlay"><span class="spinner"></span> Calculating...</span>
+  </div>
+  <div id="ph-output" class="output"></div>
+  <div class="history-panel" id="ph-history">
+    <h4 onclick="this.nextElementSibling.classList.toggle('show')">▼ History</h4>
+    <div id="ph-history-list"></div>
+  </div>
+  <div id="ph-steps" class="steps"></div>
+</section>
+</main>
+<footer>
+  <p>Chemical Engine &mdash; Fully client-side. No data sent to any server (except PubChem API for structures).</p>
+</footer>
+</div>
+<script src="js/elements.js"></script>
+<script src="js/app.js"></script>
+<script src="js/linear.js"></script>
+<script src="js/nonlinear.js"></script>
+  <script src="js/chem-balance.js"></script>
+  <script src="js/classification.js"></script>
+  <script src="js/chem-predict.js"></script>
+<script src="js/mol-structure.js"></script>
+<script src="js/stoichiometry.js"></script>
+<script src="js/periodic.js"></script>
+<script src="js/ph-calc.js"></script>
+</body>
+</html>

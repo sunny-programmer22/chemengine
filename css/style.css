@@ -1,33 +1,41 @@
 :root {
-  --bg-primary: #0d1117;
-  --bg-secondary: #161b22;
-  --bg-tertiary: #21262d;
-  --border: #30363d;
-  --text-primary: #c9d1d9;
-  --text-secondary: #8b949e;
-  --text-link: #58a6ff;
-  --accent: #1f6feb;
-  --accent-hover: #388bfd;
-  --success: #238636;
+  --bg-primary: #17182b;
+  --bg-secondary: #20223a;
+  --bg-tertiary: #2a2c47;
+  --border: #363858;
+  --text-primary: #e2e4f0;
+  --text-secondary: #9da0b8;
+  --text-link: #7b8cff;
+  --accent: #5b6ef5;
+  --accent-hover: #7b8cff;
+  --success: #2ea043;
   --error: #da3633;
   --warning: #d29922;
-  --purple: #d2a8ff;
+  --purple: #c9a0ff;
+  --gradient-start: #1a1b2e;
+  --gradient-mid: #2d1b69;
+  --gradient-end: #1b3a5c;
+  --card-bg: rgba(255,255,255,0.06);
   --sidebar-width: 220px;
 }
 [data-theme="light"] {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f6f8fa;
-  --bg-tertiary: #eaeef2;
-  --border: #d0d7de;
-  --text-primary: #1f2328;
-  --text-secondary: #656d76;
-  --text-link: #0969da;
-  --accent: #0969da;
-  --accent-hover: #0550ae;
+  --bg-primary: #f8f6ff;
+  --bg-secondary: #eeedfb;
+  --bg-tertiary: #e3e1f5;
+  --border: #cdcae8;
+  --text-primary: #1f1a3a;
+  --text-secondary: #5e5a82;
+  --text-link: #5b6ef5;
+  --accent: #5b6ef5;
+  --accent-hover: #4a5de0;
   --success: #1a7f37;
   --error: #cf222e;
   --warning: #9a6700;
-  --purple: #8250df;
+  --purple: #7c3aed;
+  --gradient-start: #f0eeff;
+  --gradient-mid: #fce4ec;
+  --gradient-end: #e0f0ff;
+  --card-bg: rgba(255,255,255,0.7);
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { height: 100%; }
@@ -302,6 +310,15 @@ textarea::placeholder { color: var(--text-secondary); opacity: 0.6; }
   .eq-var-row label { display: flex; flex-direction: column; gap: 0.25rem; }
   .small-input { width: 100%; }
   footer { padding: 0.75rem; }
+  #sec-home {
+    margin: -1.5rem -0.75rem;
+    padding: 2rem 1rem;
+    border-radius: 0;
+    min-height: auto;
+  }
+  .home-hero h1 { font-size: 2rem; }
+  .home-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+  .home-card { padding: 1rem; }
 }
 /* ===== SUBSCRIPT RENDERING ===== */
 .chem-formula sub, .chem-eqn sub { display: inline; }
@@ -322,6 +339,81 @@ footer {
   border-top: 1px solid var(--border);
   transition: border-color 0.3s;
 }
+/* ===== HOMEPAGE ===== */
+#sec-home {
+  padding: 2rem 0;
+  min-height: calc(100vh - 8rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-mid), var(--gradient-end));
+  border-radius: 16px;
+  margin: -2rem;
+  padding: 3rem 2rem;
+  transition: background 0.5s;
+}
+.home-hero {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+.home-hero h1 {
+  font-size: 2.8rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #7b8cff, #c9a0ff, #f0a0d0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 1px;
+  margin-bottom: 0.5rem;
+}
+.home-hero p {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  max-width: 500px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  width: 100%;
+  max-width: 900px;
+}
+.home-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 1.5rem 1.25rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-align: center;
+}
+.home-card:hover {
+  transform: translateY(-4px);
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.2);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+}
+.home-card .home-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+.home-card h3 {
+  font-size: 1rem;
+  color: var(--text-primary);
+  margin-bottom: 0.3rem;
+}
+.home-card p {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
 #structure-viewer { margin-top: 1rem; border-radius: 6px; overflow: hidden; }
 #structure-viewer .mol-container { width: 100%; height: 100%; }
 /* ===== PERIODIC TABLE ===== */

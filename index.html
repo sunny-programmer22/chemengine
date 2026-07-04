@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Engine - Scientific Calculator</title>
 <link rel="stylesheet" href="css/style.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
+<script src="node_modules/mathjs/lib/browser/math.js"></script>
 <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
 </head>
 <body>
@@ -16,7 +16,8 @@
     <button id="theme-toggle" title="Toggle Dark/Light theme">🌓</button>
   </div>
   <nav id="main-nav">
-    <a href="#" class="tab active" data-tab="linear">Linear Eqs</a>
+    <a href="#" class="tab active" data-tab="home">Home</a>
+    <a href="#" class="tab" data-tab="linear">Linear Eqs</a>
     <a href="#" class="tab" data-tab="nonlinear">Non-Linear Eqs</a>
     <a href="#" class="tab" data-tab="balance">Balance Eqn</a>
     <a href="#" class="tab" data-tab="predict">Predict Rx</a>
@@ -30,7 +31,56 @@
 <div id="content">
   <button id="hamburger">☰</button>
 <main>
-<section id="sec-linear" class="tab-content active">
+<section id="sec-home" class="tab-content active">
+  <div class="home-hero">
+    <h1>Chem Engine</h1>
+    <p>Your all-in-one chemistry companion — balance equations, predict reactions, explore molecules, and more.</p>
+  </div>
+  <div class="home-grid">
+    <div class="home-card" data-tab="linear">
+      <span class="home-icon">📐</span>
+      <h3>Linear Equations</h3>
+      <p>Solve systems of linear equations</p>
+    </div>
+    <div class="home-card" data-tab="nonlinear">
+      <span class="home-icon">📈</span>
+      <h3>Non-Linear Equations</h3>
+      <p>Newton-Raphson solver</p>
+    </div>
+    <div class="home-card" data-tab="balance">
+      <span class="home-icon">⚖️</span>
+      <h3>Balance Equation</h3>
+      <p>Balance chemical equations</p>
+    </div>
+    <div class="home-card" data-tab="predict">
+      <span class="home-icon">🔬</span>
+      <h3>Predict Reaction</h3>
+      <p>Predict reaction products</p>
+    </div>
+    <div class="home-card" data-tab="structure">
+      <span class="home-icon">🧬</span>
+      <h3>Molecular Structure</h3>
+      <p>3D molecular viewer</p>
+    </div>
+    <div class="home-card" data-tab="stoichiometry">
+      <span class="home-icon">🧮</span>
+      <h3>Stoichiometry</h3>
+      <p>Moles, grams &amp; volume calc</p>
+    </div>
+    <div class="home-card" data-tab="periodic">
+      <span class="home-icon">📊</span>
+      <h3>Periodic Table</h3>
+      <p>Interactive element explorer</p>
+    </div>
+    <div class="home-card" data-tab="ph">
+      <span class="home-icon">🧪</span>
+      <h3>pH Calculator</h3>
+      <p>Acid/base pH calculations</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-linear" class="tab-content">
   <h2>Solve Linear Equations</h2>
   <p class="desc">Enter a system of linear equations (one per line). Variables: x, y, z, w ...
     <span class="help-tip" data-tip="Format: 2*x + y - z = 8. Use * for multiplication.">?</span>

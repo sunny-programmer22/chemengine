@@ -28,16 +28,26 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ===== TAB SWITCHING ===== */
+function switchTab(tabId) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const tabLink = document.querySelector(`.tab[data-tab="${tabId}"]`);
+  if (tabLink) tabLink.classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active'));
+  const sec = document.getElementById('sec-' + tabId);
+  if (sec) sec.classList.add('active');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', (e) => {
       e.preventDefault();
-      const target = tab.dataset.tab;
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active'));
-      const sec = document.getElementById('sec-' + target);
-      if (sec) sec.classList.add('active');
+      switchTab(tab.dataset.tab);
+    });
+  });
+  /* ===== HOME CARD CLICKS ===== */
+  document.querySelectorAll('.home-card').forEach(card => {
+    card.addEventListener('click', () => {
+      switchTab(card.dataset.tab);
     });
   });
 });

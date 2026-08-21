@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Chem Engine</string>
+    <string name="title_activity_main">Chem Engine</string>
+    <string name="package_name">com.chemengine.app</string>
+    <string name="custom_url_scheme">com.chemengine.app</string>
+</resources>

@@ -340,7 +340,7 @@ footer {
   transition: border-color 0.3s;
 }
 /* ===== HOMEPAGE ===== */
-#sec-home {
+#sec-home.active {
   padding: 2rem 0;
   min-height: calc(100vh - 8rem);
   display: flex;

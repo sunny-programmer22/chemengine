@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-/* ===== TAB SWITCHING ===== */
+/* ===== TAB SWITCHING (URL-hash routing so Back/Forward work) ===== */
 function switchTab(tabId) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   const tabLink = document.querySelector(`.tab[data-tab="${tabId}"]`);
@@ -37,19 +37,37 @@ function switchTab(tabId) {
   if (sec) sec.classList.add('active');
 }
 
+function currentHashTab() {
+  const id = decodeURIComponent(location.hash.slice(1));
+  return (id && document.getElementById('sec-' + id)) ? id : null;
+}
+
+function navigateTo(tabId) {
+  switchTab(tabId);
+  if (currentHashTab() !== tabId) history.pushState(null, '', '#' + tabId);
+}
+
+window.addEventListener('popstate', () => {
+  const id = currentHashTab();
+  if (id) switchTab(id);
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', (e) => {
       e.preventDefault();
-      switchTab(tab.dataset.tab);
+      navigateTo(tab.dataset.tab);
     });
   });
   /* ===== HOME CARD CLICKS ===== */
   document.querySelectorAll('.home-card').forEach(card => {
     card.addEventListener('click', () => {
-      switchTab(card.dataset.tab);
+      navigateTo(card.dataset.tab);
     });
   });
+  /* Deep-link: open tab from #hash on first load */
+  const initial = currentHashTab();
+  if (initial) switchTab(initial);
 });
 
 /* ===== CLEAR BUTTONS ===== */

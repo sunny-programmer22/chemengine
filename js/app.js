@@ -48,8 +48,8 @@ function navigateTo(tabId) {
 }
 
 window.addEventListener('popstate', () => {
-  const id = currentHashTab();
-  if (id) switchTab(id);
+  const id = currentHashTab() || 'home';
+  switchTab(id);
 });
 
 document.addEventListener('DOMContentLoaded', () => {

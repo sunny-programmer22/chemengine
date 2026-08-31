@@ -81,10 +81,10 @@ In the **Environment Variables** section, click **Add Environment Variable** for
 | `TELEGRAM_BOT_TOKEN` | your token from @BotFather | **Required** - only hard-required var (`src/config.js:45`) |
 | `GEMINI_API_KEY` | your Gemini API key | **Optional** but required for `/ask` (Gemini path) |
 | `OPENAI_API_KEY` | your OpenAI API key | **Optional** - alternative for `/ask` (`src/config.js:27`) |
-| `GEMINI_MODEL` | `gemini-3.1-flash-lite` | Optional - overrides `src/config.js:30` default (`gemini-1.5-flash`) |
+| `GEMINI_MODEL` | `gemini-1.5-flash` | Optional - overrides `src/config.js:30` default (`gemini-1.5-flash`) |
 | `OPENAI_MODEL` | `gpt-4o-mini` | Optional - defaults to `gpt-4o-mini` (`src/config.js:28`, `.env.example:3`) |
 | `WEBHOOK_URL` | `https://chem-bot.onrender.com` | **Required for production** - base URL only, **no** `/webhook/...` suffix (see Step 8); set after first deploy |
-| `PORT` | `3000` | Optional - Render injects `PORT`, defaults to `3000` (`src/config.js:33`, `render.yaml:15`) |
+| `PORT` | `3000` | Optional - Render injects `PORT`, defaults to `3000` (`src/config.js:33`; Render sets automatically) |
 | `LOG_LEVEL` | `info` | Optional - `error` / `warn` / `info` / `debug` (`src/config.js:35`) |
 | `MAX_MESSAGE_LENGTH` | `3500` | Optional - Telegram chunk limit (`src/config.js:36`, `render.yaml:19`) |
 | `PUGCHEM_BASE` | `https://pubchem.ncbi.nlm.nih.gov/rest/pug` | Optional - override PubChem API (`src/config.js:31`, `.env.example:6`) |

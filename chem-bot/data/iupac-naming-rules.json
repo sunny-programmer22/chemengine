@@ -1,0 +1,201 @@
+{
+  "introduction": "IUPAC (International Union of Pure and Applied Chemistry) nomenclature is the standard system for naming chemical compounds. The rules below summarise how to name inorganic and organic compounds systematically.",
+
+  "inorganic": {
+    "binaryCompounds": {
+      "name": "Inorganic Binary Compounds",
+      "description": "Compounds of two elements.",
+      "rules": [
+        "The element farther left in the periodic table is named first (e.g., sodium chloride).",
+        "The element farther right is named second with the suffix -ide (e.g., chloride, oxide).",
+        "Greek prefixes (mono-, di-, tri-, tetra-, penta-, hexa-, hepta-, octa-, nona-, deca-) are used for covalent (non-metal) compounds to indicate the count of each atom.",
+        "The prefix 'mono-' is usually omitted for the first element.",
+        "Roman numerals in parentheses indicate the oxidation state of the metal in ionic compounds (Stock system)."
+      ],
+      "examples": [
+        {"formula": "NaCl", "name": "sodium chloride"},
+        {"formula": "CO2", "name": "carbon dioxide"},
+        {"formula": "PCl5", "name": "phosphorus pentachloride"},
+        {"formula": "N2O4", "name": "dinitrogen tetroxide"},
+        {"formula": "Fe2O3", "name": "iron(III) oxide"}
+      ]
+    },
+    "ionicCompounds": {
+      "name": "Ionic Compounds",
+      "description": "Compounds formed between a metal and a nonmetal (or polyatomic ion).",
+      "rules": [
+        "Cation (positive) is named first using the element name; anion (negative) follows with the -ide suffix.",
+        "For polyatomic ions, use the standard ion name (e.g., sulfate, nitrate, carbonate).",
+        "If the metal can have multiple oxidation states, use Roman numerals (Stock system) or the -ous/-ic suffix.",
+        "Crossover rule (Crisscross method) is used to balance charges when writing the formula.",
+        "Ammonium salts use the name 'ammonium' for the cation."
+      ],
+      "examples": [
+        {"formula": "NaHCO3", "name": "sodium hydrogen carbonate"},
+        {"formula": "FeCl3", "name": "iron(III) chloride"},
+        {"formula": "NH4NO3", "name": "ammonium nitrate"},
+        {"formula": "KMnO4", "name": "potassium permanganate"},
+        {"formula": "Cu2SO4", "name": "copper(I) sulfate"}
+      ]
+    },
+    "covalentCompounds": {
+      "name": "Covalent (Molecular) Compounds",
+      "description": "Compounds of two nonmetals.",
+      "greekPrefixes": [
+        {"n": 1, "prefix": "mono"},
+        {"n": 2, "prefix": "di"},
+        {"n": 3, "prefix": "tri"},
+        {"n": 4, "prefix": "tetra"},
+        {"n": 5, "prefix": "penta"},
+        {"n": 6, "prefix": "hexa"},
+        {"n": 7, "prefix": "hepta"},
+        {"n": 8, "prefix": "octa"},
+        {"n": 9, "prefix": "nona"},
+        {"n": 10, "prefix": "deca"}
+      ],
+      "examples": [
+        {"formula": "CO", "name": "carbon monoxide"},
+        {"formula": "CO2", "name": "carbon dioxide"},
+        {"formula": "SF6", "name": "sulfur hexafluoride"},
+        {"formula": "N2O5", "name": "dinitrogen pentoxide"}
+      ]
+    },
+    "acids": {
+      "name": "Naming of Acids",
+      "binaryAcids": {
+        "rules": [
+          "Named as 'hydro-<root>-ic acid'. Example: HCl is hydrochloric acid.",
+          "Use the stem of the element (chlor-, brom-, fluor-, sulfur-) plus -ic."
+        ],
+        "examples": [
+          {"formula": "HCl", "name": "hydrochloric acid"},
+          {"formula": "HBr", "name": "hydrobromic acid"},
+          {"formula": "H2S", "name": "hydrosulfuric acid"},
+          {"formula": "HF", "name": "hydrofluoric acid"}
+        ]
+      },
+      "oxyacids": {
+        "rules": [
+          "If the polyatomic ion ends in -ate, the acid ends in -ic acid. Example: SO4^2- → H2SO4 is sulfuric acid.",
+          "If the polyatomic ion ends in -ite, the acid ends in -ous acid. Example: SO3^2- → H2SO3 is sulfurous acid.",
+          "If the polyatomic ion ends in -ide, use hydro-...-ic acid (binary acid).",
+          "Per- prefix means one more oxygen (e.g., ClO4- is perchlorate → HClO4 is perchloric acid).",
+          "Hypo- prefix means one less oxygen (e.g., ClO- is hypochlorite → HClO is hypochlorous acid)."
+        ],
+        "examples": [
+          {"formula": "H2SO4", "name": "sulfuric acid", "ion": "SO4^2- (sulfate)"},
+          {"formula": "H2SO3", "name": "sulfurous acid", "ion": "SO3^2- (sulfite)"},
+          {"formula": "HNO3", "name": "nitric acid", "ion": "NO3- (nitrate)"},
+          {"formula": "HNO2", "name": "nitrous acid", "ion": "NO2- (nitrite)"},
+          {"formula": "HClO4", "name": "perchloric acid", "ion": "ClO4- (perchlorate)"},
+          {"formula": "HClO", "name": "hypochlorous acid", "ion": "ClO- (hypochlorite)"}
+        ]
+      }
+    }
+  },
+
+  "organic": {
+    "alkanes": {
+      "name": "Alkanes",
+      "suffix": "-ane",
+      "description": "Saturated hydrocarbons with formula CnH2n+2.",
+      "rules": [
+        "Use Greek prefix for carbon count (meth-, eth-, prop-, but-, pent-, hex-, hept-, oct-, non-, dec-) plus -ane.",
+        "For branched alkanes, identify the longest chain, then add substituents as prefixes."
+      ],
+      "examples": [
+        {"formula": "CH4", "name": "methane"},
+        {"formula": "C2H6", "name": "ethane"},
+        {"formula": "C3H8", "name": "propane"},
+        {"formula": "C4H10", "name": "butane"},
+        {"formula": "C5H12", "name": "pentane"}
+      ]
+    },
+    "alkenes": {
+      "name": "Alkenes",
+      "suffix": "-ene",
+      "description": "Hydrocarbons with at least one C=C double bond; formula CnH2n.",
+      "rules": [
+        "Same as alkanes but the suffix is -ene.",
+        "The position of the double bond is given by the lower-numbered carbon (e.g., but-2-ene).",
+        "For multiple double bonds, use -adiene, -atriene, etc."
+      ],
+      "examples": [
+        {"formula": "C2H4", "name": "ethene (ethylene)"},
+        {"formula": "C3H6", "name": "propene (propylene)"},
+        {"formula": "C4H8", "name": "but-2-ene"}
+      ]
+    },
+    "alkynes": {
+      "name": "Alkynes",
+      "suffix": "-yne",
+      "description": "Hydrocarbons with at least one C≡C triple bond; formula CnH2n-2.",
+      "rules": [
+        "Same as alkanes but the suffix is -yne.",
+        "Number the chain to give the triple bond the lowest locant."
+      ],
+      "examples": [
+        {"formula": "C2H2", "name": "ethyne (acetylene)"},
+        {"formula": "C3H4", "name": "propyne"},
+        {"formula": "C4H6", "name": "but-2-yne"}
+      ]
+    },
+    "substitutedAlkane": {
+      "name": "Naming a Substituted Alkane",
+      "description": "Step-by-step procedure for naming complex organic molecules.",
+      "steps": [
+        {"step": 1, "name": "Find the longest carbon chain", "detail": "The longest chain becomes the parent name (methane, ethane, propane, etc.)."},
+        {"step": 2, "name": "Number the chain to give the lowest locants", "detail": "Number from the end that gives the substituent (or the first point of unsaturation) the lowest number."},
+        {"step": 3, "name": "Identify and name substituents", "detail": "Each group off the main chain is named (methyl, ethyl, chloro, bromo, hydroxy, etc.). Use locants to indicate their position."},
+        {"step": 4, "name": "Alphabetize substituents", "detail": "List substituents in alphabetical order. Ignore the di-, tri-, etc. prefixes for alphabetising, but include them when naming."},
+        {"step": 5, "name": "Assemble the name", "detail": "Combine: locant(s)-substituent(s) + parent name + locant-suffix. For example: 2,3-dimethylbutane."}
+      ],
+      "example": {
+        "problem": "Name CH3-CH(CH3)-CH2-CH3",
+        "solution": "Identify the longest chain (4 carbons) → butane; find the methyl substituent at carbon 2; final name: 2-methylbutane"
+      }
+    },
+    "functionalGroups": {
+      "name": "Functional Group Priority for Suffix",
+      "description": "When a molecule has multiple functional groups, the highest-priority group becomes the suffix; others are named as prefixes.",
+      "priority": [
+        {"priority": 1, "group": "carboxylic acid", "suffix": "-oic acid"},
+        {"priority": 2, "group": "ester", "suffix": "-oate"},
+        {"priority": 3, "group": "amide", "suffix": "-amide"},
+        {"priority": 4, "group": "nitrile", "suffix": "-nitrile"},
+        {"priority": 5, "group": "aldehyde", "suffix": "-al"},
+        {"priority": 6, "group": "ketone", "suffix": "-one"},
+        {"priority": 7, "group": "alcohol", "suffix": "-ol"},
+        {"priority": 8, "group": "amine", "suffix": "-amine"},
+        {"priority": 9, "group": "alkene", "suffix": "-ene"},
+        {"priority": 10, "group": "alkyne", "suffix": "-yne"},
+        {"priority": 11, "group": "ether", "suffix": "(named as alkoxy- prefix)"},
+        {"priority": 12, "group": "halide", "suffix": "(named as halo- prefix)"}
+      ]
+    }
+  },
+
+  "stereochemistry": {
+    "name": "Stereochemistry Prefixes",
+    "description": "Descriptors used to indicate three-dimensional configuration.",
+    "prefixes": [
+      {"prefix": "cis-", "use": "Two same groups on same side of a double bond or ring"},
+      {"prefix": "trans-", "use": "Two same groups on opposite sides of a double bond or ring"},
+      {"prefix": "R-", "use": "Rectus (clockwise) absolute configuration at a stereocentre (CIP priority rules)"},
+      {"prefix": "S-", "use": "Sinister (counter-clockwise) absolute configuration at a stereocentre"},
+      {"prefix": "E-", "use": "Entgegen (opposite side) — high-priority groups on opposite sides of a double bond"},
+      {"prefix": "Z-", "use": "Zusammen (together) — high-priority groups on the same side of a double bond"},
+      {"prefix": "D-", "use": "Dextrorotatory in Fischer projection of sugars/amino acids"},
+      {"prefix": "L-", "use": "Levorotatory in Fischer projection"}
+    ]
+  },
+
+  "summary": [
+    "Use Greek prefixes for non-metal binary compounds.",
+    "Use Roman numerals (Stock system) for metals with variable oxidation state.",
+    "Oxyacids are named after their parent polyatomic ion (-ic acid for -ate; -ous acid for -ite).",
+    "Organic suffixes: -ane (alkane), -ene (alkene), -yne (alkyne), -ol (alcohol), -al (aldehyde), -one (ketone), -oic acid (carboxylic acid), -oate (ester), -amine (amine), -amide (amide), -nitrile (nitrile).",
+    "When multiple functional groups are present, only the highest-priority group is named as a suffix; others become prefixes.",
+    "Stereochemistry uses cis/trans or E/Z (for double bonds) and R/S (for stereocentres)."
+  ]
+}

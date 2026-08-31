@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: chem-bot
+    runtime: node
+    plan: free
+    region: oregon
+    branch: main
+    rootDir: chem-bot
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: LOG_LEVEL
+        value: "info"
+      - key: MAX_MESSAGE_LENGTH
+        value: "3500"
+      - key: GEMINI_MODEL
+        value: "gemini-1.5-flash"
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: WEBHOOK_URL
+        sync: false

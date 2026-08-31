@@ -1,0 +1,30 @@
+{
+  "name": "chem-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot for chemistry - powered by IUPAC knowledge and online sources",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node test/run-tests.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mathjs": "^15.2.0",
+    "node-telegram-bot-api": "^2.1.0"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "chemistry",
+    "iupac",
+    "education"
+  ],
+  "author": "Sunny Programmer",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}

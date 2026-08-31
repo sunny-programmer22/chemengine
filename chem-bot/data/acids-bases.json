@@ -1,0 +1,69 @@
+{
+  "STRONG_ACIDS": [
+    {"formula": "HCl", "name": "hydrochloric acid", "Ka": null, "type": "strong"},
+    {"formula": "HBr", "name": "hydrobromic acid", "Ka": null, "type": "strong"},
+    {"formula": "HI", "name": "hydroiodic acid", "Ka": null, "type": "strong"},
+    {"formula": "HNO3", "name": "nitric acid", "Ka": null, "type": "strong"},
+    {"formula": "H2SO4", "name": "sulfuric acid", "Ka": null, "type": "strong", "note": "Only first dissociation is strong; Ka2 = 1.2e-2"},
+    {"formula": "HClO4", "name": "perchloric acid", "Ka": null, "type": "strong"},
+    {"formula": "HClO3", "name": "chloric acid", "Ka": null, "type": "strong"},
+    {"formula": "HBrO3", "name": "bromic acid", "Ka": null, "type": "strong"},
+    {"formula": "HIO3", "name": "iodic acid", "Ka": null, "type": "strong"},
+    {"formula": "HBrO4", "name": "perbromic acid", "Ka": null, "type": "strong"},
+    {"formula": "HIO4", "name": "periodic acid", "Ka": null, "type": "strong"}
+  ],
+  "STRONG_BASES": [
+    {"formula": "LiOH", "name": "lithium hydroxide", "type": "strong"},
+    {"formula": "NaOH", "name": "sodium hydroxide", "type": "strong"},
+    {"formula": "KOH", "name": "potassium hydroxide", "type": "strong"},
+    {"formula": "RbOH", "name": "rubidium hydroxide", "type": "strong"},
+    {"formula": "CsOH", "name": "caesium hydroxide", "type": "strong"},
+    {"formula": "Ca(OH)2", "name": "calcium hydroxide", "type": "strong", "note": "Sparingly soluble but treated as strong base when dissolved"},
+    {"formula": "Sr(OH)2", "name": "strontium hydroxide", "type": "strong"},
+    {"formula": "Ba(OH)2", "name": "barium hydroxide", "type": "strong"}
+  ],
+  "WEAK_ACIDS": [
+    {"formula": "HF", "name": "hydrofluoric acid", "Ka": 6.6e-4, "pKa": 3.18},
+    {"formula": "CH3COOH", "name": "acetic acid", "Ka": 1.8e-5, "pKa": 4.74, "synonyms": ["CH3CO2H", "HC2H3O2", "C2H4O2"]},
+    {"formula": "HCOOH", "name": "formic acid", "Ka": 1.8e-4, "pKa": 3.75, "synonyms": ["HCO2H", "CH2O2"]},
+    {"formula": "HCN", "name": "hydrocyanic acid", "Ka": 6.2e-10, "pKa": 9.21},
+    {"formula": "HNO2", "name": "nitrous acid", "Ka": 4.5e-4, "pKa": 3.35},
+    {"formula": "H2S", "name": "hydrosulfuric acid", "Ka": 9.1e-8, "pKa": 7.04, "note": "Ka1 value"},
+    {"formula": "HClO", "name": "hypochlorous acid", "Ka": 3.0e-8, "pKa": 7.53},
+    {"formula": "HBrO", "name": "hypobromous acid", "Ka": 2.1e-9, "pKa": 8.68},
+    {"formula": "HIO", "name": "hypoiodous acid", "Ka": 2.3e-11, "pKa": 10.64},
+    {"formula": "H3PO4", "name": "phosphoric acid", "Ka": 7.5e-3, "pKa": 2.12, "note": "Ka1 value; Ka2=6.2e-8, Ka3=4.8e-13"},
+    {"formula": "H2CO3", "name": "carbonic acid", "Ka": 4.3e-7, "pKa": 6.37, "note": "Ka1 value; Ka2=4.8e-11"},
+    {"formula": "H2SO3", "name": "sulfurous acid", "Ka": 1.3e-2, "pKa": 1.89, "note": "Ka1 value; Ka2=6.3e-8"},
+    {"formula": "H3BO3", "name": "boric acid", "Ka": 5.8e-10, "pKa": 9.24},
+    {"formula": "H2C2O4", "name": "oxalic acid", "Ka": 5.9e-2, "pKa": 1.23, "note": "Ka1 value; Ka2=6.4e-5", "synonyms": ["HOOCCOOH", "C2H2O4"]},
+    {"formula": "C6H5COOH", "name": "benzoic acid", "Ka": 6.3e-5, "pKa": 4.20, "synonyms": ["HC7H5O2"]},
+    {"formula": "C6H5OH", "name": "phenol", "Ka": 1.0e-10, "pKa": 10.00, "note": "Weak acid despite OH group"},
+    {"formula": "H2CrO4", "name": "chromic acid", "Ka": 1.8e-1, "pKa": 0.74, "note": "Ka1 value; Ka2=3.2e-7"},
+    {"formula": "NH4+", "name": "ammonium", "Ka": 5.6e-10, "pKa": 9.25, "note": "Acts as weak acid in water"},
+    {"formula": "HSO3-", "name": "bisulfite", "Ka": 6.3e-8, "pKa": 7.20},
+    {"formula": "HS-", "name": "hydrosulfide", "Ka": 1.0e-19, "pKa": 19.0, "note": "HS- -> H+ + S2-"},
+    {"formula": "H2C4H4O4", "name": "succinic acid", "Ka": 6.2e-5, "pKa": 4.21, "note": "Ka1 value"},
+    {"formula": "H2C6H6O6", "name": "ascorbic acid", "Ka": 7.9e-5, "pKa": 4.10},
+    {"formula": "HC3H5O3", "name": "lactic acid", "Ka": 1.4e-4, "pKa": 3.86},
+    {"formula": "C6H8O7", "name": "citric acid", "Ka": 7.4e-4, "pKa": 3.13, "note": "Ka1 value"}
+  ],
+  "WEAK_BASES": [
+    {"formula": "NH3", "name": "ammonia", "Kb": 1.8e-5, "pKb": 4.74, "synonyms": ["NH4OH"]},
+    {"formula": "NH2NH2", "name": "hydrazine", "Kb": 1.7e-6, "pKb": 5.77, "synonyms": ["N2H4"]},
+    {"formula": "C6H5NH2", "name": "aniline", "Kb": 4.0e-10, "pKb": 9.40, "synonyms": ["PhNH2"]},
+    {"formula": "CH3NH2", "name": "methylamine", "Kb": 4.4e-4, "pKb": 3.36, "synonyms": ["MeNH2"]},
+    {"formula": "(CH3)2NH", "name": "dimethylamine", "Kb": 5.4e-4, "pKb": 3.27, "synonyms": ["Me2NH", "C2H7N"]},
+    {"formula": "NH2OH", "name": "hydroxylamine", "Kb": 9.1e-9, "pKb": 8.04},
+    {"formula": "C2H5NH2", "name": "ethylamine", "Kb": 5.6e-4, "pKb": 3.25, "synonyms": ["EtNH2"]},
+    {"formula": "C5H5N", "name": "pyridine", "Kb": 1.7e-9, "pKb": 8.77},
+    {"formula": "(CH3)3N", "name": "trimethylamine", "Kb": 6.3e-5, "pKb": 4.20}
+  ],
+  "notes": [
+    "Ka is the acid dissociation constant. Smaller Ka (larger pKa) means weaker acid.",
+    "Kb is the base dissociation constant. Smaller Kb (larger pKb) means weaker base.",
+    "For polyprotic acids, only Ka1 is given here; subsequent steps are much weaker.",
+    "Strong acids and bases are assumed to dissociate completely in dilute aqueous solution.",
+    "Reference: CRC Handbook of Chemistry and Physics, 95th Edition."
+  ]
+}

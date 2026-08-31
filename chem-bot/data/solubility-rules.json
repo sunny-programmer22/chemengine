@@ -1,0 +1,55 @@
+{
+  "alwaysSoluble": {
+    "description": "Compounds of these ions are always soluble in water.",
+    "rules": [
+      {
+        "cations": ["Li+", "Na+", "K+", "Rb+", "Cs+", "NH4+"],
+        "note": "All Group 1 (alkali metal) cations and ammonium salts are soluble. No exceptions."
+      },
+      {
+        "anions": ["NO3-", "NO2-", "ClO4-", "ClO3-", "CH3COO-"],
+        "note": "All nitrates, nitrites, perchlorates, chlorates, and acetates are soluble. No exceptions."
+      }
+    ]
+  },
+  "usuallySoluble": {
+    "description": "Compounds of these ions are usually soluble, with notable exceptions.",
+    "rules": [
+      {
+        "anions": ["Cl-", "Br-", "I-"],
+        "note": "All halides are soluble EXCEPT those of Ag+, Pb2+, and Hg2^2+ (mercury(I))."
+      },
+      {
+        "anions": ["SO4^2-"],
+        "note": "Sulfates are soluble EXCEPT those of Ba2+, Pb2+, Sr2+, and Ca2+ (CaSO4 is slightly soluble)."
+      },
+      {
+        "anions": ["F-"],
+        "note": "Fluorides are soluble EXCEPT those of Group 2 (alkaline earth) cations, Pb2+, and a few others."
+      }
+    ]
+  },
+  "usuallyInsoluble": {
+    "description": "Compounds of these ions are usually insoluble, with notable exceptions.",
+    "rules": [
+      {
+        "anions": ["CO3^2-", "PO4^3-", "CrO4^2-", "S^2-", "OH-"],
+        "note": "These anions form insoluble compounds EXCEPT with Group 1 cations and NH4+ (and some with Ca2+, Sr2+, Ba2+ for OH-)."
+      },
+      {
+        "anions": ["O2^2-"],
+        "note": "Peroxides are generally unstable in aqueous solution."
+      }
+    ]
+  },
+  "summary": [
+    "ALWAYS soluble: Group 1 salts, NH4+ salts, NO3-, NO2-, ClO4-, ClO3-, CH3COO-",
+    "USUALLY soluble: Cl-, Br-, I- (except Ag+, Pb2+, Hg2^2+); SO4^2- (except Ba2+, Pb2+, Sr2+, Ca2+); F- (except Group 2, Pb2+).",
+    "USUALLY insoluble: CO3^2-, PO4^3-, CrO4^2-, S^2-, OH- (except Group 1, NH4+)."
+  ],
+  "notes": [
+    "Solubility at room temperature in water is the default unless specified otherwise.",
+    "Slightly soluble compounds are noted as 'usually insoluble' for general chemistry purposes.",
+    "Solubility rules apply to aqueous reactions. Some compounds are soluble in non-aqueous solvents."
+  ]
+}

@@ -1,0 +1,594 @@
+/**
+ * Bot command handlers for the Chemistry Bot
+ * Wires up all Telegram bot commands and inline queries
+ */
+
+const { logger } = require('../config');
+const { splitMessage, formatError, formatList } = require('./formatters');
+
+// Placeholder imports for tools (will be implemented later)
+const balancer = require('../tools/balancer');
+const predictor = require('../tools/predictor');
+const molar = require('../tools/molar');
+const element = require('../tools/element');
+const phCalc = require('../tools/ph');
+const iupac = require('../tools/iupac');
+const safety = require('../tools/safety');
+const search = require('../tools/search');
+const stoichiometry = require('../tools/stoichiometry');
+const llm = require('../llm/index');
+
+// Patterns for auto-detection
+const EQUATION_PATTERN = /(?:->|→|<->|⇌|[0-9]?\s*[A-Z][a-z]?[0-9]*(?:\([^)]+\)[0-9]*)*\s*(?:\+|→|->|<->|⇌)\s*)+/i;
+const FORMULA_WITH_NUMBER_PATTERN = /^([A-Z][a-z]?[0-9]*(?:\([^)]+\)[0-9]*)*)\s+(\d+(?:\.\d+)?)\s*$/i;
+const GREETINGS = ['hello', 'hi', 'hey', 'greetings', 'good morning', 'good afternoon', 'good evening', 'sup'];
+
+/**
+ * Send welcome message for /start command
+ * @param {Object} bot - Telegram bot instance
+ * @param {Object} msg - Message object
+ */
+async function handleStart(bot, msg) {
+  const chatId = msg.chat.id;
+  const welcomeText = `
+<b>🧪 Welcome to the Chemistry Bot!</b>
+
+I can help you with all things chemistry. Here's what I can do:
+
+${formatList([
+  '/balance <equation> — Balance chemical equations',
+  '/predict <reactants> — Predict reaction products',
+  '/molar <formula> — Calculate molar mass',
+  '/stoich <eq> <compound> <amount> <unit> — Stoichiometry',
+  '/ph <formula> <concentration> — Calculate pH',
+  '/element <symbol|name|Z> — Get element information',
+  '/iupac <name> — Look up IUPAC names',
+  '/ask <question> — Ask any chemistry question',
+  '/safety <formula> — Get safety information',
+  '/search <query> — Search chemistry databases',
+  '/help — Show all commands'
+])}
+
+<b>Quick Tips:</b>
+• Just type a chemical equation like "H2 + O2 -> H2O" to balance it
+• Type a formula followed by a number for quick molar mass
+• Start with a greeting and I'll say hello back!
+
+<i>Powered by PubChem, Wikidata, and AI</i>
+`;
+
+  try {
+    await bot.sendMessage(chatId, welcomeText.trim(), { parse_mode: 'HTML' });
+  } catch (err) {
+    logger.error('Error sending start message:', err);
+    await bot.sendMessage(chatId, formatError(err));
+  }
+}
+
+/**
+ * Handle /help command - list all commands
+ * @param {Object} bot - Telegram bot instance
+ * @param {Object} msg - Message object
+ */
+async function handleHelp(bot, msg) {
+  const chatId = msg.chat.id;
+  const helpText = `
+<b>📚 Chemistry Bot Commands</b>
+
+<b>Basic Commands:</b>
+${formatList([
+  '/start — Get started with the bot',
+  '/help — Show this help message'
+])}
+
+<b>Chemistry Tools:</b>
+${formatList([
+  '/balance H2 + O2 -> H2O — Balance any chemical equation',
+  '/predict Na + Cl2 — Predict products of a reaction',
+  '/molar H2SO4 — Calculate molar mass',
+  '/stoich 2H2 + O2 -> 2H2O H2O 10 mol — Stoichiometry',
+  '/ph HCl 0.1 — Calculate pH of a solution',
+  '/element Fe or Iron or 26 — Get element info',
+  '/iupac acetic acid — Get systematic IUPAC name'
+])}
+
+<b>AI-Powered:</b>
+${formatList([
+  '/ask Why is the sky blue? — Free-form Q&A',
+  '/safety H2SO4 — Get hazard info from PubChem',
+  '/search Vitamin C — Search chemistry databases'
+])}
+
+<b>Examples:</b>
+<pre>
+/molar NaCl
+/molar Ca(OH)2
+/element gold
+/balance CH4 + O2 -> CO2 + H2O
+/predict Zn + HCl
+/ask What is the mechanism of SN1 reactions?
+</pre>
+
+Type any command to get started!
+`;
+
+  try {
+    await bot.sendMessage(chatId, helpText.trim(), { parse_mode: 'HTML' });
+  } catch (err) {
+    logger.error('Error sending help message:', err);
+    await bot.sendMessage(chatId, formatError(err));
+  }
+}
+
+/**
+ * Handle /balance command - balance chemical equations
+ * @param {Object} bot - Telegram bot instance
+ * @param {Object} msg - Message object
+ * @param {string[]} args - Command arguments
+ */
+async function handleBalance(bot, msg, args) {
+  const chatId = msg.chat.id;
+  const equation = args.join(' ').trim();
+
+  if (!equation) {
+    await bot.sendMessage(chatId, 'Please provide a chemical equation.\nUsage: /balance H2 + O2 -> H2O', { parse_mode: 'HTML' });
+    return;
+  }
+
+  try {
+    await bot.sendChatAction(chatId, 'typing');
+    const result = await balancer.balance(equation);
+    const message = `<b>⚖️ Balanced Equation</b>\n\n${result}`;
+    await sendFormattedMessage(bot, chatId, message);
+  } catch (err) {
+    logger.error('Balance error:', err);
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' });
+  }
+}
+
+/**
+ * Handle /predict command - predict reaction products
+ * @param {Object} bot - Telegram bot instance
+ * @param {Object} msg - Message object
+ * @param {string[]} args - Command arguments
+ */
+async function handlePredict(bot, msg, args) {
+  const chatId = msg.chat.id;
+  const reactants = args.join(' ').trim();
+
+  if (!reactants) {
+    await bot.sendMessage(chatId, 'Please provide reactants.\nUsage: /predict Na + Cl2', { parse_mode: 'HTML' });
+    return;
+  }
+
+  try {
+    await bot.sendChatAction(chatId, 'typing');
+    const result = await predictor.predict(reactants);
+    const message = `<b>🔮 Reaction Prediction</b>\n\n${result}`;
+    await sendFormattedMessage(bot, chatId, message);
+  } catch (err) {
+    logger.error('Predict error:', err);
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' });
+  }
+}
+
+/**
+ * Handle /molar command - calculate molar mass
+ * @param {Object} bot - Telegram bot instance
+ * @param {Object} msg - Message object
+ * @param {string[]} args - Command arguments
+ */
+async function handleMolar(bot, msg, args) {
+  const chatId = msg.chat.id;
+  const formula = args.join(' ').trim();
+
+  if (!formula) {
+    await bot.sendMessage(chatId, 'Please provide a chemical formula.\nUsage: /molar H2SO4', { parse_mode: 'HTML' });
+    return;
+  }
+
+  try {
+    await bot.sendChatAction(chatId, 'typing');
+    const result = await molar.calculate(formula);
+    const message = `<b>⚛️ Molar Mass Calculator</b>\n\n${result}`;
+    await sendFormattedMessage(bot, chatId, message);
+  } catch (err) {
+    logger.error('Molar mass error:', err);
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' });
+  }
+}
+
+/**
+ * Handle /stoich command - stoichiometry calculations
+ * @param {Object} bot - Telegram bot instance
+ * @param {Object} msg - Message object
+ * @param {string[]} args - Command arguments
+ */
+async function handleStoich(bot, msg, args) {
+  const chatId = msg.chat.id;
+
+  if (args.length < 4) {
+    await bot.sendMessage(chatId,
+      'Usage: /stoich <equation> <compound> <amount> <unit>\n' +
+      'Example: /stoich 2H2 + O2 -> 2H2O H2O 10 mol',
+      { parse_mode: 'HTML' }
+    );
+    return;
+  }
+
+  // Parse arguments - find the equation, then compound, amount, unit
+  const input = args.join(' ');
+  const eqMatch = input.match(/(.+?)\s+(\w+(?:\([^)]+\))?\d*)\s+(\d+(?:\.\d+)?)\s*(mol|g|kg|mg|mol|mmol)?$/i);
+
+  if (!eqMatch) {
+    await bot.sendMessage(chatId, 'Could not parse the arguments. Please check the format.', { parse_mode: 'HTML' });
+    return;
+  }
+
+  const [, equation, compound, amount, unit] = eqMatch;
+
+  try {
+    await bot.sendChatAction(chatId, 'typing');
+    const result = await stoichiometry.calculate(equation, compound, parseFloat(amount), unit || 'mol');
+    const message = `<b>📊 Stoichiometry Calculation</b>\n\n${result}`;
+    await sendFormattedMessage(bot, chatId, message);
+  } catch (err) {
+    logger.error('Stoichiometry error:', err);
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' });
+  }
+}
+
+/**
+ * Handle /ph command - calculate pH
+ * @param {Object} bot - Telegram bot instance
+ * @param {Object} msg - Message object
+ * @param {string[]} args - Command arguments
+ */
+async function handlePh(bot, msg, args) {
+  const chatId = msg.chat.id;
+
+  if (args.length < 2) {
+    await bot.sendMessage(chatId, 'Usage: /ph <formula> <concentration>\nExample: /ph HCl 0.1\nNote: Concentration in mol/L (M)', { parse_mode: 'HTML' });
+    return;
+  }
+
+  const formula = args[0];
+  const concStr = args.slice(1).join(' ');
+  const concentration = parseFloat(concStr);
+
+  if (isNaN(concentration) || concentration <= 0) {
+    await bot.sendMessage(chatId, 'Please provide a valid positive concentration.\nExample: /ph HCl 0.1', { parse_mode: 'HTML' });
+    return;
+  }
+
+  try {
+    await bot.sendChatAction(chatId, 'typing');
+    const result = await phCalc.calculate(formula, concentration);
+    const message = `<b>⚗️ pH Calculator</b>\n\n${result}`;
+    await sendFormattedMessage(bot, chatId, message);
+  } catch (err) {
+    logger.error('pH calculation error:', err);
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' });
+  }
+}
+
+/**
+ * Handle /element command - get element information
+ * @param {Object} bot - Telegram bot instance
+ * @param {Object} msg - Message object
+ * @param {string[]} args - Command arguments
+ */
+async function handleElement(bot, msg, args) {
+  const chatId = msg.chat.id;
+  const query = args.join(' ').trim();
+
+  if (!query) {
+    await bot.sendMessage(chatId, 'Please provide an element symbol, name, or atomic number.\nUsage: /element Fe or /element Iron or /element 26', { parse_mode: 'HTML' });
+    return;
+  }
+
+  try {
+    await bot.sendChatAction(chatId, 'typing');
+    const result = await element.getInfo(query);
+    // Result may be { ok, element, formatted } or a string
+    let body = '';
+    if (typeof result === 'string') {
+      body = result;
+    } else if (result && result.formatted) {
+      body = result.formatted;
+    } else if (result && result.ok && result.element) {
+      const e = result.element;
+      body = `<b>${e.name}</b> (${e.symbol}) — Z = ${e.z}\n` +
+             (e.category ? `Category: ${e.category}\n` : '') +
+             (e.atomicMass ? `Atomic mass: ${e.atomicMass} u\n` : '');
+    } else {
+      body = 'No information found.';
+    }
+    const message = `<b>🔬 Element Information</b>\n\n${body}`;
+    await sendFormattedMessage(bot, chatId, message);
+  } catch (err) {
+    logger.error('Element lookup error:', err);
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' });
+  }
+}
+
+/**
+ * Handle /iupac command - look up IUPAC names
+ * @param {Object} bot - Telegram bot instance
+ * @param {Object} msg - Message object
+ * @param {string[]} args - Command arguments
+ */
+async function handleIupac(bot, msg, args) {
+  const chatId = msg.chat.id;
+  const name = args.join(' ').trim();
+
+  if (!name) {
+    await bot.sendMessage(chatId, 'Please provide a compound name to look up.\nUsage: /iupac acetic acid', { parse_mode: 'HTML' });
+    return;
+  }
+
+  try {
+    await bot.sendChatAction(chatId, 'typing');
+    const result = await iupac.lookup(name);
+    const message = `<b>📖 IUPAC Name Lookup</b>\n\n${result}`;
+    await sendFormattedMessage(bot, chatId, message);
+  } catch (err) {
+    logger.error('IUPAC lookup error:', err);
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' });
+  }
+}
+
+/**
+ * Handle /ask command - free-form chemistry Q&A
+ * @param {Object} bot - Telegram bot instance
+ * @param {Object} msg - Message object
+ * @param {string[]} args - Command arguments
+ */
+async function handleAsk(bot, msg, args) {
+  const chatId = msg.chat.id;
+  const question = args.join(' ').trim();
+
+  if (!question) {
+    await bot.sendMessage(chatId, 'Please ask a chemistry question.\nUsage: /ask What is the mechanism of SN1 reactions?', { parse_mode: 'HTML' });
+    return;
+  }
+
+  try {
+    await bot.sendChatAction(chatId, 'typing');
+    const result = await llm.ask(question, msg.from);
+    const message = `<b>🤖 Answer</b>\n\n${result}`;
+    await sendFormattedMessage(bot, chatId, message);
+  } catch (err) {
+    logger.error('LLM ask error:', err);
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' });
+  }
+}
+
+/**
+ * Handle /safety command - get safety information from PubChem
+ * @param {Object} bot - Telegram bot instance
+ * @param {Object} msg - Message object
+ * @param {string[]} args - Command arguments
+ */
+async function handleSafety(bot, msg, args) {
+  const chatId = msg.chat.id;
+  const formula = args.join(' ').trim();
+
+  if (!formula) {
+    await bot.sendMessage(chatId, 'Please provide a chemical formula or name.\nUsage: /safety H2SO4', { parse_mode: 'HTML' });
+    return;
+  }
+
+  try {
+    await bot.sendChatAction(chatId, 'typing');
+    const result = await safety.getInfo(formula);
+    const message = `<b>⚠️ Safety Information</b>\n\n${result}`;
+    await sendFormattedMessage(bot, chatId, message);
+  } catch (err) {
+    logger.error('Safety lookup error:', err);
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' });
+  }
+}
+
+/**
+ * Handle /search command - search across databases
+ * @param {Object} bot - Telegram bot instance
+ * @param {Object} msg - Message object
+ * @param {string[]} args - Command arguments
+ */
+async function handleSearch(bot, msg, args) {
+  const chatId = msg.chat.id;
+  const query = args.join(' ').trim();
+
+  if (!query) {
+    await bot.sendMessage(chatId, 'Please provide a search query.\nUsage: /search Vitamin C', { parse_mode: 'HTML' });
+    return;
+  }
+
+  try {
+    await bot.sendChatAction(chatId, 'typing');
+    const result = await search.query(query);
+    const message = `<b>🔍 Search Results</b>\n\n${result}`;
+    await sendFormattedMessage(bot, chatId, message);
+  } catch (err) {
+    logger.error('Search error:', err);
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' });
+  }
+}
+
+/**
+ * Handle inline queries for quick chemistry lookups
+ * @param {Object} bot - Telegram bot instance
+ * @param {Object} query - Inline query object
+ */
+async function handleInlineQuery(bot, query) {
+  const queryText = query.query.trim();
+
+  if (!queryText) {
+    await bot.answerInlineQuery(query.id, []);
+    return;
+  }
+
+  try {
+    // Try to parse as chemical formula
+    const results = [];
+
+    if (/^[A-Z][a-z]?[0-9]*(?:\([^)]+\)[0-9]*)*$/i.test(queryText)) {
+      const molarMass = await molar.calculate(queryText);
+      results.push({
+        type: 'article',
+        id: 'molar-' + queryText,
+        title: `Molar Mass: ${queryText}`,
+        description: molarMass.substring(0, 200),
+        input_message_content: {
+          message_text: `<b>⚛️ Molar Mass</b>\n\n${molarMass}`,
+          parse_mode: 'HTML'
+        }
+      });
+    }
+
+    await bot.answerInlineQuery(query.id, results);
+  } catch (err) {
+    logger.error('Inline query error:', err);
+    await bot.answerInlineQuery(query.id, []);
+  }
+}
+
+/**
+ * Auto-detection router for messages without commands
+ * @param {Object} bot - Telegram bot instance
+ * @param {Object} msg - Message object
+ */
+async function routeMessage(bot, msg) {
+  const text = msg.text || msg.caption || '';
+  const chatId = msg.chat.id;
+
+  // Check for greetings
+  const lowerText = text.toLowerCase().trim();
+  if (GREETINGS.some(g => lowerText === g || lowerText.startsWith(g + ' '))) {
+    const greetings = ['Hello! 👋', 'Hi there! 🧪', 'Hey! Ready for some chemistry?', 'Greetings! Let\'s explore chemistry!'];
+    await bot.sendMessage(chatId, greetings[Math.floor(Math.random() * greetings.length)]);
+    return;
+  }
+
+  // Check for chemical equation pattern
+  if (EQUATION_PATTERN.test(text)) {
+    await handleBalance(bot, msg, [text]);
+    return;
+  }
+
+  // Check for formula with number (molar mass request)
+  const formulaMatch = text.match(FORMULA_WITH_NUMBER_PATTERN);
+  if (formulaMatch) {
+    await handleMolar(bot, msg, [formulaMatch[1]]);
+    return;
+  }
+
+  // If it's a simple formula, offer to calculate molar mass
+  if (/^[A-Z][a-z]?[0-9]*(?:\([^)]+\)[0-9]*)*$/i.test(text.trim())) {
+    await handleMolar(bot, msg, [text.trim()]);
+    return;
+  }
+
+  // Unknown input - suggest commands
+  await bot.sendMessage(chatId,
+    'I\'m not sure what you mean. Try one of these commands:\n' +
+    '• /balance <equation> — Balance an equation\n' +
+    '• /molar <formula> — Calculate molar mass\n' +
+    '• /help — See all commands',
+    { parse_mode: 'HTML' }
+  );
+}
+
+/**
+ * Send a formatted message, splitting if necessary
+ * @param {Object} bot - Telegram bot instance
+ * @param {number} chatId - Chat ID
+ * @param {string} text - Message text
+ */
+async function sendFormattedMessage(bot, chatId, text) {
+  const { config } = require('../config');
+  const chunks = splitMessage(text, config.maxMessageLength);
+
+  for (const chunk of chunks) {
+    await bot.sendMessage(chatId, chunk, { parse_mode: 'HTML' });
+  }
+}
+
+/**
+ * Register all bot handlers
+ * @param {Object} bot - Telegram bot instance
+ */
+function registerHandlers(bot) {
+  // Command handlers using new API
+  bot.command('start', (ctx) => handleStart(bot, ctx.message));
+  bot.command('help', (ctx) => handleHelp(bot, ctx.message));
+
+  // Commands with optional arguments - use hears with regex
+  bot.hears(/\/balance(?:\s+(.*))?/, (ctx) => {
+    const match = ctx.match;
+    const args = match[1] ? match[1].trim().split(/\s+/) : [];
+    handleBalance(bot, ctx.message, args);
+  });
+  bot.hears(/\/predict(?:\s+(.*))?/, (ctx) => {
+    const match = ctx.match;
+    const args = match[1] ? match[1].trim().split(/\s+/) : [];
+    handlePredict(bot, ctx.message, args);
+  });
+  bot.hears(/\/molar(?:\s+(.*))?/, (ctx) => {
+    const match = ctx.match;
+    const args = match[1] ? match[1].trim().split(/\s+/) : [];
+    handleMolar(bot, ctx.message, args);
+  });
+  bot.hears(/\/stoich(?:\s+(.*))?/, (ctx) => {
+    const match = ctx.match;
+    const args = match[1] ? match[1].trim().split(/\s+/) : [];
+    handleStoich(bot, ctx.message, args);
+  });
+  bot.hears(/\/ph(?:\s+(.*))?/, (ctx) => {
+    const match = ctx.match;
+    const args = match[1] ? match[1].trim().split(/\s+/) : [];
+    handlePh(bot, ctx.message, args);
+  });
+  bot.hears(/\/element(?:\s+(.*))?/, (ctx) => {
+    const match = ctx.match;
+    const args = match[1] ? match[1].trim().split(/\s+/) : [];
+    handleElement(bot, ctx.message, args);
+  });
+  bot.hears(/\/iupac(?:\s+(.*))?/, (ctx) => {
+    const match = ctx.match;
+    const args = match[1] ? match[1].trim().split(/\s+/) : [];
+    handleIupac(bot, ctx.message, args);
+  });
+  bot.hears(/\/ask(?:\s+(.*))?/, (ctx) => {
+    const match = ctx.match;
+    const args = match[1] ? match[1].trim().split(/\s+/) : [];
+    handleAsk(bot, ctx.message, args);
+  });
+  bot.hears(/\/safety(?:\s+(.*))?/, (ctx) => {
+    const match = ctx.match;
+    const args = match[1] ? match[1].trim().split(/\s+/) : [];
+    handleSafety(bot, ctx.message, args);
+  });
+  bot.hears(/\/search(?:\s+(.*))?/, (ctx) => {
+    const match = ctx.match;
+    const args = match[1] ? match[1].trim().split(/\s+/) : [];
+    handleSearch(bot, ctx.message, args);
+  });
+
+  // Inline query handler
+  bot.on('inline_query', (ctx) => handleInlineQuery(bot, ctx.inlineQuery));
+
+  // Message router for non-command messages
+  bot.on('message', (ctx) => {
+    const msg = ctx.message;
+    // Skip processed commands and channel posts
+    if (msg.text && !msg.text.startsWith('/') && msg.chat.type !== 'channel') {
+      routeMessage(bot, msg);
+    }
+  });
+
+  logger.info('Bot handlers registered successfully');
+}
+
+module.exports = { registerHandlers };

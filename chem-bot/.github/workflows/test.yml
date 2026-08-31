@@ -1,0 +1,72 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run test suite
+        run: npm test
+
+      - name: Smoke test - load config
+        run: node -e "require('./src/config.js')"
+
+      - name: Verify all source modules load
+        run: |
+          node -e "
+            const modules = [
+              './src/config.js',
+              './src/utils/parser.js',
+              './src/tools/balancer.js',
+              './src/tools/molar.js',
+              './src/tools/element.js',
+              './src/tools/predictor.js',
+              './src/tools/ph.js',
+              './src/tools/stoichiometry.js',
+              './src/bot/handler.js',
+              './src/bot/middleware.js',
+              './src/bot/formatters.js',
+              './src/bot/safety.js',
+              './src/llm/index.js'
+            ];
+            let failed = 0;
+            for (const m of modules) {
+              try {
+                require(m);
+                console.log('  ✓ ' + m);
+              } catch (err) {
+                console.log('  ✗ ' + m + ': ' + err.message);
+                failed++;
+              }
+            }
+            if (failed > 0) {
+              console.log(failed + ' module(s) failed to load');
+              process.exit(1);
+            }
+            console.log('All ' + modules.length + ' modules loaded successfully');
+          "
+
+      - name: Display test results
+        if: always()
+        run: echo "Test run complete - see job logs for details"

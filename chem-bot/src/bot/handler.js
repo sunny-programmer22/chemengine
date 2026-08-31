@@ -517,72 +517,61 @@ async function sendFormattedMessage(bot, chatId, text) {
 
 /**
  * Register all bot handlers
- * @param {Object} bot - Telegram bot instance
+ * @param {Object} bot - Telegram bot instance (node-telegram-bot-api classic)
  */
 function registerHandlers(bot) {
-  // Command handlers using new API
-  bot.command('start', (ctx) => handleStart(bot, ctx.message));
-  bot.command('help', (ctx) => handleHelp(bot, ctx.message));
+  // Command handlers - classic API using onText
+  bot.onText(/^\/start(?:@\w+)?(?:\s|$)/, (msg) => handleStart(bot, msg));
+  bot.onText(/^\/help(?:@\w+)?(?:\s|$)/, (msg) => handleHelp(bot, msg));
 
-  // Commands with optional arguments - use hears with regex
-  bot.hears(/\/balance(?:\s+(.*))?/, (ctx) => {
-    const match = ctx.match;
+  // Commands with optional arguments
+  bot.onText(/\/balance(?:@\w+)?(?:\s+(.*))?/, (msg, match) => {
     const args = match[1] ? match[1].trim().split(/\s+/) : [];
-    handleBalance(bot, ctx.message, args);
+    handleBalance(bot, msg, args);
   });
-  bot.hears(/\/predict(?:\s+(.*))?/, (ctx) => {
-    const match = ctx.match;
+  bot.onText(/\/predict(?:@\w+)?(?:\s+(.*))?/, (msg, match) => {
     const args = match[1] ? match[1].trim().split(/\s+/) : [];
-    handlePredict(bot, ctx.message, args);
+    handlePredict(bot, msg, args);
   });
-  bot.hears(/\/molar(?:\s+(.*))?/, (ctx) => {
-    const match = ctx.match;
+  bot.onText(/\/molar(?:@\w+)?(?:\s+(.*))?/, (msg, match) => {
     const args = match[1] ? match[1].trim().split(/\s+/) : [];
-    handleMolar(bot, ctx.message, args);
+    handleMolar(bot, msg, args);
   });
-  bot.hears(/\/stoich(?:\s+(.*))?/, (ctx) => {
-    const match = ctx.match;
+  bot.onText(/\/stoich(?:@\w+)?(?:\s+(.*))?/, (msg, match) => {
     const args = match[1] ? match[1].trim().split(/\s+/) : [];
-    handleStoich(bot, ctx.message, args);
+    handleStoich(bot, msg, args);
   });
-  bot.hears(/\/ph(?:\s+(.*))?/, (ctx) => {
-    const match = ctx.match;
+  bot.onText(/\/ph(?:@\w+)?(?:\s+(.*))?/, (msg, match) => {
     const args = match[1] ? match[1].trim().split(/\s+/) : [];
-    handlePh(bot, ctx.message, args);
+    handlePh(bot, msg, args);
   });
-  bot.hears(/\/element(?:\s+(.*))?/, (ctx) => {
-    const match = ctx.match;
+  bot.onText(/\/element(?:@\w+)?(?:\s+(.*))?/, (msg, match) => {
     const args = match[1] ? match[1].trim().split(/\s+/) : [];
-    handleElement(bot, ctx.message, args);
+    handleElement(bot, msg, args);
   });
-  bot.hears(/\/iupac(?:\s+(.*))?/, (ctx) => {
-    const match = ctx.match;
+  bot.onText(/\/iupac(?:@\w+)?(?:\s+(.*))?/, (msg, match) => {
     const args = match[1] ? match[1].trim().split(/\s+/) : [];
-    handleIupac(bot, ctx.message, args);
+    handleIupac(bot, msg, args);
   });
-  bot.hears(/\/ask(?:\s+(.*))?/, (ctx) => {
-    const match = ctx.match;
+  bot.onText(/\/ask(?:@\w+)?(?:\s+(.*))?/, (msg, match) => {
     const args = match[1] ? match[1].trim().split(/\s+/) : [];
-    handleAsk(bot, ctx.message, args);
+    handleAsk(bot, msg, args);
   });
-  bot.hears(/\/safety(?:\s+(.*))?/, (ctx) => {
-    const match = ctx.match;
+  bot.onText(/\/safety(?:@\w+)?(?:\s+(.*))?/, (msg, match) => {
     const args = match[1] ? match[1].trim().split(/\s+/) : [];
-    handleSafety(bot, ctx.message, args);
+    handleSafety(bot, msg, args);
   });
-  bot.hears(/\/search(?:\s+(.*))?/, (ctx) => {
-    const match = ctx.match;
+  bot.onText(/\/search(?:@\w+)?(?:\s+(.*))?/, (msg, match) => {
     const args = match[1] ? match[1].trim().split(/\s+/) : [];
-    handleSearch(bot, ctx.message, args);
+    handleSearch(bot, msg, args);
   });
 
-  // Inline query handler
-  bot.on('inline_query', (ctx) => handleInlineQuery(bot, ctx.inlineQuery));
+  // Inline query handler - classic: query object directly
+  bot.on('inline_query', (query) => handleInlineQuery(bot, query));
 
   // Message router for non-command messages
-  bot.on('message', (ctx) => {
-    const msg = ctx.message;
-    // Skip processed commands and channel posts
+  bot.on('message', (msg) => {
+    // Skip commands and channel posts - commands already handled by onText
     if (msg.text && !msg.text.startsWith('/') && msg.chat.type !== 'channel') {
       routeMessage(bot, msg);
     }

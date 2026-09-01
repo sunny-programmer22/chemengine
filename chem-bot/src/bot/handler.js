@@ -21,7 +21,7 @@ const llm = require('../llm/index');
 // Patterns for auto-detection
 const EQUATION_PATTERN = /(?:->|→|<->|⇌|[0-9]?\s*[A-Z][a-z]?[0-9]*(?:\([^)]+\)[0-9]*)*\s*(?:\+|→|->|<->|⇌)\s*)+/i;
 const FORMULA_WITH_NUMBER_PATTERN = /^([A-Z][a-z]?[0-9]*(?:\([^)]+\)[0-9]*)*)\s+(\d+(?:\.\d+)?)\s*$/i;
-const GREETINGS = ['hello', 'hi', 'hey', 'greetings', 'good morning', 'good afternoon', 'good evening', 'sup'];
+const GREETINGS = ['hello', 'hi', 'hey', 'greetings', 'good morning', 'good afternoon', 'good evening', 'sup', 'how are you', 'how are you?', 'how r u', "how's it going", "what's up", 'whats up', 'how are u'];
 
 /**
  * Send welcome message for /start command
@@ -477,12 +477,25 @@ async function routeMessage(bot, msg) {
   const text = msg.text || msg.caption || '';
   const chatId = msg.chat.id;
 
-  // Check for greetings
+  // Check for greetings / casual human chat - very short replies
   const lowerText = text.toLowerCase().trim();
-  if (GREETINGS.some(g => lowerText === g || lowerText.startsWith(g + ' '))) {
-    const greetings = ['Hello! 👋', 'Hi there! 🧪', 'Hey! Ready for some chemistry?', 'Greetings! Let\'s explore chemistry!'];
+  const casualPhrases = ['how are you', 'how r u', "how's it going", "what's up", 'whats up', 'how are u', 'hru', 'wbu', 'what about you', 'i am fine', "i'm fine", 'i am good', "i'm good"];
+  if (GREETINGS.some(g => lowerText === g || lowerText.startsWith(g + ' ') || lowerText.startsWith(g + '?') || lowerText.startsWith(g + '!'))) {
+    const greetings = ['Hey! 👋', 'Hi there! 🧪', 'Hello! 😊', 'Hey there!'];
     await bot.sendMessage(chatId, greetings[Math.floor(Math.random() * greetings.length)]);
     return;
+  }
+  if (casualPhrases.some(p => lowerText === p || lowerText.startsWith(p) || lowerText.includes(p))) {
+    const casualReplies = ["I'm good! 😊 How about you?", "Doing great! You?", "All good here! 👋", "Great! How can I help? 😊"];
+    // Specific handling for "how are you"
+    if (lowerText.includes('how are you') || lowerText.includes('how r u') || lowerText.includes('how are u') || lowerText.includes('hru')) {
+      await bot.sendMessage(chatId, casualReplies[Math.floor(Math.random() * casualReplies.length)]);
+      return;
+    }
+    if (lowerText.includes("what's up") || lowerText.includes('whats up') || lowerText.includes('sup')) {
+      await bot.sendMessage(chatId, "Not much! Just chilling with chemistry 🧪 You?");
+      return;
+    }
   }
 
   // Check for chemical equation pattern

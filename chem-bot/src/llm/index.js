@@ -345,11 +345,26 @@ async function tryLocalTools(question, taskType) {
 }
 
 /**
+ * Returns true if the question is a short casual greeting that should skip online sources.
+ * Prevents "how are you" (10 chars) from hitting wikidataLookup("how are you") -> Q17092041.
+ * @param {string} question
+ * @returns {boolean}
+ */
+function isCasualGreeting(question) {
+  if (!question) return false;
+  const q = question.trim();
+  if (q.length >= 30) return false;
+  return /^(hi|hello|hey|how are you|whats up|what's up|how r u|how are u|good morning|good afternoon|good evening|hey there|hi there)\b/i.test(q);
+}
+
+/**
  * Try online sources (PubChem, Wikipedia, Wikidata) for a question.
  * @param {string} question
  * @returns {Promise<{answer: string, source: string, confidence: number}|null>}
  */
 async function tryOnlineSources(question) {
+  // Early skip for casual greetings: don't hit Wikidata/Wikipedia/PubChem for "how are you"
+  if (isCasualGreeting(question)) return null;
   const q = question.trim();
   // Try PubChem first (chemistry data)
   try {

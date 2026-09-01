@@ -49,8 +49,8 @@ async function chat(messages, options = {}) {
     messages,
     stream: false,
     options: {
-      temperature: options.temperature !== undefined ? options.temperature : 0.3,
-      num_predict: options.max_tokens || 800
+      temperature: options.temperature !== undefined ? options.temperature : 0.7,
+      num_predict: options.max_tokens || 150
     }
   };
 

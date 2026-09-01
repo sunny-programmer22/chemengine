@@ -422,6 +422,9 @@ async function tryOnlineSources(question) {
  */
 function chooseSystemPrompt(taskType, question) {
   const q = (question || '').toLowerCase();
+  if (taskType === TASK_TYPES.GENERAL) {
+    return SYSTEM_PROMPT_GENERAL;
+  }
   if (taskType === TASK_TYPES.IUPAC || /\b(naming|iupac name|systematic name)\b/.test(q)) {
     return SYSTEM_PROMPT_NAMER;
   }
@@ -552,7 +555,8 @@ async function askChem(question, context = {}) {
     { role: 'user', content: trimmed }
   ];
 
-  const llmResult = await callLlm(messages, { max_tokens: 800, temperature: 0.3 });
+  const maxTokens = (taskType === TASK_TYPES.GENERAL ? 150 : 400);
+  const llmResult = await callLlm(messages, { max_tokens: maxTokens, temperature: 0.3 });
   if (llmResult && llmResult.content) {
     let answer = llmResult.content;
     if (safety.note) answer += `\n\n${safety.note}`;

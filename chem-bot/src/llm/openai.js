@@ -11,8 +11,8 @@ const { config } = require('../config');
 const API_URL = 'https://api.openai.com/v1/chat/completions';
 const DEFAULT_TIMEOUT = 30000; // 30 seconds
 const DEFAULT_MODEL = config.openaiModel || process.env.OPENAI_MODEL || 'gpt-4o-mini';
-const DEFAULT_TEMPERATURE = 0.3;
-const DEFAULT_MAX_TOKENS = 800;
+const DEFAULT_TEMPERATURE = 0.7;
+const DEFAULT_MAX_TOKENS = 150;
 
 /**
  * Check if OpenAI is configured

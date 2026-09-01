@@ -10,8 +10,8 @@ const { config } = require('../config');
 const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 const DEFAULT_TIMEOUT = 30000;
 const DEFAULT_MODEL = config.geminiModel || process.env.GEMINI_MODEL || 'gemini-1.5-flash';
-const DEFAULT_TEMPERATURE = 0.3;
-const DEFAULT_MAX_TOKENS = 800;
+const DEFAULT_TEMPERATURE = 0.7;
+const DEFAULT_MAX_TOKENS = 150;
 
 /**
  * Check if Gemini is configured

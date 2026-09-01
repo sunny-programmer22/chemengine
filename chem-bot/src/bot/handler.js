@@ -369,9 +369,9 @@ async function handleAsk(bot, msg, args) {
 
   try {
     await bot.sendChatAction(chatId, 'typing');
-    const result = await llm.ask(question, msg.from);
-    const message = `<b>🤖 Answer</b>\n\n${result}`;
-    await sendFormattedMessage(bot, chatId, message);
+    const result = await (llm.askChem || llm.ask)(question, msg.from);
+    const answer = result && typeof result === 'object' ? (result.answer || String(result)) : String(result);
+    await sendFormattedMessage(bot, chatId, answer);
   } catch (err) {
     logger.error('LLM ask error:', err);
     await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' });
@@ -504,14 +504,14 @@ async function routeMessage(bot, msg) {
     return;
   }
 
-  // Unknown input - suggest commands
-  await bot.sendMessage(chatId,
-    'I\'m not sure what you mean. Try one of these commands:\n' +
-    '• /balance <equation> — Balance an equation\n' +
-    '• /molar <formula> — Calculate molar mass\n' +
-    '• /help — See all commands',
-    { parse_mode: 'HTML' }
-  );
+  // Unknown input - try LLM for general chat (very short)
+  try {
+    await bot.sendChatAction(chatId, 'typing');
+    const result = await llm.askChem(text, msg.from);
+    await sendFormattedMessage(bot, chatId, result.answer || result);
+    return;
+  } catch {}
+  await bot.sendMessage(chatId, 'Hey! 😊 Try /help for chemistry stuff!', { parse_mode: 'HTML' });
 }
 
 /**

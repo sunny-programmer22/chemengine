@@ -1,0 +1,89 @@
+{
+  "ir": {
+    "title": "Infrared Spectroscopy (IR) — Vibrational frequencies (cm⁻¹)",
+    "principle": "IR measures molecular vibrations. Frequency ν ∝ √(k/μ) (Hooke's law: stronger bond ↑ν, heavier atom ↓ν). Region 4000-400 cm⁻¹. Fingerprint region 1500-400 cm⁻¹ is unique per molecule. Strong bands require change in dipole moment.",
+    "tables": [
+      { "group": "O-H (free, non-H-bonded)", "frequency": "3650-3590", "intensity": "sharp, medium", "notes": "Sharp free alcohol/phenol; in dilute solution" },
+      { "group": "O-H (H-bonded, alcohol/polymeric)", "frequency": "3400-3200", "intensity": "broad, strong", "notes": "Broad due to H-bonding network; increases as conc. increases" },
+      { "group": "O-H (carboxylic acid)", "frequency": "3300-2500", "intensity": "very broad", "notes": "Extremely broad overlapping C-H; characteristic very wide band due to dimer H-bonding" },
+      { "group": "N-H (amine/amide)", "frequency": "3500-3300", "intensity": "medium", "notes": "1° amine: 2 peaks (asym/sym); 2°: 1 peak; 3°: none; amide similar but ~3350" },
+      { "group": "≡C-H (terminal alkyne)", "frequency": "3330-3270", "intensity": "sharp, strong", "notes": "Distinctive narrow high frequency" },
+      { "group": "=C-H (alkene, sp²)", "frequency": "3100-3000", "intensity": "medium", "notes": ">3000 indicates sp²; alkyl sp³ is <3000" },
+      { "group": "C-H (alkane, sp³)", "frequency": "3000-2850", "intensity": "strong", "notes": "2960/2870 (CH3 asym/sym), 2930/2850 (CH2)" },
+      { "group": "Aromatic C-H", "frequency": "3030", "intensity": "weak", "notes": "Just above 3000; often weak" },
+      { "group": "C≡N (nitrile)", "frequency": "2260-2210", "intensity": "medium", "notes": "Sharp near triple bond region" },
+      { "group": "C≡C (alkyne)", "frequency": "2260-2100", "intensity": "weak to medium", "notes": "Internal alkyne weak; terminal medium; symmetric dialkyl alkyne may be IR-inactive" },
+      { "group": "C=O (anhydride, 2 bands)", "frequency": "1850 & 1780", "intensity": "strong", "notes": "Two C=O stretches" },
+      { "group": "C=O (acid chloride)", "frequency": "1800", "intensity": "strong", "notes": "Highest carbonyl frequency" },
+      { "group": "C=O (ester)", "frequency": "1750-1735", "intensity": "strong", "notes": "Saturated aliphatic ~1735; α,β-unsaturated ~1715" },
+      { "group": "C=O (aldehyde)", "frequency": "1740-1720", "intensity": "strong", "notes": "Also aldehydic C-H doublet ~2720 & 2820" },
+      { "group": "C=O (ketone)", "frequency": "1725-1705", "intensity": "strong", "notes": "Saturated ~1715; conjugated ~1685" },
+      { "group": "C=O (carboxylic acid)", "frequency": "1725-1700", "intensity": "strong", "notes": "Plus very broad O-H 3300-2500" },
+      { "group": "C=O (amide)", "frequency": "1680-1630", "intensity": "strong", "notes": "Amide I band ~1650; amide II ~1550 (N-H bend)" },
+      { "group": "C=C (alkene)", "frequency": "1680-1620", "intensity": "weak to medium", "notes": "Weak if symmetric trans; conjugation lowers to ~1620" },
+      { "group": "C=C (aromatic)", "frequency": "1600 & 1500", "intensity": "medium", "notes": "Two bands ~1600 & ~1500 due to ring; overtone/combination 2000-1650 pattern indicates substitution" },
+      { "group": "N-O (nitro, 2 bands)", "frequency": "1550 & 1350", "intensity": "strong", "notes": "Asymmetric & symmetric NO2" },
+      { "group": "C-H bend (alkane)", "frequency": "1465 & 1375", "intensity": "medium", "notes": "CH3 bend 1375; gem-dimethyl doublet 1385+1365" },
+      { "group": "C-O (alcohol/ether/ester)", "frequency": "1300-1000", "intensity": "strong", "notes": "1050 primary, ~1100 secondary, ~1150 tertiary; phenol ~1200; ester 2 bands 1300-1000" },
+      { "group": "C-X (alkyl halide)", "frequency": "800-500", "intensity": "strong", "notes": "C-Cl 800-600; C-Br ~600-500" }
+    ],
+    "interpretationTips": [
+      "Check 4000-2500 first: broad 3300-2500 + 1710 → carboxylic acid; broad 3400-3200 → alcohol (exchangeable); sharp 3300 → alkyne; twin 2720/2820 + 1720 → aldehyde",
+      "Strong 1700±50 → carbonyl: use exact ν + O-H to classify acid vs ester vs ketone vs aldehyde vs amide.",
+      "Absence of strong carbonyl but 1650 + 3080 → alkene; 1600+1500+3030 → aromatic.",
+      "Fingerprint 1500-400 distinguishes isomers; match to library."
+    ]
+  },
+  "nmr": {
+    "title": "Nuclear Magnetic Resonance (NMR)",
+    "principle": "NMR measures magnetic environment of nuclei (¹H, ¹³C) in applied field. Chemical shift δ (ppm) referenced to TMS (0 ppm). Shielding ↑ → δ ↓. Integration ∝ number of H; multiplicity (n+1 rule) from vicinal H count (J coupling constant ~7 Hz for alkyl, 2 Hz for geminal, 10 cis/17 trans for vinyl). Exchangeable OH/NH are broad singlets.",
+    "hNmrShifts": [
+      { "type": "Alkane CH3 (alkyl)", "delta": "0.7 - 1.0", "example": "CH3-CH2- (triplet 0.9)", "notes": "R-CH3" },
+      { "type": "Alkane CH2 (alkyl)", "delta": "1.2 - 1.5", "example": "CH2 (multiplet)", "notes": "CH2 next to alkyl" },
+      { "type": "CH next to C=C / Ar (allylic/benzylic)", "delta": "1.6 - 2.6", "example": "CH3-C=O 2.1; CH3-Ph 2.3; CH3-C≡ 1.8", "notes": "Acetyl CH3 2.1 singlet is diagnostic" },
+      { "type": "CH α to heteroatom (C-O, C-N, C-X)", "delta": "3.0 - 4.5", "example": "CH3-O 3.3-3.8; CH3-N 2.2-3.0; CH2-Cl 3.5", "notes": "Electronegative atom deshields; CH3-OAc ~2.0 for acetyl" },
+      { "type": "Vinylic H (C=C-H)", "delta": "4.5 - 6.5", "example": "CH2=CH- (4.8-5.8, J 10 cis, 17 trans)", "notes": "Conjugated or substituted shifts more downfield" },
+      { "type": "Aromatic H", "delta": "6.5 - 8.5", "example": "Ph-H 7.27; electron-donor OMe shields (6.8), NO2 deshields (8.2)", "notes": "Ring current strongly deshields; substitution pattern from splitting" },
+      { "type": "Aldehyde H", "delta": "9 - 10", "example": "R-CHO 9.8 singlet or doublet", "notes": "Very characteristic far downfield" },
+      { "type": "Carboxylic acid OH", "delta": "10 - 13", "example": "RCOOH 11-12 broad s", "notes": "Exchangeable; often very broad, disappears with D2O" },
+      { "type": "Phenol OH", "delta": "4 - 8", "example": "Ar-OH 5-7 broad, concentration dependent", "notes": "Intramolecular H-bond shifts higher" },
+      { "type": "Alcohol OH", "delta": "0.5 - 5.0", "example": "R-OH 1-5 broad s", "notes": "Variable; exchangeable with D2O, no splitting; may not appear" },
+      { "type": "Amine N-H", "delta": "0.5 - 5.0", "example": "R-NH2 0.5-5 broad, often ~1-3", "notes": "Exchangeable; may be broad due to quadrupole" },
+      { "type": "Terminal alkyne ≡C-H", "delta": "1.8 - 3.1", "example": "R-C≡C-H 2.5", "notes": "Deshielded sp carbon" },
+      { "type": "Alpha to C=O (CH2CO)", "delta": "2.0 - 2.7", "example": "CH3CO 2.1, CH2CO 2.3", "notes": "Carbonyl anisotropy deshields" }
+    ],
+    "cNmrShifts": [
+      { "type": "Alkyl CH3, CH2, CH (sp³)", "delta": "0 - 50", "notes": "CH3 ~10, CH2 ~20-30, CH ~25-40, Cq ~30-40" },
+      { "type": "C attached to N/O/halogen", "delta": "40 - 90", "notes": "CH2-O ~60-80; CH2-N ~40-60; CH2-Cl ~35-40" },
+      { "type": "Alkyne C≡C", "delta": "65 - 90", "notes": "Two signals" },
+      { "type": "Alkene C=C", "delta": "100 - 150", "notes": "Terminal CH2 ~110, internal ~120-140; conjugated lower" },
+      { "type": "Aromatic C", "delta": "110 - 160", "notes": "C-H ~128, C-O ~155, C=O substituted ~135" },
+      { "type": "Nitrile (C≡N)", "delta": "115 - 125", "notes": "Quaternary" },
+      { "type": "Carbonyl C=O", "delta": "170 - 215", "notes": "Acid/ester 170-175, aldehyde 190-205, ketone 205-215, amide 165-175" }
+    ],
+    "splittingRules": "n equivalent vicinal H on adjacent carbon → n+1 peaks (doublet =1 neighbor, triplet=2, quartet=3, quintet=4). Coupling constant J (Hz) reveals connectivity: vicinal (³J) ~7 (alkyl), 6-12 cis / 14-18 trans (vinyl), 1-10 allylic; geminal (²J) ~2. Ethyl pattern: CH3 triplet (n=2) integrates 3H + CH2 quartet (n=3) integrates 2H with same J (~7 Hz).",
+    "deuterium": "Shaking with D2O exchanges OH/NH/SH → signal disappears, confirms exchangeable proton."
+  },
+  "massSpec": {
+    "title": "Mass Spectrometry (MS)",
+    "principle": "Molecule ionized (EI, 70 eV) → molecular ion M⁺· (m/z = molecular weight). Fragments by homolysis/heterolysis. Base peak = most intense (100%). Isotope pattern: ³⁵Cl/³⁷Cl 3:1, ⁷⁹Br/⁸¹Br 1:1, M+2 reveals halogen count. Nitrogen rule: odd M = odd N (for M⁺).",
+    "commonFragmentations": [
+      { "type": "α-Cleavage next to heteroatom", "description": "Bond breaks α to O/N: R-CH2-CH2-O· → R-CH2· + CH2=O⁺ (e.g., alcohol gives CH2=OH⁺ m/z 31)", "examples": ["CH3CH2OH → m/z 31 (CH2OH⁺ base peak)", "CH3COCH3 → m/z 43 (CH3CO⁺)"] },
+      { "type": "McLafferty rearrangement", "description": "Carbonyl with γ-H → 6-membered TS, transfers H to carbonyl O, cleaves α-β, forms enol radical cation. E.g., hexanal CH3CH2CH2CH2CHO → m/z 44 (CH2=CHOH⁺·)", "condition": "Needs γ-H and carbonyl" },
+      { "type": "Benzylic cleavage", "description": "Alkylbenzene cleaves benzylic bond → stable tropylium C7H7⁺ m/z 91 base peak (rearranges to aromatic 7-membered).", "example": "C6H5CH2CH2CH3 → 91 (C7H7⁺)" },
+      { "type": "Allylic cleavage", "description": "Alkene cleaves allylic → resonance-stabilized allyl cation.", "example": "CH3CH2CH=CH2 → m/z 41 (C3H5⁺)" },
+      { "type": "Loss of small molecules", "description": "Common neutrals lost: H2O (M-18, alcohol), CH3· (M-15), Et· (M-29), CO (M-28, carbonyl/phenol), CO2 (M-44, acid/ester).", "example": "C2H5OH M=46 → M-18=28 shows alcohol" },
+      { "type": "Isotope clusters", "description": "Deduce formula: Cl: M:M+2 3:1; 2Cl 9:6:1; Br 1:1; 2Br 1:2:1; S gives M+2 4% per S.", "tip": "Odd m/z molecular ion → odd N" }
+    ],
+    "interpretationSteps": [
+      "1. Find M⁺· (highest m/z, may be weak for alcohols/branched). Check nitrogen rule and isotope pattern for Cl/Br.",
+      "2. Base peak (100%) often is most stable carbocation (tertiary, allylic, benzylic, α-cleavage).",
+      "3. Look for M-18 (alcohol), M-31 (OCH3), M-43 (CH3CO), M-91 (benzyl).",
+      "4. Fragment mass differences reveal neutral losses; combine with IR/NMR to assign structure."
+    ]
+  },
+  "combinedProblemExample": {
+    "unknown": "C4H8O: IR 1715 strong, no broad O-H, ¹H NMR: δ 2.1 (s,3H), 2.4 (t,2H), 0.9 (t,3H); MS M⁺ 72 base 43",
+    "solution": "IR C=O ketone; NMR singlet 3H = CH3CO; triplet 2H + triplet 3H = ethyl CH2CH3; structure CH3COCH2CH3 (butan-2-one). MS 43 = CH3CO⁺, M 72 correct."
+  }
+}

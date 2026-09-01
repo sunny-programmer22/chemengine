@@ -1,0 +1,104 @@
+{
+  "concepts": [
+    {
+      "id": "chirality",
+      "name": "Chirality & Chiral Center",
+      "definition": "Chiral object is non-superimposable on its mirror image (like hands). In molecules, chirality most commonly arises from sp³ carbon with 4 different substituents — a stereocenter. Presence of a chiral center ≠ chiral molecule (meso case cancels).",
+      "criteria": ["Atom (usually C) with 4 different groups", "No internal plane of symmetry in whole molecule", "Tetrahedral geometry allows two 3-D arrangements that are mirror images"],
+      "examples": [
+        { "name": "Lactic acid", "formula": "CH3-CH(OH)-COOH", "stereocenter": "C*H(OH)(CH3)(COOH) — 2 enantiomers R/S" },
+        { "name": "2-Butanol", "formula": "CH3-CH(OH)-CH2CH3", "stereocenter": "C-2 has OH, CH3, H, C2H5 → chiral" },
+        { "name": "Glycine", "formula": "NH2-CH2-COOH", "stereocenter": "none (CH2 with 2 H) → achiral" }
+      ],
+      "identificationSteps": ["Draw skeletal formula", "Find each sp³ carbon; list its 4 attachments up to symmetry (consider entire substituent, not just first atom)", "If all 4 different → stereocenter; mark *", "Count stereocenters: n centers → up to 2ⁿ stereoisomers (fewer if meso)"]
+    },
+    {
+      "id": "rs",
+      "name": "R/S Absolute Configuration (Cahn-Ingold-Prelog, CIP)",
+      "definition": "R (rectus, clockwise) / S (sinister, counterclockwise) assigns absolute 3-D arrangement at each stereocenter using CIP priority rules based on atomic number.",
+      "rules": [
+        "1. Rank the 4 substituents by atomic number (Z) of atom directly bonded to stereocenter. Higher Z = higher priority (I > Br > Cl > S > F > O > N > C > H; lone pair = 0).",
+        "2. If tie, move outward atom-by-atom along substituent; at first point of difference, higher Z wins. Double/triple bonds treated as duplicated single bonds: C=O → C bonded to O,O,C; C≡C → C bonded to C,C,C.",
+        "3. Place lowest priority (4) to the back (dash, going away). If it is wedged forward, swap any two groups to put it back and invert final answer.",
+        "4. Trace 1→2→3 ignoring 4: clockwise = R, counterclockwise = S."
+      ],
+      "examples": [
+        {
+          "molecule": "Lactic acid CH3-C*H(OH)-COOH",
+          "center": "C*",
+          "groups": ["OH (O, Z8) prio 1", "COOH (C bonded to O,O,OH) prio 2", "CH3 (C bonded to H,H,H) prio 3", "H prio4"],
+          "assignment": "With H to back, OH→COOH→CH3 trace; example arrangement gives S (if trace counterclockwise). Mirror image = R.",
+          "tip": "In Fischer, horizontal = wedge (forward), vertical = dash (back)."
+        },
+        {
+          "molecule": "Alanine NH2-CH(CH3)-COOH",
+          "groups": ["NH2 (N) prio1", "COOH prio2", "CH3 prio3", "H prio4"],
+          "assignment": "Natural L-alanine = S configuration."
+        },
+        {
+          "molecule": "CHFClBr (bromochlorofluoromethane)",
+          "groups": ["Br (35) 1", "Cl (17) 2", "F (9) 3", "H (1) 4"],
+          "assignment": "Simple atomic number series → easy trace."
+        }
+      ],
+      "commonMistakes": ["Forgetting to put lowest priority to back before tracing; if 4 is on wedge, answer inverts.", "Treating -CH(CH3)2 vs -CH2CH2CH3: need to go to second sphere; branching matters.", "Double bond duplication: -CHO (C bonded to O,O,H) outranks -CH2OH (C bonded to O,H,H)."]
+    },
+    {
+      "id": "ez",
+      "name": "E/Z Alkene Isomerism (CIP for double bonds)",
+      "definition": "E (entgegen, opposite) / Z (zusammen, together) describes relative positions of high-priority groups on each sp² carbon of a C=C. Replaces unreliable cis/trans when more than 2 different substituents.",
+      "rules": [
+        "For each sp² carbon of C=C separately, rank its two substituents by CIP (same rules as R/S).",
+        "Determine where the #1 priority on carbon-1 sits relative to #1 on carbon-2 across the double bond.",
+        "If both #1 priorities are on SAME side → Z (zusammen); if OPPOSITE sides → E (entgegen)."
+      ],
+      "examples": [
+        {
+          "molecule": "2-butene CH3-CH=CH-CH3",
+          "C1": "CH3 (C) vs H → CH3 higher",
+          "C2": "CH3 vs H → CH3 higher",
+          "Z": "Both CH3 on same side = (Z)-2-butene (cis, Z)",
+          "E": "CH3 opposite = (E)-2-butene (trans, E)"
+        },
+        {
+          "molecule": "1-bromo-1-chloro-2-fluoroethene C(Br)Cl = C(F)H",
+          "C1": "Br (35) > Cl (17)",
+          "C2": "F (9) > H (1)",
+          "assignment": "If Br and F same side → Z; opposite → E. Note cis/trans would be ambiguous because 4 different groups."
+        }
+      ],
+      "cisTransVsEZ": "cis/trans only meaningful when each C has one H (or clearly 'same groups'). For highly substituted alkenes (3-4 carbons), always use E/Z via CIP."
+    },
+    {
+      "id": "enantiomer-diastereomer",
+      "name": "Enantiomers, Diastereomers, Meso & Racemic Mixtures",
+      "relationships": [
+        { "term": "Enantiomers", "definition": "Pair of stereoisomers that are non-superimposable mirror images. Identical physical properties (mp, bp, IR, NMR) except optical rotation [α]D opposite sign (± equal magnitude) and interaction with other chiral environments (enzymes, chiral reagents).", "example": "(R)-lactic acid [α] = -3.8° vs (S)-lactic acid [α] = +3.8°; NMR identical in achiral solvent.", "test": "Racemic mixture (± 1:1) is optically inactive; meso not formed." },
+        { "term": "Diastereomers", "definition": "Stereoisomers that are NOT mirror images. Different physical and chemical properties (mp, bp, Rf, NMR δ different).", "example": "(2R,3R)-tartaric acid vs (2R,3S)-tartaric acid (meso). Also E vs Z alkenes are diastereomers; cis vs trans cycloalkanes.", "energy": "Diastereomers have different stability; may be separable by standard chromatography." },
+        { "term": "Meso compound", "definition": "Has stereocenters but is achiral due to internal plane of symmetry; non-superimposable mirror is identical via rotation. Despite 2 stereocenters, only 3 stereoisomers not 4.", "example": "(2R,3S)-tartaric acid HOOC-C*H(OH)-C*H(OH)-COOH: the two centers are opposite (R,S) → internal plane between C2-C3 cancels chirality; optically inactive, meso. Also meso-2,3-butanediol.", "recognition": "Draw Fischer with vertical carbon chain; if top half mirrors bottom half (plane through middle), meso." },
+        { "term": "Racemic mixture (racemate)", "definition": "1:1 equimolar mixture of two enantiomers. Optically inactive (rotations cancel). Physical properties similar to pure enantiomer but may differ in mp/crystal form (racemic vs conglomerate).", "separation": "Resolved via chiral resolving agent (diastereomeric salt formation, e.g., racemic acid + chiral amine → salts with different solubility) or chiral chromatography." },
+        { "term": "Epimers", "definition": "Diastereomers differing at exactly ONE stereocenter (among ≥2).", "example": "D-glucose vs D-mannose (epimer at C-2); D-glucose vs D-galactose (C-4)." },
+        { "term": "Anomers", "definition": "Epimers at the anomeric carbon (hemiacetal carbon) of cyclic sugars. α-anomer: OH trans to CH2OH (axial in glucose); β-anomer: OH cis (equatorial). Mutarotation interconverts via open chain.", "example": "α-D-glucose [α] +112° ⇌ open chain ⇌ β-D-glucose [α] +18.7° → equilibrium +52.7°" }
+      ],
+      "maxIsomers": "For molecule with n stereocenters: max 2ⁿ stereoisomers. Subtract meso duplicates. E.g., 2 centers → 4 combos (RR, SS enantiomers; RS, SR enantiomers) but if RS = SR identical (meso) → 3 total."
+    },
+    {
+      "id": "conformation",
+      "name": "Conformation, Fischer, Newman & Chair",
+      "conformation": [
+        { "type": "Ethane Newman", "detail": "Staggered (60° dihedral, low energy) vs eclipsed (0°, high due to torsional strain). Barrier ~12 kJ/mol. Anti (180°) most stable in butane.", "diagram": "Newman: front carbon dot, back circle; 3 lines each." },
+        { "type": "Cyclohexane chair", "detail": "Most stable: all angles 109.5°, staggered, no angle/torsional strain. Chair interconversion (ring flip) swaps axial ↔ equatorial. Axial substituents experience 1,3-diaxial interactions (~7 kJ per axial CH3); equatorial more stable. tert-Butyl locks chair equatorially.", "axialEquatorial": "Axial: parallel to C3 axis, alternating up/down; Equatorial: roughly in-plane, also alternating but opposite. Cis-1,2-disubstituted: one axial one equatorial (a,e) in both chair forms." }
+      ],
+      "fischer": "Fischer projection: vertical line = dashes (back), horizontal = wedges (forward). Carbon chain vertical, most oxidized C at top (aldehyde for sugars). D/L determined by OH on highest chiral C far from carbonyl: D = OH on right (in Fischer), L = on left (historical glyceraldehyde standard). D/L not related to +/- rotation or R/S.",
+      "opticalRotation": "[α]D^T = α / (l·c) where α observed rotation (°), l path length (dm), c concentration (g/mL). Dextrorotatory (+) rotates clockwise viewed toward light; levorotatory (−) counterclockwise. R/S does NOT correlate with +/- (e.g., (R)-lactic acid is levorotatory).",
+      "resolutionMethods": "Racemate resolution: 1) Diastereomeric salt (Pasteur), 2) Chiral chromatography, 3) Enzymatic resolution (enantioselective enzyme), 4) Asymmetric synthesis (chiral catalyst → one enantiomer)."
+    }
+  ],
+  "quickReference": {
+    "rsAssignmentMnemonic": "CIP → point lowest to back → 1→2→3 clockwise = R (Right), counterclockwise = S (Sinistra). Clockwise R, Counterclockwise S.",
+    "ezMnemonic": "Z = Zusammen (together): high priorities together; E = Entgegen (opposite): high priorities opposite.",
+    "cisTransLimit": "Use cis/trans only for disubstituted alkenes with H or ring; else use E/Z.",
+    "chiralCenterTest": "4 different groups? → stereocenter. Then check whole molecule for plane of symmetry → if none, chiral.",
+    "enantiomerProperties": "Enantiomers: identical mp/bp/IR/NMR; opposite optical rotation; different biological activity (e.g., (S)-thalidomide teratogenic vs R sedative; (S)-ibuprofen active). Diastereomers differ in all properties."
+  }
+}

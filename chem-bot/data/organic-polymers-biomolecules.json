@@ -1,0 +1,142 @@
+{
+  "polymers": {
+    "introduction": "Polymers are macromolecules built from repeating monomers. Degree of polymerization n up to 10⁵, molar mass thousands to millions. Properties depend on monomer, tacticity, crosslinking, and crystallinity. Two families: addition (chain-growth) and condensation (step-growth).",
+    "classification": [
+      {
+        "type": "Addition (Chain-Growth) Polymerization",
+        "mechanism": "Initiation → Propagation (radical/cationic/anionic or coordination) → Termination. Monomers contain C=C (vinyl) or strained ring. No small molecule lost: monomer → polymer. Active center adds monomer sequentially.",
+        "examples": [
+          { "monomer": "Ethene CH2=CH2", "polymer": "Polyethylene (PE) –[CH2-CH2]n–", "variants": "LDPE (branched, film) vs HDPE (linear, bottle); catalyst: Ziegler-Natta (TiCl4/AlEt3) gives stereoregular", "uses": "Bags, bottles, pipes" },
+          { "monomer": "Propene CH2=CHCH3", "polymer": "Polypropylene (PP) –[CH2-CH(CH3)]n–", "tacticity": "Isotactic (all CH3 same side, crystalline) via Ziegler-Natta; atactic (random) amorphous", "uses": "Car parts, packaging, fibers" },
+          { "monomer": "Chloroethene CH2=CHCl", "polymer": "Poly(vinyl chloride) (PVC) –[CH2-CHCl]n–", "uses": "Pipes, cables, flooring; plasticized with phthalates" },
+          { "monomer": "Phenylethene (styrene) CH2=CHPh", "polymer": "Polystyrene (PS) –[CH2-CHPh]n–", "variants": "Expanded EPS foam", "uses": "Packaging, insulation" },
+          { "monomer": "Tetrafluoroethene CF2=CF2", "polymer": "Polytetrafluoroethene (PTFE, Teflon) –[CF2-CF2]n–", "uses": "Non-stick, chemical resistant" },
+          { "monomer": "Methyl methacrylate CH2=C(CH3)COOCH3", "polymer": "Poly(methyl methacrylate) (PMMA, Plexiglas)", "uses": "Optics, glass replacement" },
+          { "monomer": "Acrylonitrile CH2=CHCN", "polymer": "Polyacrylonitrile (PAN, acrylic fiber) → carbon fiber precursor", "uses": "Textiles" },
+          { "monomer": "Buta-1,3-diene + styrene", "polymer": "Styrene-butadiene rubber (SBR) – copolymer", "uses": "Tires" }
+        ],
+        "initiators": "Benzoyl peroxide (radical), BF3 (cationic for isobutylene), BuLi (anionic for styrene)"
+      },
+      {
+        "type": "Condensation (Step-Growth) Polymerization",
+        "mechanism": "Monomers with two functional groups react stepwise, releasing small molecule (H2O, HCl, MeOH). Each step is independent; dimer → trimer → oligomer → polymer. Carothers equation: p = extent, DP = 1/(1-p); need p>0.99 for high DP. No active center.",
+        "examples": [
+          {
+            "polymer": "Poly(ethylene terephthalate) (PET)",
+            "monomers": "HO-CH2CH2-OH (ethylene glycol) + HOOC-C6H4-COOH (terephthalic acid) → –[OCH2CH2O-CO-C6H4-CO]n– + (2n-1) H2O",
+            "uses": "Bottles, fibers (polyester)",
+            "reactionType": "Esterification"
+          },
+          {
+            "polymer": "Nylon-6,6",
+            "monomers": "H2N-(CH2)6-NH2 (hexamethylene diamine) + HOOC-(CH2)4-COOH (adipic acid) → –[NH-(CH2)6-NH-CO-(CH2)4-CO]n– + H2O",
+            "uses": "Fibers, stockings, parachutes; hydrogen bonding gives high strength",
+            "numbering": "6,6 means 6 carbons in each monomer"
+          },
+          {
+            "polymer": "Nylon-6",
+            "monomers": "ε-caprolactam ring-opening → –[NH-(CH2)5-CO]n–",
+            "notes": "Ring-opening is addition-like but chemically condensation family"
+          },
+          {
+            "polymer": "Polyurethane",
+            "monomers": "HO-R-OH (diol) + OCN-R'-NCO (diisocyanate) → –[O-R-O-CO-NH-R'-NH-CO]n–",
+            "uses": "Foams, coatings; blowing agent gives flexible/rigid foams"
+          },
+          {
+            "polymer": "Phenol-formaldehyde (Bakelite)",
+            "monomers": "Phenol + formaldehyde (HCHO) → cross-linked network (thermoset)",
+            "uses": "Electrical insulators, adhesive; first synthetic polymer (1907)"
+          },
+          {
+            "polymer": "Silicone (polysiloxane)",
+            "monomers": "Me2SiCl2 → hydrolysis → –[SiMe2-O]n–",
+            "uses": "Rubber, sealants, breast implants; Si-O flexibility"
+          }
+        ]
+      }
+    ],
+    "thermoplasticVsThermoset": {
+      "thermoplastic": "Linear or branched, no crosslinks; melts on heating (reprocessable): PE, PP, PS, PVC, PET, nylon. Crystalline regions give strength; amorphous give transparency.",
+      "thermoset": "Cross-linked network (covalent between chains) formed on curing; does NOT melt (degrades on heating): epoxy, Bakelite, vulcanized rubber (S bridges), polyurethane network. Strong, heat resistant.",
+      "elastomer": "Lightly cross-linked + flexible chains (Tg below room T) → reversible stretch: vulcanized cis-polyisoprene (natural rubber + S), SBR, silicone rubber."
+    },
+    "propertiesAndTuning": [
+      "Tg (glass transition): below Tg = glassy brittle; above Tg = rubbery. Tg ↑ with rigidity, aromatic, H-bonding. PE Tg -80°C (flexible at RT), PS Tg 100°C (rigid).",
+      "Crystallinity: ordered packing ↑ strength, mp, density. Isotactic PP crystalline; atactic amorphous.",
+      "Molecular weight: ↑Mw → ↑ strength, viscosity, mp (entanglements).",
+      "Plasticizer: lowers Tg (PVC rigid→flexible with phthalates).",
+      "Biodegradable: PLA (poly(lactic acid) from corn) –[O-CH(CH3)-CO]n–, PHB bacterial polyester, starch-based; hydrolyze via ester."
+    ],
+    "environment": "Problems: persistence (PE ~500 yr), microplastics. Solutions: recycling codes (1 PET, 2 HDPE, 3 PVC, 4 LDPE, 5 PP, 6 PS, 7 other); pyrolysis, mechanical recycling, biodegradable/bio-based polymers. Green chemistry: CO2-epoxide polycarbonates, lignin-based."
+  },
+  "biomolecules": {
+    "introduction": "Biomolecules: carbohydrates, lipids, amino acids/proteins, nucleotides/nucleic acids. Despite huge diversity, built from small monomer alphabets via condensation (dehydration) and broken by hydrolysis. Importance: energy, structure, information, catalysis.",
+    "carbohydrates": {
+      "definition": "Polyhydroxy aldehydes/ketones (Cn(H2O)n). Monosaccharides (simple sugars), disaccharides (2 units), polysaccharides (many).",
+      "monosaccharides": [
+        { "name": "Glucose (aldohexose)", "formula": "C6H12O6", "structure": "Open: HOCH2-(CHOH)4-CHO; cyclic: pyranose (6-membered) 99% as α/β-D-glucopyranose (hemiacetal). Aldose.", "stereochem": "D-glucose: OH on C5 right in Fischer; α/β anomers at C1; mutarotation equilibrium.", "uses": "Blood sugar (5 mM), energy via glycolysis → ATP; polymerizes to starch/cellulose" },
+        { "name": "Fructose (ketohexose)", "formula": "C6H12O6", "structure": "Ketohexose, furanose (5-membered) as β-D-fructofuranose; sweetest sugar", "notes": "In sucrose, honey, fruit" },
+        { "name": "Ribose / Deoxyribose", "formula": "C5H10O5 / C5H10O4", "structure": "Aldopentoses; furanose forms in RNA/DNA backbone", "notes": "Deoxy = OH at C2 replaced by H" }
+      ],
+      "glycosidicBond": "Condensation: -OH (anomeric C) + HO- (another sugar) → O-glycosidic bond + H2O. α vs β matters: α-1,4 (starch, digestible) vs β-1,4 (cellulose, indigestible for humans — needs cellulase). Hydrolysis by glycosidase.",
+      "disaccharides": [
+        { "name": "Sucrose (table sugar)", "structure": "α-D-glucose (1→2) β-D-fructose; non-reducing (both anomeric carbons linked)", "uses": "Sweetener" },
+        { "name": "Lactose (milk sugar)", "structure": "β-D-galactose (1→4) D-glucose; reducing; hydrolyzed by lactase deficiency → lactose intolerance", "uses": "Milk" },
+        { "name": "Maltose", "structure": "α-D-glucose (1→4) D-glucose; product of starch digestion", "uses": "Malt, brewing" }
+      ],
+      "polysaccharides": [
+        { "name": "Starch (amylose + amylopectin)", "structure": "α-D-glucose (1→4) chains + occasional α-1,6 branches; amylose helix with I2 → blue-black (iodine test)", "function": "Energy storage in plants" },
+        { "name": "Glycogen", "structure": "Highly branched α-1,4 with α-1,6 every 8-12 residues; 30k glucoses", "function": "Animal energy storage (liver/muscle)" },
+        { "name": "Cellulose", "structure": "β-1,4 glucose linear; interchain H-bonding + van der Waals → crystalline microfibrils, immense tensile strength", "function": "Plant structural (wood ~50% cellulose)", "notes": "Humans lack β-glycosidase → fiber" },
+        { "name": "Chitin", "structure": "β-1,4 N-acetylglucosamine; second most abundant polymer", "function": "Insect exoskeleton, fungal walls" }
+      ],
+      "tests": "Benedict/Fehling: reducing sugars (free aldehyde) reduce Cu²⁺→Cu2O red ppt; Iodine: starch blue-black; Seliwanoff: ketoses (fructose) red faster than aldoses."
+    },
+    "lipids": {
+      "definition": "Non-polar, water-insoluble (hydrophobic) molecules: fats/oils (energy storage), phospholipids (membranes), steroids (signaling).",
+      "fattyAcids": [
+        { "name": "Saturated", "structure": "No C=C; e.g., palmitic C16H32O2 CH3-(CH2)14-COOH (straight, packs well, solid at RT → butter, lard); mp increases with chain length", "examples": "Palmitic (C16:0), stearic (C18:0)" },
+        { "name": "Unsaturated", "structure": "One (mono) or poly (PUFA) cis C=C → kink, poor packing, liquid at RT (oil). Essential: linoleic (C18:2 ω-6), linolenic (C18:3 ω-3) — humans cannot synthesize.", "examples": "Oleic (C18:1 cis-9, olive oil), linoleic (C18:2)", "transFat": "Partial hydrogenation gives trans C=C (straight, solid-like) → raises LDL, harmful; banned/reduced" }
+      ],
+      "triglycerides": "Glycerol HOCH2-CHOH-CH2OH + 3 fatty acids → triester TAG + 3 H2O (condensation). Stored in adipocytes; energy density 38 kJ/g vs carb 17 kJ/g. Saponification: TAG + 3 NaOH → glycerol + 3 RCOONa (soap); soap amphiphilic (polar head + non-polar tail → micelles). Iodine value = degree of unsaturation.",
+      "phospholipids": "Glycerol + 2 fatty acids + phosphate + head group (choline/ethanolamine) → bilayer membrane (hydrophilic head out, hydrophobic tails in). Membrane fluidity: unsaturated ↑ fluidity (kinks); cholesterol regulates.",
+      "steroids": "Fused 4-ring (3×6 + 1×5) perhydrocyclopentanophenanthrene: cholesterol (27C, membrane fluidity, precursor to hormones/bile/vitamin D), testosterone, estradiol. Amphipathic but rigid.",
+      "waxes": "Long-chain ester + long alcohol → waterproofing (beeswax, cutin)."
+    },
+    "proteins": {
+      "definition": "Polymers of α-amino acids linked via peptide (amide) bond: NH2-CHR-COOH. 20 standard AAs. Hierarchies: primary (sequence), secondary (α-helix, β-sheet via H-bond), tertiary (overall 3D via hydrophobic, H-bond, disulfide, salt bridges), quaternary (multi-subunit).",
+      "aminoAcids": {
+        "general": "H2N-CHR-COOH; at pH 7 mostly zwitterion ⁺H3N-CHR-COO⁻. Stereochemistry: all except Gly chiral, natural = L (S except Cys R). Classification: non-polar (Gly, Ala, Val, Leu, Ile, Met, Pro, Phe, Trp), polar uncharged (Ser, Thr, Cys, Tyr, Asn, Gln), acidic (Asp, Glu, negative), basic (Lys, Arg, His, positive).",
+        "peptideBond": "Condensation: –COOH + H2N– → –CO-NH– + H2O. N→C direction. Planar due to resonance (partial double-bond, 40% double). Cis rare (proline ~10%). Hydrolysis by proteases or 6M HCl, 110°C.",
+        "isoelectricPoint": "pI = (pKa1+pKa2)/2 for neutral AA; pH where net charge 0; solubility minimum. Polyampholyte."
+      },
+      "structure": [
+        { "level": "Primary", "detail": "AA sequence determines all higher structure. Determined via Edman degradation or MS/MS." },
+        { "level": "Secondary", "detail": "α-helix: 3.6 residues/turn, i→i+4 H-bond (C=O···H-N), right-handed, rod (e.g., keratin). β-sheet: strands H-bonded parallel/antiparallel pleated (e.g., silk). Random coil. Ramachandran plot φ/ψ.", "stabilized": "H-bonds between carbonyl O and amide H" },
+        { "level": "Tertiary", "detail": "Overall fold via hydrophobic core (non-polar inside), H-bonds, salt bridges (Lys⁺---Asp⁻), disulfides (Cys-S-S-Cys, oxidized). Chaperones assist folding. Denaturation: heat, pH, urea → unfolds; sometimes reversible (Anfinsen).", "example": "Myoglobin: globular, 153 AAs, 8 helices, heme pocket" },
+        { "level": "Quaternary", "detail": "Association of subunits: hemoglobin (α2β2, 4 hemes, cooperative O2 binding, allostery); collagen triple helix (Gly-X-Y repeat, X Pro, Y Hyp) → fibers." }
+      ],
+      "enzymes": "Protein catalysts: lower activation energy, specificity (lock-and-key or induced fit), Michaelis-Menten kinetics v = Vmax[S]/(Km+[S]). Cofactors: heme (Fe²⁺ in Hb/cytochrome), NAD⁺/FAD (redox), ATP (energy). Inhibition: competitive (binds active site), non-competitive, irreversible. Optimum pH/T.",
+      "tests": "Biuret: Cu²⁺ + peptide → violet (needs ≥2 peptide bonds); Ninhydrin: blue-purple with α-AA (proline yellow); xanthoproteic: nitration of aromatic (yellow)."
+    },
+    "nucleicAcids": {
+      "definition": "Polymers of nucleotides: phosphate-sugar-base. Information carriers (DNA) and functional (RNA: mRNA, tRNA, rRNA, catalysis).",
+      "nucleotide": "Pentose (ribose in RNA, deoxyribose in DNA 2'-H) + phosphate (PO4³⁻) + nitrogenous base (purine: A,G 2-ring; pyrimidine: C,U/T 1-ring). Link: N-glycosidic bond (sugar C1-N of base) + phosphodiester (C3'-O-P-O-C5' to next sugar). Direction 5'→3'. Base attached to C1', phosphate to C5'.",
+      "bases": ["Adenine (A, purine)", "Guanine (G, purine)", "Cytosine (C, pyrimidine)", "Thymine (T, DNA) / Uracil (U, RNA)"],
+      "dna": {
+        "structure": "Double helix (Watson-Crick, 1953): two antiparallel strands, right-handed helix, 10 bp/turn, diameter 2 nm. Sugar-phosphate backbone outside, bases inside H-bonded: A=T (2 H-bonds), G≡C (3 H-bonds). GC richer → higher Tm. Complementarity → replication & transcription.",
+        "denaturation": "Heating → strands separate (melting, TM where 50% ss). A260 ↑ upon melting (hyperchromicity). Renaturation upon cooling.",
+        "packaging": "Nucleosomes (DNA wrapped around histone octamer) → chromatin → chromosome."
+      },
+      "rna": {
+        "types": ["mRNA: codons (3 nt = 1 AA), 5' cap + poly-A tail", "tRNA: cloverleaf, anticodon loop, carries AA (acceptor stem)", "rRNA: catalytic (ribosome peptidyl transferase)", "siRNA/miRNA: regulation"],
+        "differences": "Single-stranded, U instead of T, ribose 2'-OH makes more labile, versatile catalysis (ribozyme)."
+      },
+      "centralDogma": "DNA →(+RNA polymerase) mRNA →(ribosome) protein. Semiconservative replication: each daughter duplex has one parental strand. PCR amplifies DNA via thermal cycling.",
+      "tests": "Diphenylamine (DNA blue), Orcinol (RNA green), UV 260 nm quantification (A260 1 ≈ 50 µg/mL dsDNA). Electrophoresis separates by size."
+    },
+    "metabolismOverview": "Metabolism: catabolism (breakdown, exergonic: glycolysis, citric acid, oxidative phosphorylation → ATP; β-oxidation of fatty acids) vs anabolism (building, endergonic: gluconeogenesis, protein synthesis). ATP = energy currency (phosphoanhydride ΔG ~ -30 kJ/mol). Coenzymes: NADH/NAD⁺, FADH2/FAD, CoA.",
+    "appliedNotes": "Isoelectric precipitation (casein pH 4.6); salting out (NH4)2SO4; SDS-PAGE separates proteins by mass; Sanger sequencing / NGS for DNA; biodiesel: transesterification of TAG → FAME (fatty acid methyl esters); hydrogenation of oils → margarine (now avoided)."
+  }
+}

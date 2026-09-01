@@ -1,0 +1,157 @@
+[
+  {
+    "id": "sn1",
+    "name": "Nucleophilic Substitution Unimolecular (SN1)",
+    "aliases": ["sn1", "sn-1", "unimolecular substitution"],
+    "keywords": ["tertiary", "carbocation", "racemization", "polar protic"],
+    "mechanism": "Two-step: 1) Rate-determining ionization → carbocation + leaving group (slow, unimolecular); 2) Nucleophile attacks planar carbocation from either face (fast).",
+    "rateLaw": "Rate = k[substrate] (first order, independent of [Nu])",
+    "substrate": "Tertiary >> secondary > primary (methyl: never). Stability: 3° > 2° > 1°; resonance-stabilized (allylic, benzylic) also favored; carbocation rearrangements (hydride/methyl shift) common to give more stable cation.",
+    "nucleophile": "Weak nucleophile OK (H2O, ROH). Strong Nu favors SN2/E2 instead.",
+    "leavingGroup": "Good LG required: I⁻ > Br⁻ > Cl⁻ >> F⁻; -OTs, -OTf excellent. Weak bases are good leaving groups.",
+    "solvent": "Polar protic (H2O, ROH, HCOOH) stabilizes carbocation via solvation; polar protic accelerates SN1.",
+    "stereochemistry": "Racemization (with slight inversion excess if ion pair). Planar carbocation attacked from both faces → racemic mixture if starting chiral.",
+    "competition": "Competes with E1. Heat + weak base favors E1; low T + good Nu favors SN1.",
+    "examples": [
+      "(CH3)3C-Br + H2O → (CH3)3C-OH + HBr (tert-butyl bromide hydrolysis, rate-limiting carbocation)",
+      "(CH3)2CH-CH(Cl)-CH3 + CH3OH → ether + HCl (via carbocation, rearrangement possible)",
+      "Ph-CH(Cl)-CH3 + H2O → Ph-CH(OH)-CH3 (benzylic SN1, resonance stabilized)"
+    ],
+    "energyDiagram": "Two transition states: TS1 (ionization, highest) then carbocation intermediate valley, then TS2 (nucleophilic capture). ΔG‡ dominated by first step."
+  },
+  {
+    "id": "sn2",
+    "name": "Nucleophilic Substitution Bimolecular (SN2)",
+    "aliases": ["sn2", "sn-2", "bimolecular substitution", "backside attack"],
+    "keywords": ["primary", "inversion", "walden", "polar aprotic", "concerted"],
+    "mechanism": "One-step concerted: nucleophile attacks carbon from backside (180° to leaving group) as LG leaves simultaneously. Transition state: pentacoordinate, trigonal bipyramidal, partial bonds to Nu and LG.",
+    "rateLaw": "Rate = k[substrate][nucleophile] (second order)",
+    "substrate": "Methyl > primary > secondary >> tertiary (no SN2). Unhindered backside required. Neopentyl extremely slow.",
+    "nucleophile": "Strong nucleophile, good polarizability: I⁻ > Br⁻ > Cl⁻ > F⁻ (in protic) reverse in aprotic; RS⁻ > RO⁻ > N3⁻ > OH⁻; charge & basicity increase rate.",
+    "leavingGroup": "Same as SN1: good LG accelerates (I⁻ best).",
+    "solvent": "Polar aprotic (DMSO, DMF, acetone, MeCN) → solvates cations, leaves Nu naked and highly reactive. Protic solvents H-bond to Nu and slow SN2.",
+    "stereochemistry": "Walden inversion: complete inversion of configuration at stereocenter (like umbrella flipping). Enantiomer flips R → S.",
+    "competition": "Competes with E2. Strong bulky base (t-BuOK) favors E2; small strong Nu + primary substrate → SN2; heat favors elimination.",
+    "examples": [
+      "CH3-Br + OH⁻ → CH3-OH + Br⁻ (methyl, classic SN2)",
+      "CH3CH2-I + CN⁻ —DMSO→ CH3CH2-CN + I⁻ (nitrile synthesis)",
+      "(R)-CH3CH(Cl)CH3 + I⁻ → (S)-CH3CH(I)CH3 + Cl⁻ (inversion)",
+      "Na⁺ ⁻O-CH3 + CH3CH2Br → CH3CH2OCH3 + NaBr (Williamson ether: alkoxide + primary halide)"
+    ],
+    "energyDiagram": "Single transition state (pentacoordinate) → no intermediate. ΔG‡ involves both Nu and substrate."
+  },
+  {
+    "id": "e1",
+    "name": "Elimination Unimolecular (E1)",
+    "aliases": ["e1", "unimolecular elimination", "saytzeff"],
+    "keywords": ["tertiary", "carbocation", "saytzeff", "zaitsev"],
+    "mechanism": "Two-step: 1) Ionization to carbocation (rate-determining, same as SN1); 2) Weak base abstracts β-H (H on carbon adjacent to C⁺) → π bond forms as LG leaves. Two β-H sets possible → major Saytzeff (more substituted alkene) vs minor Hofmann.",
+    "rateLaw": "Rate = k[substrate] (first order)",
+    "substrate": "Tertiary > secondary >> primary. Same as SN1: needs stable carbocation; rearrangements possible.",
+    "base": "Weak base (H2O, ROH, or substrate itself). Strong bulky base would give E2 instead.",
+    "solvent": "Polar protic (favors ionization).",
+    "stereochemistry": "Not stereospecific; Saytzeff product predominates (thermodynamic, more substituted double bond). No anti-periplanar requirement (carbocation planar).",
+    "competition": "Always competes with SN1 (same carbocation). SN1 favored at low T, weak Nu, good nucleophile present; E1 favored at high T (entropy: 1→2 molecules), weak non-nucleophilic base.",
+    "examples": [
+      "(CH3)3C-Br + H2O —heat→ (CH3)2C=CH2 + HBr + H2O (tert-butanol E1 dehydration is analogous)",
+      "(CH3)2C(Br)CH2CH3 —H2O/heat→ CH3C(=CH2)CH2CH3 (Saytzeff) + CH3CH=C(CH3)2 (major, more substituted)"
+    ],
+    "energyDiagram": "Like SN1: TS1 (ionization, RDS) → carbocation → TS2 (deprotonation). Carbocation can branch to SN1 or E1."
+  },
+  {
+    "id": "e2",
+    "name": "Elimination Bimolecular (E2)",
+    "aliases": ["e2", "bimolecular elimination", "anti-periplanar", "hofmann", "zaitsev"],
+    "keywords": ["anti", "periplanar", "bulky base", "hofmann", "saytzeff"],
+    "mechanism": "One-step concerted: base abstracts β-H while C-H σ electrons form C=C π and LG leaves simultaneously. Requires anti-periplanar geometry: C-H and C-LG dihedral 180° for optimal orbital overlap (σC-H → σ*C-LG). In Newman projection, H and LG anti.",
+    "rateLaw": "Rate = k[substrate][base] (second order)",
+    "substrate": "Tertiary > secondary > primary (but all can do E2 with strong base; primary needs strong bulky base). Regioselectivity: bulky base (t-BuOK) gives Hofmann (less substituted) due to accessing more accessible H; small base (EtONa) gives Saytzeff (more substituted).",
+    "base": "Strong base essential: OH⁻, RO⁻, t-BuO⁻ (bulky → Hofmann), DBU, DBN. Strength ↑ → E2 rate ↑.",
+    "leavingGroup": "Good LG (I, Br, OTs). F⁻ very poor.",
+    "solvent": "Polar aprotic helps for anionic base; polar protic OK but less optimal.",
+    "stereochemistry": "Anti-periplanar mandatory → stereospecific. In cyclohexane, leaving group must be axial and anti to H; determines which alkene forms from diastereomers.",
+    "competition": "Competes with SN2. SN2 favored: primary substrate + small good Nu + low T + polar aprotic. E2 favored: secondary/tertiary + bulky base + high T + hindered substrate.",
+    "examples": [
+      "CH3CH2Br + KOH (alc) —heat→ CH2=CH2 + KBr + H2O",
+      "CH3CH(Br)CH3 + CH3ONa → CH3CH=CH2 + NaBr + CH3OH (Saytzeff, one product only)",
+      "CH3CH2CH(Br)CH3 + t-BuOK → CH3CH2CH=CH2 (Hofmann, 75%, less substituted due to bulky base) + CH3CH=CHCH3 (Saytzeff, 25%)",
+      "Cyclohexane: trans-1-bromo-2-methylcyclohexane + base → more substituted alkene only if anti-H exists"
+    ],
+    "energyDiagram": "Single TS: C-H breaking + C=C forming + C-LG breaking partially. Like SN2, one peak.",
+    "quickDecisionTable": "Primary + strong Nu/small base → SN2; Primary + bulky strong base + heat → E2; Secondary: strong base → E2, weak Nu → SN1/E1; Tertiary + weak Nu/base → SN1/E1 (heat→E1); Tertiary + strong base → E2"
+  },
+  {
+    "id": "addition-electrophilic",
+    "name": "Electrophilic Addition to Alkenes/Alkynes",
+    "aliases": ["electrophilic addition", "addition", "markovnikov", "anti addition"],
+    "keywords": ["markovnikov", "carbocation", "halonium", "oxymercuration"],
+    "mechanism": "π bond attacks electrophile (E⁺) → carbocation (or cyclic halonium/mercurinium) intermediate → nucleophile captures. Regiochemistry by carbocation stability (Markovnikov: H/E⁺ adds to carbon with more H to give more stable carbocation on other carbon). Stereochemistry: halonium → anti addition.",
+    "variants": [
+      { "name": "Hydrohalogenation", "reagents": "HX (HCl, HBr, HI)", "regio": "Markovnikov (H to C with more H, X to more substituted C)", "stereo": "via planar carbocation → racemic if chiral center formed", "example": "CH3CH=CH2 + HBr → CH3CHBrCH3" },
+      { "name": "Acid-catalyzed Hydration", "reagents": "H2O / H2SO4", "regio": "Markovnikov", "stereo": "carbocation, no stereospecificity", "example": "CH2=CHCH3 + H2O —H+→ CH3CH(OH)CH3" },
+      { "name": "Oxymercuration-demercuration", "reagents": "1) Hg(OAc)2/H2O 2) NaBH4", "regio": "Markovnikov", "stereo": "anti via mercurinium ion; no rearrangement (not true carbocation)", "example": "Alkene → Markovnikov alcohol without rearrangement" },
+      { "name": "Hydroboration-oxidation", "reagents": "1) BH3·THF 2) H2O2/OH⁻", "regio": "Anti-Markovnikov (BH2 to more substituted C, H to less substituted), then OH replaces BH2", "stereo": "Syn addition (H and OH cis)", "example": "1-hexene → 1-hexanol (anti-Markovnikov, syn)" },
+      { "name": "Halogenation", "reagents": "Br2 / Cl2 (no catalyst)", "regio": "both carbons get halogen", "stereo": "Anti addition via cyclic bromonium → trans-diaxial product", "example": "cis-2-butene + Br2 → racemic 2,3-dibromobutane (anti)", "test": "Decolorizes orange Br2 (alkene test)" },
+      { "name": "Halohydrin formation", "reagents": "Br2 / H2O", "regio": "Br to less substituted C (bromonium opening at more substituted by H2O)", "stereo": "Anti", "example": "CH2=CH2 + Br2/H2O → BrCH2CH2OH" }
+    ],
+    "alkyneNotes": "Alkyne can add 1 equiv then second equiv: HC≡CH + 2 HBr → CH3CHBr2 (Markovnikov twice, via vinyl cation). Hg²⁺-catalyzed hydration → enol → ketone (Markovnikov: terminal alkyne → methyl ketone).",
+    "examples": [
+      "CH3C≡CH + HBr (1 equiv) → CH3CBr=CH2; + excess HBr → CH3CBr2CH3",
+      "CH3C≡CH + H2O —HgSO4/H2SO4→ CH3COCH3 (acetone via enol)"
+    ]
+  },
+  {
+    "id": "addition-nucleophilic",
+    "name": "Nucleophilic Addition to Carbonyl (C=O)",
+    "aliases": ["nucleophilic addition", "carbonyl addition", "grignard", "cyanohydrin"],
+    "keywords": ["tetrahedral intermediate", "carbonyl", "grignard"],
+    "mechanism": "Nucleophile attacks electrophilic carbonyl carbon (δ⁺) → tetrahedral alkoxide intermediate → protonation → alcohol (or addition product). Carbonyl π* is LUMO. No leaving group in aldehyde/ketone; in carboxylic derivatives, tetrahedral intermediate collapses expelling LG → substitution.",
+    "reactivityOrder": "Aldehyde > ketone > ester > amide (resonance donation reduces electrophilicity). Acyl chloride > anhydride > ester > amide.",
+    "variants": [
+      { "name": "Grignard addition", "reagents": "RMgX (dry ether) then H3O⁺", "products": "HCHO + RMgX → RCH2OH (1°); RCHO + RMgX → R2CHOH (2°); RCOR + RMgX → R3COH (3°)", "notes": "Must be anhydrous; incompatible with -OH, -NH, -SH, -COOH" },
+      { "name": "Cyanohydrin", "reagents": "CN⁻ (NaCN/KCN, HCN)", "product": "R2C=O + CN⁻ → R2C(OH)CN", "notes": "Reversible; base-catalyzed; creates new C-C bond + stereocenter" },
+      { "name": "Hydride reduction", "reagents": "NaBH4 (mild, aldehyde/ketone) or LiAlH4 (stronger: acid/ester too)", "product": "C=O → CH-OH", "notes": "NaBH4 selective; LiAlH4 requires dry ether, workup" },
+      { "name": "Acetal formation", "reagents": "ROH, H⁺, -H2O", "steps": "C=O + ROH → hemiacetal → +ROH → acetal + H2O (acid-catalyzed, reversible). Protecting group for carbonyl.", "example": "CH3CHO + 2 MeOH —H+→ CH3CH(OMe)2 + H2O" },
+      { "name": "Wittig olefination", "reagents": "Ph3P=CHR' (ylide)", "product": "R2C=O + ylide → R2C=CHR' + Ph3PO", "notes": "Aldehyde/ketone → alkene, non-stabilized ylide → Z-alkene" }
+    ]
+  },
+  {
+    "id": "eas",
+    "name": "Electrophilic Aromatic Substitution (EAS)",
+    "aliases": ["eas", "aromatic substitution", "friedel-crafts", "nitration"],
+    "keywords": ["sigma complex", "arenium", "activating", "deactivating", "directing"],
+    "mechanism": "Two-step: 1) Electrophile (E⁺) attacks π system → resonance-stabilized σ-complex (arenium ion, carbocation at 3 positions, loss of aromaticity, RDS); 2) Base abstracts H from sp³ carbon → restores aromaticity (fast, exothermic). Overall: C6H5-H + E⁺ → C6H5-E + H⁺.",
+    "electrophiles": [
+      { "reaction": "Nitration", "electrophile": "NO2⁺ (nitronium)", "reagents": "HNO3 + H2SO4 (makes NO2⁺)", "product": "C6H5NO2" },
+      { "reaction": "Sulfonation", "electrophile": "SO3 (or HSO3⁺)", "reagents": "SO3 / H2SO4 (oleum)", "product": "C6H5SO3H", "notes": "Reversible; desulfonation at high T" },
+      { "reaction": "Halogenation", "electrophile": "Br⁺ / Cl⁺", "reagents": "Br2 + FeBr3; Cl2 + AlCl3", "product": "C6H5Br / Cl" },
+      { "reaction": "Friedel-Crafts Alkylation", "electrophile": "R⁺ (as R-Cl·AlCl3)", "reagents": "R-Cl + AlCl3 (Lewis acid)", "product": "C6H5-R", "limitations": "Carbocation rearrangement; over-alkylation (product more activating); fails with deactivating ring or -NH2 (complexes AlCl3); primary R⁺ rearranges" },
+      { "reaction": "Friedel-Crafts Acylation", "electrophile": "R-C≡O⁺ (acylium)", "reagents": "R-COCl + AlCl3", "product": "C6H5-COR", "advantages": "No rearrangement (acylium resonance stable); no over-acylation (product deactivating -COR)" }
+    ],
+    "substituentEffects": {
+      "activatingOrthoPara": ["-OH (strong)", "-O⁻ (very strong)", "-NH2 / -NHR / -NR2 (strong, but via salt becomes meta)", "-OCH3", "-NHCOCH3", "-alkyl (-CH3, -Et) (weak)", "-phenyl"],
+      "weaklyDeactivatingOrthoPara": ["-F, -Cl, -Br, -I (halogens: deactivating by -I but o/p by +M lone pair donation)"],
+      "deactivatingMeta": ["-NO2 (strong)", "-CN", "-SO3H", "-CHO / -COR", "-COOH / -COOR", "-CF3", "-NR3⁺"],
+      "notes": "Activating = rate ↑ vs benzene; deactivating = rate ↓. o/p directors donate e⁻ ortho/para via resonance; meta directors withdraw; halogens special case."
+    },
+    "examples": [
+      "C6H5CH3 (toluene) + Br2/FeBr3 → o- and p-bromotoluene (alkyl activates o/p, ~60% ortho, 35% para)",
+      "C6H5NO2 + Br2/FeBr3 → m-bromonitrobenzene (NO2 deactivates meta)",
+      "Phenol + Br2 (H2O, no catalyst) → 2,4,6-tribromophenol (white ppt, ultra-activated)"
+    ],
+    "quickTests": "Benzene resists Br2 without catalyst (vs alkene instant decolor). Phenol gives white ppt with Br2(aq). Aniline activates strongly but AlCl3 coords to NH2 in Friedel-Crafts, deactivating."
+  },
+  {
+    "id": "radical",
+    "name": "Free-Radical Substitution (Alkanes)",
+    "aliases": ["radical", "free radical", "halogenation", "chain reaction"],
+    "keywords": ["initiation", "propagation", "termination", "selectivity"],
+    "mechanism": "Chain reaction: Initiation: X2 —hv/Δ→ 2 X· (homolysis). Propagation: X· + R-H → HX + R· (H abstraction); R· + X2 → R-X + X· (regenerates X·). Termination: R·+R·, R·+X·, X·+X· → stable bonds.",
+    "selectivity": "Reactivity 3° > 2° > 1° > methyl due to radical stability (hyperconjugation, 3° most stable). Cl· is less selective (5:4:1 for 3°:2°:1° at 25°C); Br· highly selective (1600:80:1) → useful for selective bromination at tertiary position (NBS is even more selective for allylic/benzylic).",
+    "examples": [
+      "CH4 + Cl2 —hv→ CH3Cl + HCl; further → CH2Cl2 → CHCl3 → CCl4",
+      "CH3CH2CH3 + Br2 —hv→ CH3CHBrCH3 major (secondary radical more stable)",
+      "Allylic: CH3CH=CHCH3 + NBS —hv→ CH2BrCH=CHCH3 (resonance allylic radical)"
+    ]
+  }
+]

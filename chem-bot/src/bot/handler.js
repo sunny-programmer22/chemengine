@@ -16,12 +16,205 @@ const iupac = require('../tools/iupac');
 const safety = require('../tools/safety');
 const search = require('../tools/search');
 const stoichiometry = require('../tools/stoichiometry');
+const organic = require('../tools/organic');
 const llm = require('../llm/index');
 
 // Patterns for auto-detection
 const EQUATION_PATTERN = /(?:->|→|<->|⇌|[0-9]?\s*[A-Z][a-z]?[0-9]*(?:\([^)]+\)[0-9]*)*\s*(?:\+|→|->|<->|⇌)\s*)+/i;
 const FORMULA_WITH_NUMBER_PATTERN = /^([A-Z][a-z]?[0-9]*(?:\([^)]+\)[0-9]*)*)\s+(\d+(?:\.\d+)?)\s*$/i;
 const GREETINGS = ['hello', 'hi', 'hey', 'greetings', 'good morning', 'good afternoon', 'good evening', 'sup', 'how are you', 'how are you?', 'how r u', "how's it going", "what's up", 'whats up', 'how are u'];
+
+// ── Follow-up inline keyboards (next-step UX everywhere) ──────────────
+const KB = {
+  balance: {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '🔮 Predict Reaction', callback_data: 'cmd_predict' }, { text: '📊 Stoichiometry', callback_data: 'cmd_stoich' }],
+        [{ text: '⚛️ Molar Mass', callback_data: 'cmd_molar' }, { text: '⚠️ Safety', callback_data: 'cmd_safety' }],
+        [{ text: '📚 Help', callback_data: 'cmd_help' }, { text: '🏠 Menu', callback_data: 'cmd_start' }]
+      ]
+    }
+  },
+  molar: {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '⚖️ Balance', callback_data: 'cmd_balance' }, { text: '🔮 Predict Reaction', callback_data: 'cmd_predict' }],
+        [{ text: '⚠️ Safety', callback_data: 'cmd_safety' }, { text: '🔬 Element', callback_data: 'cmd_element' }],
+        [{ text: '📊 Stoichiometry', callback_data: 'cmd_stoich' }, { text: '📖 IUPAC', callback_data: 'cmd_iupac' }],
+        [{ text: '📚 Help', callback_data: 'cmd_help' }]
+      ]
+    }
+  },
+  predict: {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '⚖️ Balance', callback_data: 'cmd_balance' }, { text: '📊 Stoichiometry', callback_data: 'cmd_stoich' }],
+        [{ text: '⚛️ Molar Mass', callback_data: 'cmd_molar' }, { text: '⚠️ Safety', callback_data: 'cmd_safety' }],
+        [{ text: '🏠 Menu', callback_data: 'cmd_start' }, { text: '📚 Help', callback_data: 'cmd_help' }]
+      ]
+    }
+  },
+  element: {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '⚛️ Molar Mass', callback_data: 'cmd_molar' }, { text: '📖 IUPAC', callback_data: 'cmd_iupac' }],
+        [{ text: '⚠️ Safety', callback_data: 'cmd_safety' }, { text: '⚖️ Balance', callback_data: 'cmd_balance' }],
+        [{ text: '📚 Help', callback_data: 'cmd_help' }, { text: '🏠 Menu', callback_data: 'cmd_start' }]
+      ]
+    }
+  },
+  ph: {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '⚛️ Molar Mass', callback_data: 'cmd_molar' }, { text: '📊 Stoichiometry', callback_data: 'cmd_stoich' }],
+        [{ text: '⚖️ Balance', callback_data: 'cmd_balance' }, { text: '⚠️ Safety', callback_data: 'cmd_safety' }],
+        [{ text: '📚 Help', callback_data: 'cmd_help' }, { text: '🏠 Menu', callback_data: 'cmd_start' }]
+      ]
+    }
+  },
+  stoich: {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '⚖️ Balance', callback_data: 'cmd_balance' }, { text: '⚛️ Molar Mass', callback_data: 'cmd_molar' }],
+        [{ text: '🔮 Predict', callback_data: 'cmd_predict' }, { text: '⚗️ pH', callback_data: 'cmd_ph' }],
+        [{ text: '📚 Help', callback_data: 'cmd_help' }, { text: '🏠 Menu', callback_data: 'cmd_start' }]
+      ]
+    }
+  },
+  organic: {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '⛽ Hydrocarbon', callback_data: 'cmd_hydrocarbon' }, { text: '🧩 Functional', callback_data: 'cmd_functional' }],
+        [{ text: '⚙️ Mechanism', callback_data: 'cmd_mechanism' }, { text: '🔬 Stereo', callback_data: 'cmd_stereo' }],
+        [{ text: '⚛️ Molar Mass', callback_data: 'cmd_molar' }, { text: '📖 IUPAC', callback_data: 'cmd_iupac' }],
+        [{ text: '📚 Help', callback_data: 'cmd_help' }, { text: '🏠 Menu', callback_data: 'cmd_start' }]
+      ]
+    }
+  },
+  hydrocarbon: {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '🧬 Organic', callback_data: 'cmd_organic' }, { text: '🧩 Functional', callback_data: 'cmd_functional' }],
+        [{ text: '🔬 Stereo', callback_data: 'cmd_stereo' }, { text: '⚙️ Mechanism', callback_data: 'cmd_mechanism' }],
+        [{ text: '⚛️ Molar Mass', callback_data: 'cmd_molar' }, { text: '📖 IUPAC', callback_data: 'cmd_iupac' }],
+        [{ text: '📚 Help', callback_data: 'cmd_help' }, { text: '🏠 Menu', callback_data: 'cmd_start' }]
+      ]
+    }
+  },
+  mechanism: {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '🧬 Organic', callback_data: 'cmd_organic' }, { text: '🧩 Functional', callback_data: 'cmd_functional' }],
+        [{ text: '⛽ Hydrocarbon', callback_data: 'cmd_hydrocarbon' }, { text: '🔬 Stereo', callback_data: 'cmd_stereo' }],
+        [{ text: '🤖 Ask AI', callback_data: 'cmd_ask' }, { text: '📚 Help', callback_data: 'cmd_help' }],
+        [{ text: '🏠 Menu', callback_data: 'cmd_start' }]
+      ]
+    }
+  },
+  functional: {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '🧬 Organic', callback_data: 'cmd_organic' }, { text: '⛽ Hydrocarbon', callback_data: 'cmd_hydrocarbon' }],
+        [{ text: '⚙️ Mechanism', callback_data: 'cmd_mechanism' }, { text: '🔬 Stereo', callback_data: 'cmd_stereo' }],
+        [{ text: '📖 IUPAC', callback_data: 'cmd_iupac' }, { text: '⚛️ Molar Mass', callback_data: 'cmd_molar' }],
+        [{ text: '📚 Help', callback_data: 'cmd_help' }, { text: '🏠 Menu', callback_data: 'cmd_start' }]
+      ]
+    }
+  },
+  stereo: {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '🧬 Organic', callback_data: 'cmd_organic' }, { text: '🧩 Functional', callback_data: 'cmd_functional' }],
+        [{ text: '⛽ Hydrocarbon', callback_data: 'cmd_hydrocarbon' }, { text: '⚙️ Mechanism', callback_data: 'cmd_mechanism' }],
+        [{ text: '⚖️ Balance', callback_data: 'cmd_balance' }, { text: '🔮 Predict', callback_data: 'cmd_predict' }],
+        [{ text: '📚 Help', callback_data: 'cmd_help' }, { text: '🏠 Menu', callback_data: 'cmd_start' }]
+      ]
+    }
+  },
+  spectroscopy: {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '🧬 Organic', callback_data: 'cmd_organic' }, { text: '🧩 Functional', callback_data: 'cmd_functional' }],
+        [{ text: '⛽ Hydrocarbon', callback_data: 'cmd_hydrocarbon' }, { text: '🔬 Stereo', callback_data: 'cmd_stereo' }],
+        [{ text: '⚙️ Mechanism', callback_data: 'cmd_mechanism' }, { text: '📖 IUPAC', callback_data: 'cmd_iupac' }],
+        [{ text: '📚 Help', callback_data: 'cmd_help' }, { text: '🏠 Menu', callback_data: 'cmd_start' }]
+      ]
+    }
+  },
+  iupac: {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '⚛️ Molar Mass', callback_data: 'cmd_molar' }, { text: '🔍 Search', callback_data: 'cmd_search' }],
+        [{ text: '⚠️ Safety', callback_data: 'cmd_safety' }, { text: '🔬 Element', callback_data: 'cmd_element' }],
+        [{ text: '📚 Help', callback_data: 'cmd_help' }, { text: '🏠 Menu', callback_data: 'cmd_start' }]
+      ]
+    }
+  },
+  safety: {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '⚛️ Molar Mass', callback_data: 'cmd_molar' }, { text: '🔬 Element', callback_data: 'cmd_element' }],
+        [{ text: '📖 IUPAC', callback_data: 'cmd_iupac' }, { text: '⚗️ pH', callback_data: 'cmd_ph' }],
+        [{ text: '📚 Help', callback_data: 'cmd_help' }, { text: '🏠 Menu', callback_data: 'cmd_start' }]
+      ]
+    }
+  },
+  search: {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '📖 IUPAC', callback_data: 'cmd_iupac' }, { text: '⚛️ Molar Mass', callback_data: 'cmd_molar' }],
+        [{ text: '🔬 Element', callback_data: 'cmd_element' }, { text: '⚠️ Safety', callback_data: 'cmd_safety' }],
+        [{ text: '🔍 Search Again', callback_data: 'cmd_search' }, { text: '📚 Help', callback_data: 'cmd_help' }]
+      ]
+    }
+  },
+  help: {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '⚖️ Balance', callback_data: 'cmd_balance' }, { text: '🔮 Predict', callback_data: 'cmd_predict' }],
+        [{ text: '⚛️ Molar Mass', callback_data: 'cmd_molar' }, { text: '🔬 Element', callback_data: 'cmd_element' }],
+        [{ text: '⚗️ pH', callback_data: 'cmd_ph' }, { text: '📊 Stoichiometry', callback_data: 'cmd_stoich' }],
+        [{ text: '🏠 Menu', callback_data: 'cmd_start' }]
+      ]
+    }
+  },
+  ask: {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '🧬 Functional Groups', callback_data: 'topic_groups' }, { text: '⚗️ Reaction Types', callback_data: 'topic_reactions' }],
+        [{ text: '🧪 Acids & Bases', callback_data: 'topic_acids' }, { text: '📚 Periodic Trends', callback_data: 'topic_periodic' }],
+        [{ text: '⚛️ Mechanisms', callback_data: 'topic_mechanism' }, { text: '📖 IUPAC Naming', callback_data: 'topic_naming' }],
+        [{ text: '🏠 Menu', callback_data: 'cmd_start' }, { text: '📚 Help', callback_data: 'cmd_help' }]
+      ]
+    }
+  },
+  organic_short: {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '🧬 Next: Functional Groups', callback_data: 'topic_groups' }, { text: '⚗️ Next: Reactions', callback_data: 'topic_reactions' }],
+        [{ text: '🧪 Acids & Bases', callback_data: 'topic_acids' }, { text: '🏠 Menu', callback_data: 'cmd_start' }]
+      ]
+    }
+  },
+  greeting: {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '⚖️ Balance', callback_data: 'cmd_balance' }, { text: '⚛️ Molar', callback_data: 'cmd_molar' }],
+        [{ text: '🤖 Ask AI', callback_data: 'cmd_ask' }, { text: '📚 Help', callback_data: 'cmd_help' }]
+      ]
+    }
+  }
+};
+
+// Topic preset questions for organic follow-ups
+const TOPIC_QUESTIONS = {
+  topic_groups: 'Explain functional groups in organic chemistry with examples — alcohol, aldehyde, ketone, carboxylic acid, amine, etc.',
+  topic_reactions: 'Explain the main types of chemical reactions — synthesis, decomposition, single and double replacement, combustion, redox — with examples.',
+  topic_acids: 'Explain acids and bases: Arrhenius, Brønsted-Lowry, Lewis, pH scale, conjugate acid-base pairs with examples.',
+  topic_periodic: 'Explain periodic trends: atomic radius, ionization energy, electronegativity, electron affinity across periods and groups.',
+  topic_mechanism: 'Explain organic reaction mechanisms: SN1, SN2, E1, E2 — how they work, stereochemistry and examples.',
+  topic_naming: 'Explain IUPAC naming rules for organic compounds: alkanes, alkenes, alkynes, with examples.'
+};
 
 /**
  * Send welcome message for /start command
@@ -33,26 +226,32 @@ async function handleStart(bot, msg) {
   const welcomeText = `
 <b>🧪 Welcome to the Chemistry Bot!</b>
 
-I can help you with all things chemistry. Here's what I can do:
+I can help you with all things chemistry. Tap a button below to get started:
 
 ${formatList([
-  '/balance <equation> — Balance chemical equations',
-  '/predict <reactants> — Predict reaction products',
-  '/molar <formula> — Calculate molar mass',
-  '/stoich <eq> <compound> <amount> <unit> — Stoichiometry',
-  '/ph <formula> <concentration> — Calculate pH',
-  '/element <symbol|name|Z> — Get element information',
-  '/iupac <name> — Look up IUPAC names',
-  '/ask <question> — Ask any chemistry question',
-  '/safety <formula> — Get safety information',
-  '/search <query> — Search chemistry databases',
-  '/help — Show all commands'
+  '⚖️ Balance Equations — Tap ⚖️ Balance below',
+  '🔮 Predict Reaction — Tap 🔮 Predict below',
+  '⚛️ Molar Mass — Tap ⚛️ Molar Mass below',
+  '📊 Stoichiometry — Tap 📊 Stoichiometry below',
+  '⚗️ pH Calculator — Tap ⚗️ pH below',
+  '🔬 Element Info — Tap 🔬 Element below',
+  '📖 IUPAC Lookup — Tap 📖 IUPAC below',
+  '🤖 Ask AI — Tap 🤖 Ask AI below',
+  '⚠️ Safety Info — Tap ⚠️ Safety below',
+  '🔍 Chemistry Search — Tap 🔍 Search below',
+  '🧬 Organic Analysis — Tap 🧬 Organic below',
+  '⛽ Hydrocarbon — Tap ⛽ Hydrocarbon below',
+  '⚙️ Mechanism — Tap ⚙️ Mechanism below',
+  '🧩 Functional Groups — Tap 🧩 Functional below',
+  '🔬 Stereo — Tap 🔬 Stereo below',
+  '📚 Help — Tap 📚 Help below'
 ])}
 
 <b>Quick Tips:</b>
-• Just type a chemical equation like "H2 + O2 -> H2O" to balance it
-• Type a formula followed by a number for quick molar mass
-• Start with a greeting and I'll say hello back!
+• Just type a chemical equation like "H2 + O2 → H2O" to balance it
+• Type a formula like "H2SO4" for instant molar mass
+• Try tapping 🧬 Organic or ⛽ Hydrocarbon for organic help!
+• Or tap any button below — no need to type commands!
 
 <i>Powered by PubChem, Wikidata, and AI</i>
 `;
@@ -64,12 +263,34 @@ ${formatList([
         [{ text: '⚛️ Molar Mass', callback_data: 'cmd_molar' }, { text: '🔬 Element', callback_data: 'cmd_element' }],
         [{ text: '⚗️ pH', callback_data: 'cmd_ph' }, { text: '📊 Stoichiometry', callback_data: 'cmd_stoich' }],
         [{ text: '📖 IUPAC', callback_data: 'cmd_iupac' }, { text: '⚠️ Safety', callback_data: 'cmd_safety' }],
-        [{ text: '🔍 Search', callback_data: 'cmd_search' }, { text: '🤖 Ask AI', callback_data: 'cmd_ask' }],
-        [{ text: '📚 Help', callback_data: 'cmd_help' }]
+        [{ text: '🧬 Organic', callback_data: 'cmd_organic' }, { text: '⛽ Hydrocarbon', callback_data: 'cmd_hydrocarbon' }],
+        [{ text: '⚙️ Mechanism', callback_data: 'cmd_mechanism' }, { text: '🧩 Functional', callback_data: 'cmd_functional' }],
+        [{ text: '🔬 Stereo', callback_data: 'cmd_stereo' }, { text: '🤖 Ask AI', callback_data: 'cmd_ask' }],
+        [{ text: '🔍 Search', callback_data: 'cmd_search' }, { text: '📚 Help', callback_data: 'cmd_help' }]
       ]
     },
     parse_mode: 'HTML'
   };
+
+  // Persistent ReplyKeyboardMarkup — alternative bottom-row buttons (always visible)
+  // Telegram ReplyKeyboardMarkup stays at bottom of chat for quick access
+  const persistentReplyKeyboard = {
+    keyboard: [
+      [{ text: '⚖️ Balance' }, { text: '🔮 Predict' }],
+      [{ text: '⚛️ Molar Mass' }, { text: '🔬 Element' }],
+      [{ text: '⚗️ pH' }, { text: '📊 Stoichiometry' }],
+      [{ text: '📖 IUPAC' }, { text: '⚠️ Safety' }],
+      [{ text: '🧬 Organic' }, { text: '⛽ Hydrocarbon' }],
+      [{ text: '⚙️ Mechanism' }, { text: '🧩 Functional' }],
+      [{ text: '🔬 Stereo' }, { text: '🤖 Ask AI' }],
+      [{ text: '🔍 Search' }, { text: '📚 Help' }]
+    ],
+    resize_keyboard: true,
+    is_persistent: true,
+    one_time_keyboard: false
+  };
+  // Expose for optional use: send with { reply_markup: persistentReplyKeyboard } to show bottom bar
+  void persistentReplyKeyboard;
 
   try {
     await bot.sendMessage(chatId, welcomeText.trim(), keyboard);
@@ -86,48 +307,80 @@ ${formatList([
  */
 async function handleHelp(bot, msg) {
   const chatId = msg.chat.id;
-  const helpText = `
-<b>📚 Chemistry Bot Commands</b>
+    const helpText = `
+<b>📚 Chemistry Bot — Tap a Button to Start</b>
 
-<b>Basic Commands:</b>
+<b>Getting Started:</b>
 ${formatList([
-  '/start — Get started with the bot',
-  '/help — Show this help message'
+  '🏠 Start — Tap 📚 Help to see the welcome screen',
+  '📚 Help — You are here! Tap any button below'
 ])}
 
 <b>Chemistry Tools:</b>
 ${formatList([
-  '/balance H2 + O2 -> H2O — Balance any chemical equation',
-  '/predict Na + Cl2 — Predict products of a reaction',
-  '/molar H2SO4 — Calculate molar mass',
-  '/stoich 2H2 + O2 -> 2H2O H2O 10 mol — Stoichiometry',
-  '/ph HCl 0.1 — Calculate pH of a solution',
-  '/element Fe or Iron or 26 — Get element info',
-  '/iupac acetic acid — Get systematic IUPAC name'
+  '⚖️ Balance Equations — Tap ⚖️ Balance then send H2 + O2 → H2O',
+  '🔮 Predict Reaction — Tap 🔮 Predict then send Na + Cl2',
+  '⚛️ Molar Mass — Tap ⚛️ Molar Mass then send H2SO4',
+  '📊 Stoichiometry — Tap 📊 Stoichiometry then send equation + amount',
+  '⚗️ pH Calculator — Tap ⚗️ pH then send HCl 0.1',
+  '🔬 Element Info — Tap 🔬 Element then send Fe or Iron or 26',
+  '📖 IUPAC Lookup — Tap 📖 IUPAC then send acetic acid'
+])}
+
+<b>Organic Chemistry:</b>
+${formatList([
+  '🧬 Organic Analysis — Tap 🧬 Organic then send C2H5OH',
+  '⛽ Hydrocarbon — Tap ⛽ Hydrocarbon then send C6H6',
+  '⚙️ Mechanism — Tap ⚙️ Mechanism then send SN1',
+  '🧩 Functional Groups — Tap 🧩 Functional then send CH3COOH',
+  '🔬 Stereo — Tap 🔬 Stereo then send but-2-ene'
 ])}
 
 <b>AI-Powered:</b>
 ${formatList([
-  '/ask Why is the sky blue? — Free-form Q&A',
-  '/safety H2SO4 — Get hazard info from PubChem',
-  '/search Vitamin C — Search chemistry databases'
+  '🤖 Ask AI — Tap 🤖 Ask AI then send any chemistry question',
+  '⚠️ Safety Info — Tap ⚠️ Safety then send H2SO4',
+  '🔍 Chemistry Search — Tap 🔍 Search then send Vitamin C'
 ])}
 
-<b>Examples:</b>
+<b>Examples — tap a button first, then type:</b>
 <pre>
-/molar NaCl
-/molar Ca(OH)2
-/element gold
-/balance CH4 + O2 -> CO2 + H2O
-/predict Zn + HCl
-/ask What is the mechanism of SN1 reactions?
+Tap ⚛️ Molar Mass → NaCl
+Tap ⚛️ Molar Mass → Ca(OH)2
+Tap 🔬 Element → gold
+Tap ⚖️ Balance → CH4 + O2 → CO2 + H2O
+Tap 🔮 Predict → Zn + HCl
+Tap 🧬 Organic → C2H5OH
+Tap ⛽ Hydrocarbon → C6H6
+Tap ⚙️ Mechanism → SN1
+Tap 🧩 Functional → CH3COOH
+Tap 🔬 Stereo → lactic acid
+Tap 🤖 Ask AI → What is the mechanism of SN1 reactions?
 </pre>
 
-Type any command to get started!
+👇 Tap any button below or just type a formula like H2O!
 `;
 
+  // Persistent ReplyKeyboardMarkup alternative — bottom row buttons (always visible)
+  const helpPersistentKeyboard = {
+    keyboard: [
+      [{ text: '⚖️ Balance' }, { text: '🔮 Predict' }],
+      [{ text: '⚛️ Molar Mass' }, { text: '🔬 Element' }],
+      [{ text: '⚗️ pH' }, { text: '📊 Stoichiometry' }],
+      [{ text: '📖 IUPAC' }, { text: '⚠️ Safety' }],
+      [{ text: '🧬 Organic' }, { text: '⛽ Hydrocarbon' }],
+      [{ text: '⚙️ Mechanism' }, { text: '🧩 Functional' }],
+      [{ text: '🔬 Stereo' }, { text: '🤖 Ask AI' }],
+      [{ text: '🔍 Search' }, { text: '📚 Help' }]
+    ],
+    resize_keyboard: true,
+    is_persistent: true,
+    one_time_keyboard: false
+  };
+  void helpPersistentKeyboard;
+
   try {
-    await bot.sendMessage(chatId, helpText.trim(), { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, helpText.trim(), { parse_mode: 'HTML', ...KB.help });
   } catch (err) {
     logger.error('Error sending help message:', err);
     await bot.sendMessage(chatId, formatError(err));
@@ -145,7 +398,7 @@ async function handleBalance(bot, msg, args) {
   const equation = args.join(' ').trim();
 
   if (!equation) {
-    await bot.sendMessage(chatId, 'Please provide a chemical equation.\nUsage: /balance H2 + O2 -> H2O', { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, 'Please provide a chemical equation.\nUsage: /balance H2 + O2 -> H2O', { parse_mode: 'HTML', ...KB.balance });
     return;
   }
 
@@ -153,10 +406,10 @@ async function handleBalance(bot, msg, args) {
     await bot.sendChatAction(chatId, 'typing');
     const result = await balancer.balance(equation);
     const message = `<b>⚖️ Balanced Equation</b>\n\n${result}`;
-    await sendFormattedMessage(bot, chatId, message);
+    await sendFormattedMessage(bot, chatId, message, KB.balance);
   } catch (err) {
     logger.error('Balance error:', err);
-    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML', ...KB.help });
   }
 }
 
@@ -171,7 +424,7 @@ async function handlePredict(bot, msg, args) {
   const reactants = args.join(' ').trim();
 
   if (!reactants) {
-    await bot.sendMessage(chatId, 'Please provide reactants.\nUsage: /predict Na + Cl2', { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, 'Please provide reactants.\nUsage: /predict Na + Cl2', { parse_mode: 'HTML', ...KB.predict });
     return;
   }
 
@@ -179,10 +432,10 @@ async function handlePredict(bot, msg, args) {
     await bot.sendChatAction(chatId, 'typing');
     const result = await predictor.predict(reactants);
     const message = `<b>🔮 Reaction Prediction</b>\n\n${result}`;
-    await sendFormattedMessage(bot, chatId, message);
+    await sendFormattedMessage(bot, chatId, message, KB.predict);
   } catch (err) {
     logger.error('Predict error:', err);
-    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML', ...KB.help });
   }
 }
 
@@ -197,7 +450,7 @@ async function handleMolar(bot, msg, args) {
   const formula = args.join(' ').trim();
 
   if (!formula) {
-    await bot.sendMessage(chatId, 'Please provide a chemical formula.\nUsage: /molar H2SO4', { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, 'Please provide a chemical formula.\nUsage: /molar H2SO4', { parse_mode: 'HTML', ...KB.molar });
     return;
   }
 
@@ -205,10 +458,10 @@ async function handleMolar(bot, msg, args) {
     await bot.sendChatAction(chatId, 'typing');
     const result = await molar.calculate(formula);
     const message = `<b>⚛️ Molar Mass Calculator</b>\n\n${result}`;
-    await sendFormattedMessage(bot, chatId, message);
+    await sendFormattedMessage(bot, chatId, message, KB.molar);
   } catch (err) {
     logger.error('Molar mass error:', err);
-    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML', ...KB.help });
   }
 }
 
@@ -225,7 +478,7 @@ async function handleStoich(bot, msg, args) {
     await bot.sendMessage(chatId,
       'Usage: /stoich <equation> <compound> <amount> <unit>\n' +
       'Example: /stoich 2H2 + O2 -> 2H2O H2O 10 mol',
-      { parse_mode: 'HTML' }
+      { parse_mode: 'HTML', ...KB.stoich }
     );
     return;
   }
@@ -235,7 +488,7 @@ async function handleStoich(bot, msg, args) {
   const eqMatch = input.match(/(.+?)\s+(\w+(?:\([^)]+\))?\d*)\s+(\d+(?:\.\d+)?)\s*(mol|g|kg|mg|mol|mmol)?$/i);
 
   if (!eqMatch) {
-    await bot.sendMessage(chatId, 'Could not parse the arguments. Please check the format.', { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, 'Could not parse the arguments. Please check the format.', { parse_mode: 'HTML', ...KB.stoich });
     return;
   }
 
@@ -245,10 +498,10 @@ async function handleStoich(bot, msg, args) {
     await bot.sendChatAction(chatId, 'typing');
     const result = await stoichiometry.calculate(equation, compound, parseFloat(amount), unit || 'mol');
     const message = `<b>📊 Stoichiometry Calculation</b>\n\n${result}`;
-    await sendFormattedMessage(bot, chatId, message);
+    await sendFormattedMessage(bot, chatId, message, KB.stoich);
   } catch (err) {
     logger.error('Stoichiometry error:', err);
-    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML', ...KB.help });
   }
 }
 
@@ -262,7 +515,7 @@ async function handlePh(bot, msg, args) {
   const chatId = msg.chat.id;
 
   if (args.length < 2) {
-    await bot.sendMessage(chatId, 'Usage: /ph <formula> <concentration>\nExample: /ph HCl 0.1\nNote: Concentration in mol/L (M)', { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, 'Usage: /ph <formula> <concentration>\nExample: /ph HCl 0.1\nNote: Concentration in mol/L (M)', { parse_mode: 'HTML', ...KB.ph });
     return;
   }
 
@@ -271,7 +524,7 @@ async function handlePh(bot, msg, args) {
   const concentration = parseFloat(concStr);
 
   if (isNaN(concentration) || concentration <= 0) {
-    await bot.sendMessage(chatId, 'Please provide a valid positive concentration.\nExample: /ph HCl 0.1', { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, 'Please provide a valid positive concentration.\nExample: /ph HCl 0.1', { parse_mode: 'HTML', ...KB.ph });
     return;
   }
 
@@ -279,10 +532,10 @@ async function handlePh(bot, msg, args) {
     await bot.sendChatAction(chatId, 'typing');
     const result = await phCalc.calculate(formula, concentration);
     const message = `<b>⚗️ pH Calculator</b>\n\n${result}`;
-    await sendFormattedMessage(bot, chatId, message);
+    await sendFormattedMessage(bot, chatId, message, KB.ph);
   } catch (err) {
     logger.error('pH calculation error:', err);
-    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML', ...KB.help });
   }
 }
 
@@ -297,7 +550,7 @@ async function handleElement(bot, msg, args) {
   const query = args.join(' ').trim();
 
   if (!query) {
-    await bot.sendMessage(chatId, 'Please provide an element symbol, name, or atomic number.\nUsage: /element Fe or /element Iron or /element 26', { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, 'Please provide an element symbol, name, or atomic number.\nUsage: /element Fe or /element Iron or /element 26', { parse_mode: 'HTML', ...KB.element });
     return;
   }
 
@@ -319,10 +572,10 @@ async function handleElement(bot, msg, args) {
       body = 'No information found.';
     }
     const message = `<b>🔬 Element Information</b>\n\n${body}`;
-    await sendFormattedMessage(bot, chatId, message);
+    await sendFormattedMessage(bot, chatId, message, KB.element);
   } catch (err) {
     logger.error('Element lookup error:', err);
-    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML', ...KB.help });
   }
 }
 
@@ -337,7 +590,7 @@ async function handleIupac(bot, msg, args) {
   const name = args.join(' ').trim();
 
   if (!name) {
-    await bot.sendMessage(chatId, 'Please provide a compound name to look up.\nUsage: /iupac acetic acid', { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, 'Please provide a compound name to look up.\nUsage: /iupac acetic acid', { parse_mode: 'HTML', ...KB.iupac });
     return;
   }
 
@@ -345,10 +598,10 @@ async function handleIupac(bot, msg, args) {
     await bot.sendChatAction(chatId, 'typing');
     const result = await iupac.lookup(name);
     const message = `<b>📖 IUPAC Name Lookup</b>\n\n${result}`;
-    await sendFormattedMessage(bot, chatId, message);
+    await sendFormattedMessage(bot, chatId, message, KB.iupac);
   } catch (err) {
     logger.error('IUPAC lookup error:', err);
-    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML', ...KB.help });
   }
 }
 
@@ -363,7 +616,7 @@ async function handleAsk(bot, msg, args) {
   const question = args.join(' ').trim();
 
   if (!question) {
-    await bot.sendMessage(chatId, 'Please ask a chemistry question.\nUsage: /ask What is the mechanism of SN1 reactions?', { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, 'Please ask a chemistry question.\nUsage: /ask What is the mechanism of SN1 reactions?', { parse_mode: 'HTML', ...KB.ask });
     return;
   }
 
@@ -371,10 +624,10 @@ async function handleAsk(bot, msg, args) {
     await bot.sendChatAction(chatId, 'typing');
     const result = await (llm.askChem || llm.ask)(question, msg.from);
     const answer = result && typeof result === 'object' ? (result.answer || String(result)) : String(result);
-    await sendFormattedMessage(bot, chatId, answer);
+    await sendFormattedMessage(bot, chatId, answer, KB.ask);
   } catch (err) {
     logger.error('LLM ask error:', err);
-    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML', ...KB.help });
   }
 }
 
@@ -389,7 +642,7 @@ async function handleSafety(bot, msg, args) {
   const formula = args.join(' ').trim();
 
   if (!formula) {
-    await bot.sendMessage(chatId, 'Please provide a chemical formula or name.\nUsage: /safety H2SO4', { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, 'Please provide a chemical formula or name.\nUsage: /safety H2SO4', { parse_mode: 'HTML', ...KB.safety });
     return;
   }
 
@@ -397,10 +650,10 @@ async function handleSafety(bot, msg, args) {
     await bot.sendChatAction(chatId, 'typing');
     const result = await safety.getInfo(formula);
     const message = `<b>⚠️ Safety Information</b>\n\n${result}`;
-    await sendFormattedMessage(bot, chatId, message);
+    await sendFormattedMessage(bot, chatId, message, KB.safety);
   } catch (err) {
     logger.error('Safety lookup error:', err);
-    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML', ...KB.help });
   }
 }
 
@@ -415,7 +668,7 @@ async function handleSearch(bot, msg, args) {
   const query = args.join(' ').trim();
 
   if (!query) {
-    await bot.sendMessage(chatId, 'Please provide a search query.\nUsage: /search Vitamin C', { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, 'Please provide a search query.\nUsage: /search Vitamin C', { parse_mode: 'HTML', ...KB.search });
     return;
   }
 
@@ -423,10 +676,178 @@ async function handleSearch(bot, msg, args) {
     await bot.sendChatAction(chatId, 'typing');
     const result = await search.query(query);
     const message = `<b>🔍 Search Results</b>\n\n${result}`;
-    await sendFormattedMessage(bot, chatId, message);
+    await sendFormattedMessage(bot, chatId, message, KB.search);
   } catch (err) {
     logger.error('Search error:', err);
-    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML', ...KB.help });
+  }
+}
+
+/**
+ * Handle /organic command - general organic analysis (DBE, classification, functional hints)
+ * @param {Object} bot - Telegram bot instance
+ * @param {Object} msg - Message object
+ * @param {string[]} args - Command arguments
+ */
+async function handleOrganic(bot, msg, args) {
+  const chatId = msg.chat.id;
+  const query = args.join(' ').trim();
+
+  if (!query) {
+    await bot.sendMessage(chatId,
+      'Please provide a formula or name.\nUsage: <code>/organic C2H5OH</code> or <code>/organic benzene</code>\nExamples: <code>/organic CH3COOH</code>, <code>/organic glucose</code>',
+      { parse_mode: 'HTML', ...KB.organic }
+    );
+    return;
+  }
+
+  try {
+    await bot.sendChatAction(chatId, 'typing');
+    const result = await organic.analyzeOrganic(query);
+    await sendFormattedMessage(bot, chatId, result, KB.organic);
+  } catch (err) {
+    logger.error('Organic error:', err);
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML', ...KB.help });
+  }
+}
+
+/**
+ * Handle /hydrocarbon command - hydrocarbon classification
+ * @param {Object} bot - Telegram bot instance
+ * @param {Object} msg - Message object
+ * @param {string[]} args - Command arguments
+ */
+async function handleHydrocarbon(bot, msg, args) {
+  const chatId = msg.chat.id;
+  const query = args.join(' ').trim();
+
+  if (!query) {
+    await bot.sendMessage(chatId,
+      'Please provide a hydrocarbon formula.\nUsage: <code>/hydrocarbon C6H6</code>\nExamples: <code>/hydrocarbon CH4</code>, <code>/hydrocarbon C2H4</code>, <code>/hydrocarbon C2H2</code>',
+      { parse_mode: 'HTML', ...KB.hydrocarbon }
+    );
+    return;
+  }
+
+  try {
+    await bot.sendChatAction(chatId, 'typing');
+    const result = await organic.analyzeHydrocarbon(query);
+    await sendFormattedMessage(bot, chatId, result, KB.hydrocarbon);
+  } catch (err) {
+    logger.error('Hydrocarbon error:', err);
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML', ...KB.help });
+  }
+}
+
+/**
+ * Handle /mechanism command - reaction mechanism explanation
+ * @param {Object} bot - Telegram bot instance
+ * @param {Object} msg - Message object
+ * @param {string[]} args - Command arguments
+ */
+async function handleMechanism(bot, msg, args) {
+  const chatId = msg.chat.id;
+  const query = args.join(' ').trim();
+
+  if (!query) {
+    await bot.sendMessage(chatId,
+      'Please provide a mechanism type or reaction.\nUsage: <code>/mechanism SN1</code>\nExamples: <code>/mechanism SN2</code>, <code>/mechanism E1</code>, <code>/mechanism addition</code>, <code>/mechanism EAS</code>',
+      { parse_mode: 'HTML', ...KB.mechanism }
+    );
+    return;
+  }
+
+  try {
+    await bot.sendChatAction(chatId, 'typing');
+    const result = await organic.explainMechanism(query);
+    await sendFormattedMessage(bot, chatId, result, KB.mechanism);
+  } catch (err) {
+    logger.error('Mechanism error:', err);
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML', ...KB.help });
+  }
+}
+
+/**
+ * Handle /functional command - functional group identification
+ * @param {Object} bot - Telegram bot instance
+ * @param {Object} msg - Message object
+ * @param {string[]} args - Command arguments
+ */
+async function handleFunctional(bot, msg, args) {
+  const chatId = msg.chat.id;
+  const query = args.join(' ').trim();
+
+  if (!query) {
+    await bot.sendMessage(chatId,
+      'Please provide a formula or name.\nUsage: <code>/functional CH3COOH</code>\nExamples: <code>/functional C2H5OH</code>, <code>/functional benzene</code>',
+      { parse_mode: 'HTML', ...KB.functional }
+    );
+    return;
+  }
+
+  try {
+    await bot.sendChatAction(chatId, 'typing');
+    const result = await organic.identifyFunctional(query);
+    await sendFormattedMessage(bot, chatId, result, KB.functional);
+  } catch (err) {
+    logger.error('Functional error:', err);
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML', ...KB.help });
+  }
+}
+
+/**
+ * Handle /stereo command - stereochemistry & isomerism
+ * @param {Object} bot - Telegram bot instance
+ * @param {Object} msg - Message object
+ * @param {string[]} args - Command arguments
+ */
+async function handleStereo(bot, msg, args) {
+  const chatId = msg.chat.id;
+  const query = args.join(' ').trim();
+
+  if (!query) {
+    await bot.sendMessage(chatId,
+      'Please provide a formula or name.\nUsage: <code>/stereo but-2-ene</code>\nExamples: <code>/stereo lactic acid</code>, <code>/stereo glucose</code>, <code>/stereo C4H8</code>',
+      { parse_mode: 'HTML', ...KB.stereo }
+    );
+    return;
+  }
+
+  try {
+    await bot.sendChatAction(chatId, 'typing');
+    const result = await organic.explainStereo(query);
+    await sendFormattedMessage(bot, chatId, result, KB.stereo);
+  } catch (err) {
+    logger.error('Stereo error:', err);
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML', ...KB.help });
+  }
+}
+
+/**
+ * Handle /spectroscopy command - IR/NMR/MS analysis
+ * @param {Object} bot - Telegram bot instance
+ * @param {Object} msg - Message object
+ * @param {string[]} args - Command arguments
+ */
+async function handleSpectroscopy(bot, msg, args) {
+  const chatId = msg.chat.id;
+  const query = args.join(' ').trim();
+
+  if (!query) {
+    await bot.sendMessage(chatId,
+      'Please provide a spectrum or compound query.\nUsage: <code>/spectroscopy C2H5OH</code> or <code>/spectroscopy IR carbonyl</code>\nExamples: <code>/spectroscopy NMR aldehyde</code>, <code>/spectroscopy MS 91</code>',
+      { parse_mode: 'HTML', ...KB.spectroscopy }
+    );
+    return;
+  }
+
+  try {
+    await bot.sendChatAction(chatId, 'typing');
+    const result = await (organic.analyzeSpectroscopy || organic.getSpectroscopy || organic.getSpectroscopyInfo)(query);
+    await sendFormattedMessage(bot, chatId, result, KB.spectroscopy);
+  } catch (err) {
+    logger.error('Spectroscopy error:', err);
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML', ...KB.help });
   }
 }
 
@@ -477,23 +898,23 @@ async function routeMessage(bot, msg) {
   const text = msg.text || msg.caption || '';
   const chatId = msg.chat.id;
 
-  // Check for greetings / casual human chat - very short replies
+  // Check for greetings / casual human chat - very short replies with quick nav
   const lowerText = text.toLowerCase().trim();
   const casualPhrases = ['how are you', 'how r u', "how's it going", "what's up", 'whats up', 'how are u', 'hru', 'wbu', 'what about you', 'i am fine', "i'm fine", 'i am good', "i'm good"];
   if (GREETINGS.some(g => lowerText === g || lowerText.startsWith(g + ' ') || lowerText.startsWith(g + '?') || lowerText.startsWith(g + '!'))) {
     const greetings = ['Hey! 👋', 'Hi there! 🧪', 'Hello! 😊', 'Hey there!'];
-    await bot.sendMessage(chatId, greetings[Math.floor(Math.random() * greetings.length)]);
+    await bot.sendMessage(chatId, greetings[Math.floor(Math.random() * greetings.length)], { ...KB.greeting });
     return;
   }
   if (casualPhrases.some(p => lowerText === p || lowerText.startsWith(p) || lowerText.includes(p))) {
     const casualReplies = ["I'm good! 😊 How about you?", "Doing great! You?", "All good here! 👋", "Great! How can I help? 😊"];
     // Specific handling for "how are you"
     if (lowerText.includes('how are you') || lowerText.includes('how r u') || lowerText.includes('how are u') || lowerText.includes('hru')) {
-      await bot.sendMessage(chatId, casualReplies[Math.floor(Math.random() * casualReplies.length)]);
+      await bot.sendMessage(chatId, casualReplies[Math.floor(Math.random() * casualReplies.length)], { ...KB.greeting });
       return;
     }
     if (lowerText.includes("what's up") || lowerText.includes('whats up') || lowerText.includes('sup')) {
-      await bot.sendMessage(chatId, "Not much! Just chilling with chemistry 🧪 You?");
+      await bot.sendMessage(chatId, "Not much! Just chilling with chemistry 🧪 You?", { ...KB.greeting });
       return;
     }
   }
@@ -517,28 +938,32 @@ async function routeMessage(bot, msg) {
     return;
   }
 
-  // Unknown input - try LLM for general chat (very short)
+  // Unknown input - try LLM for general chat (organic explanations can be longer, with next-step buttons)
   try {
     await bot.sendChatAction(chatId, 'typing');
     const result = await llm.askChem(text, msg.from);
-    await sendFormattedMessage(bot, chatId, result.answer || result);
+    const answer = result && typeof result === 'object' ? (result.answer || String(result)) : String(result);
+    await sendFormattedMessage(bot, chatId, answer, KB.organic_short);
     return;
   } catch {}
-  await bot.sendMessage(chatId, 'Hey! 😊 Try /help for chemistry stuff!', { parse_mode: 'HTML' });
+  await bot.sendMessage(chatId, 'Hey! 😊 Try /help for chemistry stuff!', { parse_mode: 'HTML', ...KB.help });
 }
 
 /**
- * Send a formatted message, splitting if necessary
+ * Send a formatted message, splitting if necessary, with optional inline keyboard on last chunk
  * @param {Object} bot - Telegram bot instance
  * @param {number} chatId - Chat ID
  * @param {string} text - Message text
+ * @param {Object} [extra] - Extra options like reply_markup (applied to last chunk only)
  */
-async function sendFormattedMessage(bot, chatId, text) {
+async function sendFormattedMessage(bot, chatId, text, extra = {}) {
   const { config } = require('../config');
   const chunks = splitMessage(text, config.maxMessageLength);
 
-  for (const chunk of chunks) {
-    await bot.sendMessage(chatId, chunk, { parse_mode: 'HTML' });
+  for (let i = 0; i < chunks.length; i++) {
+    const isLast = i === chunks.length - 1;
+    const opts = { parse_mode: 'HTML', ...(isLast ? extra : {}) };
+    await bot.sendMessage(chatId, chunks[i], opts);
   }
 }
 
@@ -561,6 +986,31 @@ async function handleCallbackQuery(bot, query) {
 
   if (!chatId) return;
 
+  // Organic topic follow-ups — use LLM to explain then offer next steps
+  if (data && data.startsWith('topic_')) {
+    const question = TOPIC_QUESTIONS[data];
+    if (question) {
+      try {
+        await bot.sendChatAction(chatId, 'typing');
+        const result = await llm.askChem(question, query.from);
+        const answer = result && typeof result === 'object' ? (result.answer || String(result)) : String(result);
+        await sendFormattedMessage(bot, chatId, answer, KB.ask);
+      } catch (err) {
+        logger.warn('Topic LLM failed:', err.message);
+        const fallbackHints = {
+          topic_groups: '🧬 <b>Functional Groups</b>\n\nTry: <code>/ask What are functional groups? Give examples</code>',
+          topic_reactions: '⚗️ <b>Reaction Types</b>\n\nTry: <code>/ask Explain reaction types with examples</code>',
+          topic_acids: '🧪 <b>Acids &amp; Bases</b>\n\nTry: <code>/ask Explain acids and bases and pH</code>',
+          topic_periodic: '📚 <b>Periodic Trends</b>\n\nTry: <code>/ask Explain periodic trends</code>',
+          topic_mechanism: '⚛️ <b>Mechanisms</b>\n\nTry: <code>/ask Explain SN1 vs SN2 mechanisms</code>',
+          topic_naming: '📖 <b>IUPAC Naming</b>\n\nTry: <code>/ask How to name organic compounds IUPAC?</code>'
+        };
+        await bot.sendMessage(chatId, fallbackHints[data] || 'Try /ask with your question!', { parse_mode: 'HTML', ...KB.ask });
+      }
+      return;
+    }
+  }
+
   try {
     switch (data) {
       case 'cmd_start':
@@ -570,48 +1020,66 @@ async function handleCallbackQuery(bot, query) {
         await handleHelp(bot, syntheticMsg);
         break;
       case 'cmd_balance':
-        await bot.sendMessage(chatId, '⚖️ <b>Balance Chemical Equations</b>\n\nSend: <code>/balance H2 + O2 -> H2O</code>\nOr just type an equation like <code>H2 + O2 -> H2O</code>', { parse_mode: 'HTML' });
+        await bot.sendMessage(chatId, '⚖️ <b>Balance Chemical Equations</b>\n\nSend: <code>/balance H2 + O2 -> H2O</code>\nOr just type an equation like <code>H2 + O2 -> H2O</code>', { parse_mode: 'HTML', ...KB.balance });
         break;
       case 'cmd_predict':
-        await bot.sendMessage(chatId, '🔮 <b>Predict Reaction Products</b>\n\nSend: <code>/predict Na + Cl2</code>\nExample: <code>/predict Zn + HCl</code>', { parse_mode: 'HTML' });
+        await bot.sendMessage(chatId, '🔮 <b>Predict Reaction Products</b>\n\nSend: <code>/predict Na + Cl2</code>\nExample: <code>/predict Zn + HCl</code>', { parse_mode: 'HTML', ...KB.predict });
         break;
       case 'cmd_molar':
-        await bot.sendMessage(chatId, '⚛️ <b>Molar Mass Calculator</b>\n\nSend: <code>/molar H2SO4</code>\nExamples: <code>/molar NaCl</code>, <code>/molar Ca(OH)2</code>', { parse_mode: 'HTML' });
+        await bot.sendMessage(chatId, '⚛️ <b>Molar Mass Calculator</b>\n\nSend: <code>/molar H2SO4</code>\nExamples: <code>/molar NaCl</code>, <code>/molar Ca(OH)2</code>', { parse_mode: 'HTML', ...KB.molar });
         break;
       case 'cmd_stoich':
-        await bot.sendMessage(chatId, '📊 <b>Stoichiometry</b>\n\nSend: <code>/stoich 2H2 + O2 -> 2H2O H2O 10 mol</code>', { parse_mode: 'HTML' });
+        await bot.sendMessage(chatId, '📊 <b>Stoichiometry</b>\n\nSend: <code>/stoich 2H2 + O2 -> 2H2O H2O 10 mol</code>', { parse_mode: 'HTML', ...KB.stoich });
         break;
       case 'cmd_element':
-        await bot.sendMessage(chatId, '🔬 <b>Element Information</b>\n\nSend: <code>/element Fe</code> or <code>/element Iron</code> or <code>/element 26</code>', { parse_mode: 'HTML' });
+        await bot.sendMessage(chatId, '🔬 <b>Element Information</b>\n\nSend: <code>/element Fe</code> or <code>/element Iron</code> or <code>/element 26</code>', { parse_mode: 'HTML', ...KB.element });
         break;
       case 'cmd_ph':
-        await bot.sendMessage(chatId, '⚗️ <b>pH Calculator</b>\n\nSend: <code>/ph HCl 0.1</code>\nUsage: <code>/ph &lt;formula&gt; &lt;concentration&gt;</code>', { parse_mode: 'HTML' });
+        await bot.sendMessage(chatId, '⚗️ <b>pH Calculator</b>\n\nSend: <code>/ph HCl 0.1</code>\nUsage: <code>/ph &lt;formula&gt; &lt;concentration&gt;</code>', { parse_mode: 'HTML', ...KB.ph });
         break;
       case 'cmd_iupac':
-        await bot.sendMessage(chatId, '📖 <b>IUPAC Lookup</b>\n\nSend: <code>/iupac acetic acid</code>', { parse_mode: 'HTML' });
+        await bot.sendMessage(chatId, '📖 <b>IUPAC Lookup</b>\n\nSend: <code>/iupac acetic acid</code>', { parse_mode: 'HTML', ...KB.iupac });
         break;
       case 'cmd_ask':
-        await bot.sendMessage(chatId, '🤖 <b>Ask Chemistry Question</b>\n\nSend: <code>/ask What is the mechanism of SN1 reactions?</code>', { parse_mode: 'HTML' });
+        await bot.sendMessage(chatId, '🤖 <b>Ask Chemistry Question</b>\n\nSend: <code>/ask What is the mechanism of SN1 reactions?</code>', { parse_mode: 'HTML', ...KB.ask });
         break;
       case 'cmd_safety':
-        await bot.sendMessage(chatId, '⚠️ <b>Safety Information</b>\n\nSend: <code>/safety H2SO4</code>', { parse_mode: 'HTML' });
+        await bot.sendMessage(chatId, '⚠️ <b>Safety Information</b>\n\nSend: <code>/safety H2SO4</code>', { parse_mode: 'HTML', ...KB.safety });
         break;
       case 'cmd_search':
-        await bot.sendMessage(chatId, '🔍 <b>Search Chemistry Databases</b>\n\nSend: <code>/search Vitamin C</code>', { parse_mode: 'HTML' });
+        await bot.sendMessage(chatId, '🔍 <b>Search Chemistry Databases</b>\n\nSend: <code>/search Vitamin C</code>', { parse_mode: 'HTML', ...KB.search });
+        break;
+      case 'cmd_organic':
+        await bot.sendMessage(chatId, '🧬 <b>Organic Analysis</b>\n\nSend: <code>/organic C2H5OH</code> or <code>/organic benzene</code>\nExamples: <code>/organic CH3COOH</code>, <code>/organic glucose</code>', { parse_mode: 'HTML', ...KB.organic });
+        break;
+      case 'cmd_hydrocarbon':
+        await bot.sendMessage(chatId, '⛽ <b>Hydrocarbon Classification</b>\n\nSend: <code>/hydrocarbon C6H6</code>\nExamples: <code>/hydrocarbon CH4</code>, <code>/hydrocarbon C2H4</code>, <code>/hydrocarbon C2H2</code>', { parse_mode: 'HTML', ...KB.hydrocarbon });
+        break;
+      case 'cmd_mechanism':
+        await bot.sendMessage(chatId, '⚙️ <b>Reaction Mechanisms</b>\n\nSend: <code>/mechanism SN1</code>\nExamples: <code>/mechanism SN2</code>, <code>/mechanism E1</code>, <code>/mechanism E2</code>, <code>/mechanism addition</code>', { parse_mode: 'HTML', ...KB.mechanism });
+        break;
+      case 'cmd_functional':
+        await bot.sendMessage(chatId, '🧩 <b>Functional Groups</b>\n\nSend: <code>/functional CH3COOH</code>\nExamples: <code>/functional C2H5OH</code>, <code>/functional benzene</code>', { parse_mode: 'HTML', ...KB.functional });
+        break;
+      case 'cmd_stereo':
+        await bot.sendMessage(chatId, '🔬 <b>Stereochemistry</b>\n\nSend: <code>/stereo but-2-ene</code>\nExamples: <code>/stereo lactic acid</code>, <code>/stereo glucose</code>', { parse_mode: 'HTML', ...KB.stereo });
+        break;
+      case 'cmd_spectroscopy':
+        await bot.sendMessage(chatId, '🔬 <b>Spectroscopy</b>\n\nSend: <code>/spectroscopy IR carbonyl</code> or <code>/spectroscopy C2H5OH</code>\nExamples: <code>/spectroscopy NMR aldehyde</code>, <code>/spectroscopy MS 91</code>', { parse_mode: 'HTML', ...KB.spectroscopy });
         break;
       default:
         // Generic fallback for any cmd_* not explicitly listed
         if (data && data.startsWith('cmd_')) {
           const cmd = data.replace(/^cmd_/, '');
-          await bot.sendMessage(chatId, `Send: /${cmd} &lt;your input&gt;\nUse /help to see all commands.`, { parse_mode: 'HTML' });
+          await bot.sendMessage(chatId, `Send: /${cmd} &lt;your input&gt;\nUse /help to see all commands.`, { parse_mode: 'HTML', ...KB.help });
         } else {
-          await bot.sendMessage(chatId, 'Unknown action. Use /help to see available commands.', { parse_mode: 'HTML' });
+          await bot.sendMessage(chatId, 'Unknown action. Use /help to see available commands.', { parse_mode: 'HTML', ...KB.help });
         }
         break;
     }
   } catch (err) {
     logger.error('Callback query error:', err);
-    try { await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' }); } catch {}
+    try { await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML', ...KB.help }); } catch {}
   }
 }
 
@@ -664,6 +1132,30 @@ function registerHandlers(bot) {
   bot.onText(/\/search(?:@\w+)?(?:\s+(.*))?/, (msg, match) => {
     const args = match[1] ? match[1].trim().split(/\s+/) : [];
     handleSearch(bot, msg, args);
+  });
+  bot.onText(/\/organic(?:@\w+)?(?:\s+(.*))?/, (msg, match) => {
+    const args = match[1] ? match[1].trim().split(/\s+/) : [];
+    handleOrganic(bot, msg, args);
+  });
+  bot.onText(/\/hydrocarbon(?:@\w+)?(?:\s+(.*))?/, (msg, match) => {
+    const args = match[1] ? match[1].trim().split(/\s+/) : [];
+    handleHydrocarbon(bot, msg, args);
+  });
+  bot.onText(/\/mechanism(?:@\w+)?(?:\s+(.*))?/, (msg, match) => {
+    const args = match[1] ? match[1].trim().split(/\s+/) : [];
+    handleMechanism(bot, msg, args);
+  });
+  bot.onText(/\/functional(?:@\w+)?(?:\s+(.*))?/, (msg, match) => {
+    const args = match[1] ? match[1].trim().split(/\s+/) : [];
+    handleFunctional(bot, msg, args);
+  });
+  bot.onText(/\/stereo(?:@\w+)?(?:\s+(.*))?/, (msg, match) => {
+    const args = match[1] ? match[1].trim().split(/\s+/) : [];
+    handleStereo(bot, msg, args);
+  });
+  bot.onText(/\/spectroscopy(?:@\w+)?(?:\s+(.*))?/, (msg, match) => {
+    const args = match[1] ? match[1].trim().split(/\s+/) : [];
+    handleSpectroscopy(bot, msg, args);
   });
 
   // Inline query handler - classic: query object directly

@@ -1,0 +1,94 @@
+[
+  {
+    "id": "alkane",
+    "name": "Alkanes",
+    "aliases": ["alkane", "alkanes", "paraffin", "saturated"],
+    "suffix": "-ane",
+    "generalFormula": "CnH2n+2",
+    "hybridization": "sp³",
+    "geometry": "Tetrahedral (109.5°)",
+    "bondType": "σ only (C-C single, C-H single)",
+    "example": { "formula": "C4H10", "names": ["butane", "2-methylpropane (isobutane)"], "structure": "CH3-CH2-CH2-CH3" },
+    "physicalProperties": "Non-polar; mp/bp increase with chain length; branching ↓ bp; insoluble in water, soluble in non-polar solvents; density <1 g/mL; IR: ~2850-2960 cm⁻¹ (sp³ C-H)",
+    "chemicalProperties": "Low reactivity; combustion → CO2+H2O; free-radical halogenation (Cl2/hv, Br2/hv); cracking (high T, catalyst); isomerization",
+    "iupacExamples": ["methane CH4", "ethane C2H6", "propane C3H8", "2-methylbutane", "2,3-dimethylbutane", "cyclohexane C6H12 (CnH2n)"],
+    "reactions": ["CH4 + 2O2 → CO2 + 2H2O (combustion)", "CH4 + Cl2 —hv→ CH3Cl + HCl (radical substitution)", "C10H22 —cracking→ C5H12 + C5H10"]
+  },
+  {
+    "id": "alkene",
+    "name": "Alkenes",
+    "aliases": ["alkene", "alkenes", "olefin", "ene"],
+    "suffix": "-ene",
+    "generalFormula": "CnH2n (one C=C); CnH2n-2 (diene)",
+    "hybridization": "sp² at C=C (120° trigonal planar); sp³ elsewhere",
+    "geometry": "Planar around double bond; cis/trans (E/Z) isomerism possible",
+    "bondType": "One σ + one π (C=C); π is weaker, reactive site",
+    "example": { "formula": "C4H8", "names": ["but-1-ene CH2=CH-CH2-CH3", "but-2-ene CH3-CH=CH-CH3 (cis/trans)", "2-methylpropene CH2=C(CH3)2"], "structure": "CH2=CH2 (ethene)" },
+    "physicalProperties": "Similar to alkanes but slightly more polarizable; bp slightly ↑ vs alkane; IR: 3080 cm⁻¹ (=C-H), 1650 cm⁻¹ (C=C), 890-990 cm⁻¹ (=C-H bend); ¹H NMR vinyl H δ 4.5-6.5 ppm",
+    "chemicalProperties": "Electrophilic addition across C=C (Markovnikov, anti-addition)",
+    "iupacExamples": ["ethene C2H4", "propene C3H6", "but-1-ene vs but-2-ene", "cyclohexene", "1,3-butadiene CH2=CH-CH=CH2"],
+    "reactions": [
+      "C2H4 + H2 —Pt/Pd/Ni→ C2H6 (hydrogenation)",
+      "C2H4 + Br2 → CH2Br-CH2Br (halogenation, anti-addition, decolorizes Br2)",
+      "C3H6 + HBr → CH3-CHBr-CH3 (Markovnikov: H adds to C with more H)",
+      "C2H4 + H2O —H2SO4/Hg²⁺→ CH3CH2OH (hydration)",
+      "n CH2=CH2 → –[CH2-CH2]n– (polymerization → polyethylene)"
+    ]
+  },
+  {
+    "id": "alkyne",
+    "name": "Alkynes",
+    "aliases": ["alkyne", "alkynes", "acetylene", "yne"],
+    "suffix": "-yne",
+    "generalFormula": "CnH2n-2 (one C≡C)",
+    "hybridization": "sp at C≡C (180° linear); sp³/sp² elsewhere",
+    "geometry": "Linear around triple bond; no cis/trans at C≡C",
+    "bondType": "One σ + two π (C≡C); terminal C-H is acidic (pKa ~25)",
+    "example": { "formula": "C4H6", "names": ["but-1-yne HC≡C-CH2-CH3", "but-2-yne CH3-C≡C-CH3"], "structure": "HC≡CH (ethyne/acetylene)" },
+    "physicalProperties": "IR: ≡C-H ~3300 cm⁻¹ (sharp), C≡C 2100-2260 cm⁻¹ (weak); ¹H NMR acetylenic H δ 1.8-3.1 ppm; terminal alkyne H δ ~2.5 ppm",
+    "chemicalProperties": "Addition (2 equiv can add); acidic terminal H → acetylide anion; electrophilic & nucleophilic character",
+    "iupacExamples": ["ethyne C2H2 (acetylene)", "propyne C3H4", "but-1-yne vs but-2-yne"],
+    "reactions": [
+      "HC≡CH + 2 Br2 → CHBr2-CHBr2 (double addition)",
+      "HC≡CH + H2 —Lindlar→ cis-CH2=CH2; —Na/NH3→ trans-alkene",
+      "HC≡C⁻ Na⁺ + CH3Br → HC≡C-CH3 (alkylation via acetylide)",
+      "HC≡CH + H2O —HgSO4/H2SO4→ CH3CHO (Kucherov, enol → aldehyde via tautomerization)"
+    ]
+  },
+  {
+    "id": "aromatic",
+    "name": "Aromatic Hydrocarbons (Arenes)",
+    "aliases": ["aromatic", "arene", "benzene", "phenyl", "aromaticity"],
+    "suffix": "-benzene (parent: benzene C6H6)",
+    "generalFormula": "CnH2n-6 (benzene family); Hückel rule: 4n+2 π e⁻ in planar cyclic conjugation",
+    "hybridization": "sp² all carbons; hexagonal planar 120°; resonance delocalization 150 pm (between single 154 and double 134 pm)",
+    "geometry": "Planar ring; resonance energy ~150 kJ/mol stabilization",
+    "bondType": "Conjugated π system (6 p orbitals overlapping); aromatic sextet",
+    "example": { "formula": "C7H8", "names": ["methylbenzene (toluene)", "1,2-dimethylbenzene (o-xylene)", "phenol C6H5OH", "naphthalene C10H8 (2 rings)"], "structure": "C6H6 (benzene, circle inside hexagon)" },
+    "physicalProperties": "IR: aromatic C-H ~3030 cm⁻¹, C=C ~1500-1600 cm⁻¹ (2 bands), overtone 1650-2000 cm⁻¹; ¹H NMR δ 7-8 ppm (ring current); UV strong absorption; higher density/bp than aliphatic",
+    "chemicalProperties": "Electrophilic aromatic substitution (EAS) retains aromaticity; NOT addition (addition would destroy aromaticity). Activating groups (-OH, -OCH3, -NH2, -alkyl) o/p-directors; deactivating (-NO2, -COOH, -CF3) m-directors; halogens deactivating but o/p-directing.",
+    "iupacExamples": ["benzene", "methylbenzene (toluene)", "1,3,5-trimethylbenzene (mesitylene)", "ethylbenzene", "styrene (phenylethene)"],
+    "reactions": [
+      "C6H6 + HNO3 —H2SO4→ C6H5NO2 + H2O (nitration)",
+      "C6H6 + Br2 —FeBr3→ C6H5Br + HBr (halogenation)",
+      "C6H6 + CH3Cl —AlCl3→ C6H5CH3 + HCl (Friedel-Crafts alkylation)",
+      "C6H6 + CH3COCl —AlCl3→ C6H5COCH3 + HCl (Friedel-Crafts acylation)",
+      "C6H6 + SO3 —H2SO4→ C6H5SO3H (sulfonation)"
+    ]
+  },
+  {
+    "id": "cycloalkane",
+    "name": "Cycloalkanes",
+    "aliases": ["cycloalkane", "cyclohexane", "cyclopropane"],
+    "suffix": "cyclo- + -ane",
+    "generalFormula": "CnH2n",
+    "hybridization": "sp³; ring strain: cyclopropane 60° (high), cyclobutane 90°, cyclopentane ~108°, cyclohexane 109.5° (strain-free chair)",
+    "geometry": "Chair (cyclohexane most stable): axial/equatorial positions; ring flips interconvert",
+    "bondType": "σ only; angle strain + torsional strain determine reactivity",
+    "example": { "formula": "C6H12", "names": ["cyclohexane (chair conformation)", "methylcyclohexane"], "structure": "cyclohexane hexagon" },
+    "physicalProperties": "Similar to acyclic; cyclohexane bp 81°C; density ~0.78; used as non-polar solvent",
+    "chemicalProperties": "Like alkanes but small rings (3-4) undergo ring-opening addition due to strain",
+    "iupacExamples": ["cyclopropane C3H6", "cyclobutane C4H8", "cyclohexane C6H12", "1,2-dimethylcyclohexane (cis/trans)"],
+    "reactions": ["cyclopropane + Br2 → BrCH2CH2CH2Br (ring opening)", "cyclohexane + Cl2 —hv→ chlorocyclohexane + HCl"]
+  }
+]

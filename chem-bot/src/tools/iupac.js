@@ -29,7 +29,7 @@ async function lookup(name) {
 
 <i>Source: PubChem</i>
 
-Use /molar to calculate the molar mass of this compound!`;
+Try tapping ⚛️ Molar Mass to calculate the molar mass of this compound!`;
     }
 
     return `Could not find IUPAC name for "${name}". Try a different name or formula.`;
@@ -70,7 +70,7 @@ Common IUPAC naming patterns:
 • Acetic acid (CH₃COOH), Formic acid (HCOOH)
 • Sulfuric acid (H₂SO₄), Hydrochloric acid (HCl)
 
-Try /search ${name} for more options.`;
+Try tapping 🔍 Search for more options about "${name}".`;
 }
 
 /**

@@ -1491,7 +1491,7 @@ function analyzeHydrocarbon(query) {
         const keys = Object.keys(el);
         const nonCH = keys.filter(k=>!['C','H'].includes(k));
         if (nonCH.length) {
-          return `⛽ <b>Hydrocarbon Check</b>\n\nFormula <b>${_esc(query)}</b> contains non-hydrocarbon elements: <b>${nonCH.join(', ')}</b>.\nHydrocarbons are C and H only.\n\nTry <code>/organic ${query}</code> for general analysis.`;
+          return `⛽ <b>Hydrocarbon Check</b>\n\nFormula <b>${_esc(query)}</b> contains non-hydrocarbon elements: <b>${nonCH.join(', ')}</b>.\nHydrocarbons are C and H only.\n\nTry tapping 🧬 Organic for general analysis.`;
         }
       }
     } catch {}

@@ -892,14 +892,14 @@ async function askChem(question, context = {}) {
   const result = {
     source: 'fallback',
     answer: "I'm not sure how to answer that. The LLM is unavailable and my local tools don't recognize this query.\n\n" +
-            "Try one of these specific commands instead:\n" +
-            "  /molar <formula> - molar mass\n" +
-            "  /balance <equation> - balance equation\n" +
-            "  /element <name> - element info\n" +
-            "  /iupac <name> - IUPAC name lookup\n" +
-            "  /ph <formula> <concentration> - pH calculation\n" +
-            "  /predict <reactants> - predict reaction products\n" +
-            "  /safety <formula> - safety data",
+            "Try tapping one of these buttons instead:\n" +
+            "  ⚛️ Molar Mass — tap ⚛️ Molar Mass and send a formula like H2SO4\n" +
+            "  ⚖️ Balance — tap ⚖️ Balance and send an equation like H2 + O2 -> H2O\n" +
+            "  🔬 Element — tap 🔬 Element and send a name like Fe\n" +
+            "  📖 IUPAC — tap 📖 IUPAC and send a name like acetic acid\n" +
+            "  ⚗️ pH — tap ⚗️ pH and send a formula and concentration like HCl 0.1\n" +
+            "  🔮 Predict — tap 🔮 Predict and send reactants like Na + Cl2\n" +
+            "  ⚠️ Safety — tap ⚠️ Safety and send a formula like H2SO4",
     taskType,
     confidence: 0
   };

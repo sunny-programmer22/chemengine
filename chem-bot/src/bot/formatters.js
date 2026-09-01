@@ -220,7 +220,7 @@ function formatError(err) {
     }
   }
 
-  return `❌ <b>Error</b>\n\nSomething went wrong. Please try again or use /help for guidance.\n\n<i>Details: ${escapeHtml(message)}</i>`;
+  return `❌ <b>Error</b>\n\nSomething went wrong. Please try again or tap 📚 Help for guidance.\n\n<i>Details: ${escapeHtml(message)}</i>`;
 }
 
 /**

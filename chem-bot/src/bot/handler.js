@@ -421,7 +421,7 @@ async function handleBalance(bot, msg, args) {
   const equation = args.join(' ').trim();
 
   if (!equation) {
-    await bot.sendMessage(chatId, 'Please provide a chemical equation.\nUsage: /balance H2 + O2 -> H2O', { parse_mode: 'HTML', ...KB.balance });
+    await bot.sendMessage(chatId, 'Please provide a chemical equation.\nTap ⚖️ Balance and just type: H2 + O2 -> H2O', { parse_mode: 'HTML', ...KB.balance });
     return;
   }
 
@@ -447,7 +447,7 @@ async function handlePredict(bot, msg, args) {
   const reactants = args.join(' ').trim();
 
   if (!reactants) {
-    await bot.sendMessage(chatId, 'Please provide reactants.\nUsage: /predict Na + Cl2', { parse_mode: 'HTML', ...KB.predict });
+    await bot.sendMessage(chatId, 'Please provide reactants.\nTap 🔮 Predict and just type: Na + Cl2', { parse_mode: 'HTML', ...KB.predict });
     return;
   }
 
@@ -473,7 +473,7 @@ async function handleMolar(bot, msg, args) {
   const formula = args.join(' ').trim();
 
   if (!formula) {
-    await bot.sendMessage(chatId, 'Please provide a chemical formula.\nUsage: /molar H2SO4', { parse_mode: 'HTML', ...KB.molar });
+    await bot.sendMessage(chatId, 'Please provide a chemical formula.\nTap ⚛️ Molar Mass and just type: H2SO4', { parse_mode: 'HTML', ...KB.molar });
     return;
   }
 
@@ -499,8 +499,7 @@ async function handleStoich(bot, msg, args) {
 
   if (args.length < 4) {
     await bot.sendMessage(chatId,
-      'Usage: /stoich <equation> <compound> <amount> <unit>\n' +
-      'Example: /stoich 2H2 + O2 -> 2H2O H2O 10 mol',
+      'Please provide full details.\nTap 📊 Stoichiometry and just type: 2H2 + O2 -> 2H2O H2O 10 mol\nFormat: <equation> <compound> <amount> <unit>',
       { parse_mode: 'HTML', ...KB.stoich }
     );
     return;
@@ -538,7 +537,7 @@ async function handlePh(bot, msg, args) {
   const chatId = msg.chat.id;
 
   if (args.length < 2) {
-    await bot.sendMessage(chatId, 'Usage: /ph <formula> <concentration>\nExample: /ph HCl 0.1\nNote: Concentration in mol/L (M)', { parse_mode: 'HTML', ...KB.ph });
+    await bot.sendMessage(chatId, 'Please provide formula and concentration.\nTap ⚗️ pH and just type: HCl 0.1\nNote: Concentration in mol/L (M)', { parse_mode: 'HTML', ...KB.ph });
     return;
   }
 
@@ -547,7 +546,7 @@ async function handlePh(bot, msg, args) {
   const concentration = parseFloat(concStr);
 
   if (isNaN(concentration) || concentration <= 0) {
-    await bot.sendMessage(chatId, 'Please provide a valid positive concentration.\nExample: /ph HCl 0.1', { parse_mode: 'HTML', ...KB.ph });
+    await bot.sendMessage(chatId, 'Please provide a valid positive concentration.\nTap ⚗️ pH and just type: HCl 0.1', { parse_mode: 'HTML', ...KB.ph });
     return;
   }
 
@@ -573,7 +572,7 @@ async function handleElement(bot, msg, args) {
   const query = args.join(' ').trim();
 
   if (!query) {
-    await bot.sendMessage(chatId, 'Please provide an element symbol, name, or atomic number.\nUsage: /element Fe or /element Iron or /element 26', { parse_mode: 'HTML', ...KB.element });
+    await bot.sendMessage(chatId, 'Please provide an element symbol, name, or atomic number.\nTap 🔬 Element and just type: Fe or Iron or 26', { parse_mode: 'HTML', ...KB.element });
     return;
   }
 
@@ -613,7 +612,7 @@ async function handleIupac(bot, msg, args) {
   const name = args.join(' ').trim();
 
   if (!name) {
-    await bot.sendMessage(chatId, 'Please provide a compound name to look up.\nUsage: /iupac acetic acid', { parse_mode: 'HTML', ...KB.iupac });
+    await bot.sendMessage(chatId, 'Please provide a compound name to look up.\nTap 📖 IUPAC and just type: acetic acid', { parse_mode: 'HTML', ...KB.iupac });
     return;
   }
 
@@ -639,7 +638,7 @@ async function handleAsk(bot, msg, args) {
   const question = args.join(' ').trim();
 
   if (!question) {
-    await bot.sendMessage(chatId, 'Please ask a chemistry question.\nUsage: /ask What is the mechanism of SN1 reactions?', { parse_mode: 'HTML', ...KB.ask });
+    await bot.sendMessage(chatId, 'Please ask a chemistry question.\nTap 🤖 Ask AI and just type: What is the mechanism of SN1 reactions?', { parse_mode: 'HTML', ...KB.ask });
     return;
   }
 
@@ -665,7 +664,7 @@ async function handleSafety(bot, msg, args) {
   const formula = args.join(' ').trim();
 
   if (!formula) {
-    await bot.sendMessage(chatId, 'Please provide a chemical formula or name.\nUsage: /safety H2SO4', { parse_mode: 'HTML', ...KB.safety });
+    await bot.sendMessage(chatId, 'Please provide a chemical formula or name.\nTap ⚠️ Safety and just type: H2SO4', { parse_mode: 'HTML', ...KB.safety });
     return;
   }
 
@@ -691,7 +690,7 @@ async function handleSearch(bot, msg, args) {
   const query = args.join(' ').trim();
 
   if (!query) {
-    await bot.sendMessage(chatId, 'Please provide a search query.\nUsage: /search Vitamin C', { parse_mode: 'HTML', ...KB.search });
+    await bot.sendMessage(chatId, 'Please provide a search query.\nTap 🔍 Search and just type: Vitamin C', { parse_mode: 'HTML', ...KB.search });
     return;
   }
 
@@ -718,7 +717,7 @@ async function handleOrganic(bot, msg, args) {
 
   if (!query) {
     await bot.sendMessage(chatId,
-      'Please provide a formula or name.\nUsage: <code>/organic C2H5OH</code> or <code>/organic benzene</code>\nExamples: <code>/organic CH3COOH</code>, <code>/organic glucose</code>',
+      'Please provide a formula or name.\nTap 🧬 Organic and just type: <code>C2H5OH</code> or <code>benzene</code>\nExamples: <code>CH3COOH</code>, <code>glucose</code>',
       { parse_mode: 'HTML', ...KB.organic }
     );
     return;
@@ -746,7 +745,7 @@ async function handleHydrocarbon(bot, msg, args) {
 
   if (!query) {
     await bot.sendMessage(chatId,
-      'Please provide a hydrocarbon formula.\nUsage: <code>/hydrocarbon C6H6</code>\nExamples: <code>/hydrocarbon CH4</code>, <code>/hydrocarbon C2H4</code>, <code>/hydrocarbon C2H2</code>',
+      'Please provide a hydrocarbon formula.\nTap ⛽ Hydrocarbon and just type: <code>C6H6</code>\nExamples: <code>CH4</code>, <code>C2H4</code>, <code>C2H2</code>',
       { parse_mode: 'HTML', ...KB.hydrocarbon }
     );
     return;
@@ -774,7 +773,7 @@ async function handleMechanism(bot, msg, args) {
 
   if (!query) {
     await bot.sendMessage(chatId,
-      'Please provide a mechanism type or reaction.\nUsage: <code>/mechanism SN1</code>\nExamples: <code>/mechanism SN2</code>, <code>/mechanism E1</code>, <code>/mechanism addition</code>, <code>/mechanism EAS</code>',
+      'Please provide a mechanism type or reaction.\nTap ⚙️ Mechanism and just type: <code>SN1</code>\nExamples: <code>SN2</code>, <code>E1</code>, <code>addition</code>, <code>EAS</code>',
       { parse_mode: 'HTML', ...KB.mechanism }
     );
     return;
@@ -802,7 +801,7 @@ async function handleFunctional(bot, msg, args) {
 
   if (!query) {
     await bot.sendMessage(chatId,
-      'Please provide a formula or name.\nUsage: <code>/functional CH3COOH</code>\nExamples: <code>/functional C2H5OH</code>, <code>/functional benzene</code>',
+      'Please provide a formula or name.\nTap 🧩 Functional and just type: <code>CH3COOH</code>\nExamples: <code>C2H5OH</code>, <code>benzene</code>',
       { parse_mode: 'HTML', ...KB.functional }
     );
     return;
@@ -830,7 +829,7 @@ async function handleStereo(bot, msg, args) {
 
   if (!query) {
     await bot.sendMessage(chatId,
-      'Please provide a formula or name.\nUsage: <code>/stereo but-2-ene</code>\nExamples: <code>/stereo lactic acid</code>, <code>/stereo glucose</code>, <code>/stereo C4H8</code>',
+      'Please provide a formula or name.\nTap 🔬 Stereo and just type: <code>but-2-ene</code>\nExamples: <code>lactic acid</code>, <code>glucose</code>, <code>C4H8</code>',
       { parse_mode: 'HTML', ...KB.stereo }
     );
     return;
@@ -858,7 +857,7 @@ async function handleSpectroscopy(bot, msg, args) {
 
   if (!query) {
     await bot.sendMessage(chatId,
-      'Please provide a spectrum or compound query.\nUsage: <code>/spectroscopy C2H5OH</code> or <code>/spectroscopy IR carbonyl</code>\nExamples: <code>/spectroscopy NMR aldehyde</code>, <code>/spectroscopy MS 91</code>',
+      'Please provide a spectrum or compound query.\nTap 🌈 Spectroscopy and just type: <code>C2H5OH</code> or <code>IR carbonyl</code>\nExamples: <code>NMR aldehyde</code>, <code>MS 91</code>',
       { parse_mode: 'HTML', ...KB.spectroscopy }
     );
     return;
@@ -921,6 +920,31 @@ async function routeMessage(bot, msg) {
   const text = msg.text || msg.caption || '';
   const chatId = msg.chat.id;
 
+  // ── Button flow: if user clicked a button, next plain text is input for that action (no slash needed)
+  const awaiting = getAwaiting(chatId);
+  if (awaiting) {
+    clearAwaiting(chatId);
+    switch (awaiting) {
+      case 'balance': await handleBalance(bot, msg, [text.trim()]); return;
+      case 'predict': await handlePredict(bot, msg, [text.trim()]); return;
+      case 'molar': await handleMolar(bot, msg, [text.trim()]); return;
+      case 'stoich': await handleStoich(bot, msg, text.trim().split(/\s+/)); return;
+      case 'element': await handleElement(bot, msg, [text.trim()]); return;
+      case 'ph': await handlePh(bot, msg, text.trim().split(/\s+/)); return;
+      case 'iupac': await handleIupac(bot, msg, [text.trim()]); return;
+      case 'ask': await handleAsk(bot, msg, [text.trim()]); return;
+      case 'safety': await handleSafety(bot, msg, [text.trim()]); return;
+      case 'search': await handleSearch(bot, msg, [text.trim()]); return;
+      case 'organic': await handleOrganic(bot, msg, [text.trim()]); return;
+      case 'hydrocarbon': await handleHydrocarbon(bot, msg, [text.trim()]); return;
+      case 'mechanism': await handleMechanism(bot, msg, [text.trim()]); return;
+      case 'functional': await handleFunctional(bot, msg, [text.trim()]); return;
+      case 'stereo': await handleStereo(bot, msg, [text.trim()]); return;
+      case 'spectroscopy': await handleSpectroscopy(bot, msg, [text.trim()]); return;
+      default: break;
+    }
+  }
+
   // Check for greetings / casual human chat - very short replies with quick nav
   const lowerText = text.toLowerCase().trim();
   const casualPhrases = ['how are you', 'how r u', "how's it going", "what's up", 'whats up', 'how are u', 'hru', 'wbu', 'what about you', 'i am fine', "i'm fine", 'i am good', "i'm good"];
@@ -969,7 +993,7 @@ async function routeMessage(bot, msg) {
     await sendFormattedMessage(bot, chatId, answer, KB.organic_short);
     return;
   } catch {}
-  await bot.sendMessage(chatId, 'Hey! 😊 Try /help for chemistry stuff!', { parse_mode: 'HTML', ...KB.help });
+  await bot.sendMessage(chatId, 'Hey! 😊 Try tapping 📚 Help for chemistry stuff!', { parse_mode: 'HTML', ...KB.help });
 }
 
 /**
@@ -1043,51 +1067,67 @@ async function handleCallbackQuery(bot, query) {
         await handleHelp(bot, syntheticMsg);
         break;
       case 'cmd_balance':
+        setAwaiting(chatId, 'balance');
         await bot.sendMessage(chatId, '⚖️ <b>Balance Chemical Equations</b>\n\nJust type: <code>H2 + O2 -> H2O</code>', { parse_mode: 'HTML', ...KB.balance });
         break;
       case 'cmd_predict':
+        setAwaiting(chatId, 'predict');
         await bot.sendMessage(chatId, '🔮 <b>Predict Reaction Products</b>\n\nJust type: <code>Na + Cl2</code>\nExample: <code>Zn + HCl</code>', { parse_mode: 'HTML', ...KB.predict });
         break;
       case 'cmd_molar':
+        setAwaiting(chatId, 'molar');
         await bot.sendMessage(chatId, '⚛️ <b>Molar Mass Calculator</b>\n\nJust type: <code>H2SO4</code>\nExamples: <code>NaCl</code>, <code>Ca(OH)2</code>', { parse_mode: 'HTML', ...KB.molar });
         break;
       case 'cmd_stoich':
+        setAwaiting(chatId, 'stoich');
         await bot.sendMessage(chatId, '📊 <b>Stoichiometry</b>\n\nJust type: <code>2H2 + O2 -> 2H2O H2O 10 mol</code>', { parse_mode: 'HTML', ...KB.stoich });
         break;
       case 'cmd_element':
+        setAwaiting(chatId, 'element');
         await bot.sendMessage(chatId, '🔬 <b>Element Information</b>\n\nJust type: <code>Fe</code> or <code>Iron</code> or <code>26</code>', { parse_mode: 'HTML', ...KB.element });
         break;
       case 'cmd_ph':
+        setAwaiting(chatId, 'ph');
         await bot.sendMessage(chatId, '⚗️ <b>pH Calculator</b>\n\nJust type: <code>HCl 0.1</code>\nUsage: <code>&lt;formula&gt; &lt;concentration&gt;</code>', { parse_mode: 'HTML', ...KB.ph });
         break;
       case 'cmd_iupac':
+        setAwaiting(chatId, 'iupac');
         await bot.sendMessage(chatId, '📖 <b>IUPAC Lookup</b>\n\nJust type: <code>acetic acid</code>', { parse_mode: 'HTML', ...KB.iupac });
         break;
       case 'cmd_ask':
+        setAwaiting(chatId, 'ask');
         await bot.sendMessage(chatId, '🤖 <b>Ask Chemistry Question</b>\n\nJust type: <code>What is the mechanism of SN1 reactions?</code>', { parse_mode: 'HTML', ...KB.ask });
         break;
       case 'cmd_safety':
+        setAwaiting(chatId, 'safety');
         await bot.sendMessage(chatId, '⚠️ <b>Safety Information</b>\n\nJust type: <code>H2SO4</code>', { parse_mode: 'HTML', ...KB.safety });
         break;
       case 'cmd_search':
+        setAwaiting(chatId, 'search');
         await bot.sendMessage(chatId, '🔍 <b>Search Chemistry Databases</b>\n\nJust type: <code>Vitamin C</code>', { parse_mode: 'HTML', ...KB.search });
         break;
       case 'cmd_organic':
+        setAwaiting(chatId, 'organic');
         await bot.sendMessage(chatId, '🧬 <b>Organic Analysis</b>\n\nJust type: <code>C2H5OH</code> or <code>benzene</code>\nExamples: <code>CH3COOH</code>, <code>glucose</code>', { parse_mode: 'HTML', ...KB.organic });
         break;
       case 'cmd_hydrocarbon':
+        setAwaiting(chatId, 'hydrocarbon');
         await bot.sendMessage(chatId, '⛽ <b>Hydrocarbon Classification</b>\n\nJust type: <code>C6H6</code>\nExamples: <code>CH4</code>, <code>C2H4</code>, <code>C2H2</code>', { parse_mode: 'HTML', ...KB.hydrocarbon });
         break;
       case 'cmd_mechanism':
+        setAwaiting(chatId, 'mechanism');
         await bot.sendMessage(chatId, '⚙️ <b>Reaction Mechanisms</b>\n\nJust type: <code>SN1</code>\nExamples: <code>SN2</code>, <code>E1</code>, <code>E2</code>, <code>addition</code>', { parse_mode: 'HTML', ...KB.mechanism });
         break;
       case 'cmd_functional':
+        setAwaiting(chatId, 'functional');
         await bot.sendMessage(chatId, '🧩 <b>Functional Groups</b>\n\nJust type: <code>CH3COOH</code>\nExamples: <code>C2H5OH</code>, <code>benzene</code>', { parse_mode: 'HTML', ...KB.functional });
         break;
       case 'cmd_stereo':
+        setAwaiting(chatId, 'stereo');
         await bot.sendMessage(chatId, '🔬 <b>Stereochemistry</b>\n\nJust type: <code>but-2-ene</code>\nExamples: <code>lactic acid</code>, <code>glucose</code>', { parse_mode: 'HTML', ...KB.stereo });
         break;
       case 'cmd_spectroscopy':
+        setAwaiting(chatId, 'spectroscopy');
         await bot.sendMessage(chatId, '🔬 <b>Spectroscopy</b>\n\nJust type: <code>IR carbonyl</code> or <code>C2H5OH</code>\nExamples: <code>NMR aldehyde</code>, <code>MS 91</code>', { parse_mode: 'HTML', ...KB.spectroscopy });
         break;
       default:
@@ -1096,7 +1136,7 @@ async function handleCallbackQuery(bot, query) {
           const cmd = data.replace(/^cmd_/, '');
           await bot.sendMessage(chatId, `Just type: &lt;your input&gt;\nTap Help to see all commands.`, { parse_mode: 'HTML', ...KB.help });
         } else {
-          await bot.sendMessage(chatId, 'Unknown action. Use /help to see available commands.', { parse_mode: 'HTML', ...KB.help });
+          await bot.sendMessage(chatId, 'Unknown action. Tap 📚 Help to see available commands.', { parse_mode: 'HTML', ...KB.help });
         }
         break;
     }
@@ -1224,4 +1264,14 @@ function registerHandlers(bot) {
   logger.info('Bot handlers registered successfully');
 }
 
-module.exports = { registerHandlers };
+module.exports = {
+  registerHandlers,
+  // exposed for testing button flow
+  setAwaiting, getAwaiting, clearAwaiting, userAwaiting,
+  handleCallbackQuery, routeMessage,
+  handleMolar, handleBalance, handlePredict, handleElement, handlePh, handleIupac,
+  handleAsk, handleSafety, handleSearch, handleOrganic, handleHydrocarbon,
+  handleMechanism, handleFunctional, handleStereo, handleSpectroscopy,
+  handleStart, handleHelp,
+  KB,
+};

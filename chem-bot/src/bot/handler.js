@@ -86,6 +86,7 @@ const KB = {
       inline_keyboard: [
         [{ text: '⛽ Hydrocarbon', callback_data: 'cmd_hydrocarbon' }, { text: '🧩 Functional', callback_data: 'cmd_functional' }],
         [{ text: '⚙️ Mechanism', callback_data: 'cmd_mechanism' }, { text: '🔬 Stereo', callback_data: 'cmd_stereo' }],
+        [{ text: '🌈 Spectroscopy', callback_data: 'cmd_spectroscopy' }],
         [{ text: '⚛️ Molar Mass', callback_data: 'cmd_molar' }, { text: '📖 IUPAC', callback_data: 'cmd_iupac' }],
         [{ text: '📚 Help', callback_data: 'cmd_help' }, { text: '🏠 Menu', callback_data: 'cmd_start' }]
       ]
@@ -96,6 +97,7 @@ const KB = {
       inline_keyboard: [
         [{ text: '🧬 Organic', callback_data: 'cmd_organic' }, { text: '🧩 Functional', callback_data: 'cmd_functional' }],
         [{ text: '🔬 Stereo', callback_data: 'cmd_stereo' }, { text: '⚙️ Mechanism', callback_data: 'cmd_mechanism' }],
+        [{ text: '🌈 Spectroscopy', callback_data: 'cmd_spectroscopy' }],
         [{ text: '⚛️ Molar Mass', callback_data: 'cmd_molar' }, { text: '📖 IUPAC', callback_data: 'cmd_iupac' }],
         [{ text: '📚 Help', callback_data: 'cmd_help' }, { text: '🏠 Menu', callback_data: 'cmd_start' }]
       ]
@@ -106,6 +108,7 @@ const KB = {
       inline_keyboard: [
         [{ text: '🧬 Organic', callback_data: 'cmd_organic' }, { text: '🧩 Functional', callback_data: 'cmd_functional' }],
         [{ text: '⛽ Hydrocarbon', callback_data: 'cmd_hydrocarbon' }, { text: '🔬 Stereo', callback_data: 'cmd_stereo' }],
+        [{ text: '🌈 Spectroscopy', callback_data: 'cmd_spectroscopy' }],
         [{ text: '🤖 Ask AI', callback_data: 'cmd_ask' }, { text: '📚 Help', callback_data: 'cmd_help' }],
         [{ text: '🏠 Menu', callback_data: 'cmd_start' }]
       ]
@@ -116,6 +119,7 @@ const KB = {
       inline_keyboard: [
         [{ text: '🧬 Organic', callback_data: 'cmd_organic' }, { text: '⛽ Hydrocarbon', callback_data: 'cmd_hydrocarbon' }],
         [{ text: '⚙️ Mechanism', callback_data: 'cmd_mechanism' }, { text: '🔬 Stereo', callback_data: 'cmd_stereo' }],
+        [{ text: '🌈 Spectroscopy', callback_data: 'cmd_spectroscopy' }],
         [{ text: '📖 IUPAC', callback_data: 'cmd_iupac' }, { text: '⚛️ Molar Mass', callback_data: 'cmd_molar' }],
         [{ text: '📚 Help', callback_data: 'cmd_help' }, { text: '🏠 Menu', callback_data: 'cmd_start' }]
       ]
@@ -126,6 +130,7 @@ const KB = {
       inline_keyboard: [
         [{ text: '🧬 Organic', callback_data: 'cmd_organic' }, { text: '🧩 Functional', callback_data: 'cmd_functional' }],
         [{ text: '⛽ Hydrocarbon', callback_data: 'cmd_hydrocarbon' }, { text: '⚙️ Mechanism', callback_data: 'cmd_mechanism' }],
+        [{ text: '🌈 Spectroscopy', callback_data: 'cmd_spectroscopy' }],
         [{ text: '⚖️ Balance', callback_data: 'cmd_balance' }, { text: '🔮 Predict', callback_data: 'cmd_predict' }],
         [{ text: '📚 Help', callback_data: 'cmd_help' }, { text: '🏠 Menu', callback_data: 'cmd_start' }]
       ]
@@ -244,6 +249,7 @@ ${formatList([
   '⚙️ Mechanism — Tap ⚙️ Mechanism below',
   '🧩 Functional Groups — Tap 🧩 Functional below',
   '🔬 Stereo — Tap 🔬 Stereo below',
+  '🌈 Spectroscopy — Tap 🌈 Spectroscopy below',
   '📚 Help — Tap 📚 Help below'
 ])}
 
@@ -265,8 +271,9 @@ ${formatList([
         [{ text: '📖 IUPAC', callback_data: 'cmd_iupac' }, { text: '⚠️ Safety', callback_data: 'cmd_safety' }],
         [{ text: '🧬 Organic', callback_data: 'cmd_organic' }, { text: '⛽ Hydrocarbon', callback_data: 'cmd_hydrocarbon' }],
         [{ text: '⚙️ Mechanism', callback_data: 'cmd_mechanism' }, { text: '🧩 Functional', callback_data: 'cmd_functional' }],
-        [{ text: '🔬 Stereo', callback_data: 'cmd_stereo' }, { text: '🤖 Ask AI', callback_data: 'cmd_ask' }],
-        [{ text: '🔍 Search', callback_data: 'cmd_search' }, { text: '📚 Help', callback_data: 'cmd_help' }]
+        [{ text: '🔬 Stereo', callback_data: 'cmd_stereo' }, { text: '🌈 Spectroscopy', callback_data: 'cmd_spectroscopy' }],
+        [{ text: '🤖 Ask AI', callback_data: 'cmd_ask' }, { text: '🔍 Search', callback_data: 'cmd_search' }],
+        [{ text: '📚 Help', callback_data: 'cmd_help' }]
       ]
     },
     parse_mode: 'HTML'
@@ -282,8 +289,9 @@ ${formatList([
       [{ text: '📖 IUPAC' }, { text: '⚠️ Safety' }],
       [{ text: '🧬 Organic' }, { text: '⛽ Hydrocarbon' }],
       [{ text: '⚙️ Mechanism' }, { text: '🧩 Functional' }],
-      [{ text: '🔬 Stereo' }, { text: '🤖 Ask AI' }],
-      [{ text: '🔍 Search' }, { text: '📚 Help' }]
+      [{ text: '🔬 Stereo' }, { text: '🌈 Spectroscopy' }],
+      [{ text: '🤖 Ask AI' }, { text: '🔍 Search' }],
+      [{ text: '📚 Help' }]
     ],
     resize_keyboard: true,
     is_persistent: true,
@@ -333,7 +341,8 @@ ${formatList([
   '⛽ Hydrocarbon — Tap ⛽ Hydrocarbon then send C6H6',
   '⚙️ Mechanism — Tap ⚙️ Mechanism then send SN1',
   '🧩 Functional Groups — Tap 🧩 Functional then send CH3COOH',
-  '🔬 Stereo — Tap 🔬 Stereo then send but-2-ene'
+  '🔬 Stereo — Tap 🔬 Stereo then send but-2-ene',
+  '🌈 Spectroscopy — Tap 🌈 Spectroscopy then send C2H5OH'
 ])}
 
 <b>AI-Powered:</b>
@@ -355,6 +364,7 @@ Tap ⛽ Hydrocarbon → C6H6
 Tap ⚙️ Mechanism → SN1
 Tap 🧩 Functional → CH3COOH
 Tap 🔬 Stereo → lactic acid
+Tap 🌈 Spectroscopy → C2H5OH
 Tap 🤖 Ask AI → What is the mechanism of SN1 reactions?
 </pre>
 
@@ -370,8 +380,9 @@ Tap 🤖 Ask AI → What is the mechanism of SN1 reactions?
       [{ text: '📖 IUPAC' }, { text: '⚠️ Safety' }],
       [{ text: '🧬 Organic' }, { text: '⛽ Hydrocarbon' }],
       [{ text: '⚙️ Mechanism' }, { text: '🧩 Functional' }],
-      [{ text: '🔬 Stereo' }, { text: '🤖 Ask AI' }],
-      [{ text: '🔍 Search' }, { text: '📚 Help' }]
+      [{ text: '🔬 Stereo' }, { text: '🌈 Spectroscopy' }],
+      [{ text: '🤖 Ask AI' }, { text: '🔍 Search' }],
+      [{ text: '📚 Help' }]
     ],
     resize_keyboard: true,
     is_persistent: true,

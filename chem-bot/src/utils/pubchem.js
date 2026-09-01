@@ -13,6 +13,76 @@ const BASE = config.pubchemBase || 'https://pubchem.ncbi.nlm.nih.gov/rest/pug';
 const TIMEOUT_MS = 10000;
 
 /**
+ * Organic chemistry handling: mechanism-only terms should skip PubChem
+ * and representative compounds for class terms like "Grignard reagent"
+ */
+const ORGANIC_MECHANISM_ONLY = new Set([
+  'sn1', 'sn2', 'e1', 'e2', 'e1cb',
+  'sn1 reaction', 'sn2 reaction', 'e1 reaction', 'e2 reaction',
+  'markovnikov', "markovnikov's rule", 'markovnikov rule',
+  'zaitsev', 'zaitseff', 'saytzeff', "zaitsev's rule",
+  'aldol condensation', 'claisen condensation',
+  'friedel-crafts', 'friedel crafts', 'diels-alder', 'diels alder',
+  'wittig', 'cannizzaro', 'perkin', 'wurtz', 'kolbe'
+]);
+
+const ORGANIC_COMPOUND_MAP = {
+  'grignard reagent': 'methylmagnesium bromide',
+  'grignard': 'methylmagnesium bromide',
+  'aldol condensation': '3-hydroxybutanal',
+  'aldol': '3-hydroxybutanal',
+  'claisen condensation': 'ethyl acetoacetate',
+  'claisen': 'ethyl acetoacetate',
+  'friedel-crafts': 'acetophenone',
+  'friedel crafts': 'acetophenone',
+  'diels-alder': 'cyclohexene',
+  'diels alder': 'cyclohexene',
+  'wittig': 'methylenetriphenylphosphorane',
+  'cannizzaro': 'benzyl alcohol',
+  'markovnikov': '2-chloropropane',
+  'zaitsev': 'but-2-ene',
+  'zaitseff': 'but-2-ene',
+  'saytzeff': 'but-2-ene'
+};
+
+/**
+ * Clean a natural-language query for PubChem.
+ * Strips question words and keeps the chemical identifier.
+ * @param {string} query
+ * @returns {string}
+ */
+function cleanPubChemQuery(query) {
+  if (!query || typeof query !== 'string') return '';
+  let q = query.trim();
+  // Remove leading question prefixes
+  q = q.replace(/^(what\s+is|what\s+are|what's|explain|describe|define|tell me about|what is the|explain the|describe the|define the)\s+/i, '').trim();
+  // Remove trailing question marks / exclamation
+  q = q.replace(/[?.!]+$/g, '').trim();
+  // Remove trailing "in chemistry" etc.
+  q = q.replace(/\s+in\s+(organic\s+)?chemistry\s*$/i, '').trim();
+  // For mechanism queries, keep the term; for PubChem we may later map to representative compound
+  return q;
+}
+
+/**
+ * Check if a query is purely a mechanism/rule term (PubChem will not have it)
+ * @param {string} query
+ * @returns {boolean}
+ */
+function isMechanismOnlyQuery(query) {
+  if (!query) return false;
+  const lower = query.toLowerCase().trim();
+  // Exact match or contains only mechanism phrase plus filler
+  const cleaned = lower.replace(/^(what is|explain|describe|define)[\s]+/, '').replace(/[?.!]+$/, '').trim();
+  if (ORGANIC_MECHANISM_ONLY.has(cleaned)) return true;
+  if (ORGANIC_MECHANISM_ONLY.has(lower)) return true;
+  // SN1/SN2 with just "reaction" suffix still mechanism-only
+  if (/^(sn1|sn2|e1|e2|e1cb)(\s+reaction)?$/i.test(lower)) return true;
+  if (/^(markovnikov|zaitsev|aldol|claisen)(\s+(rule|condensation|reaction))?$/i.test(lower)) return true;
+  return false;
+}
+
+/**
  * Normalize a PubChem property table response
  * @param {Object} data - PubChem response data
  * @returns {Object|null} Normalized properties
@@ -115,7 +185,10 @@ async function getDescription(cid) {
 
 /**
  * Search PubChem (main entry point)
- * @param {string} query - Compound name or formula
+ * Enhanced for organic chemistry: cleans question phrasing,
+ * maps reagent/reaction classes to representative compounds,
+ * and skips pure mechanism terms quickly.
+ * @param {string} query - Compound name or formula or natural question
  * @returns {Promise<Object|null>} Combined data { name, formula, weight, iupacName, cid, smiles, inchi, description }
  */
 async function searchPubchem(query) {
@@ -123,40 +196,89 @@ async function searchPubchem(query) {
   const trimmed = query.trim();
   if (!trimmed) return null;
 
-  // Try by name first
-  let result = await searchByName(trimmed);
-  let cid = result?.cid;
+  // Quick skip for pure mechanism/rule queries that PubChem cannot answer
+  // (Wikipedia should handle them: SN1, Markovnikov, etc.)
+  const lowerTrimmed = trimmed.toLowerCase();
+  if (isMechanismOnlyQuery(trimmed) || isMechanismOnlyQuery(lowerTrimmed)) {
+    // Still try mapping to representative compound if available (e.g. Grignard -> methylmagnesium bromide)
+    const mapped = ORGANIC_COMPOUND_MAP[lowerTrimmed] || ORGANIC_COMPOUND_MAP[lowerTrimmed.replace(/\s+reaction$/,'')] || null;
+    if (!mapped) return null;
+    // Fall through to mapped compound search
+    const mappedResult = await searchByName(mapped);
+    if (mappedResult) {
+      let cid = mappedResult.cid;
+      if (!mappedResult.description && cid) {
+        try { mappedResult.description = await getDescription(cid); } catch (e) {}
+      }
+      return {
+        name: mappedResult.name,
+        formula: mappedResult.formula,
+        weight: mappedResult.weight,
+        iupacName: mappedResult.iupacName,
+        cid: mappedResult.cid,
+        smiles: mappedResult.smiles,
+        inchi: mappedResult.inchi,
+        inchiKey: mappedResult.inchiKey,
+        description: mappedResult.description
+      };
+    }
+    return null;
+  }
 
-  // If not found, try by formula
-  if (!result) {
-    cid = await searchByFormula(trimmed);
-    if (cid) {
-      result = await getByCid(cid);
+  // Build candidate list: original, cleaned, mapped representative
+  const candidates = [];
+  candidates.push(trimmed);
+  const cleaned = cleanPubChemQuery(trimmed);
+  if (cleaned && cleaned.toLowerCase() !== trimmed.toLowerCase()) candidates.push(cleaned);
+  // Also try lowercased mapping for organic reagent classes
+  const lowerCleaned = cleaned.toLowerCase();
+  if (ORGANIC_COMPOUND_MAP[lowerCleaned]) {
+    candidates.push(ORGANIC_COMPOUND_MAP[lowerCleaned]);
+  }
+  // If original trimmed is a reagent class, also map
+  if (ORGANIC_COMPOUND_MAP[lowerTrimmed]) {
+    if (!candidates.includes(ORGANIC_COMPOUND_MAP[lowerTrimmed])) candidates.push(ORGANIC_COMPOUND_MAP[lowerTrimmed]);
+  }
+  // Try each candidate by name, then by formula, return first success
+  for (const cand of candidates) {
+    if (!cand || cand.length < 2) continue;
+    // Skip if candidate is still a pure mechanism after cleaning and no mapping exists
+    if (isMechanismOnlyQuery(cand) && !ORGANIC_COMPOUND_MAP[cand.toLowerCase()]) continue;
+
+    let result = await searchByName(cand);
+    let cid = result?.cid;
+
+    // If not found, try by formula (only if candidate looks like formula)
+    if (!result && /^[A-Z][A-Za-z0-9()]*\d*/.test(cand) && cand.length < 20) {
+      cid = await searchByFormula(cand);
+      if (cid) {
+        result = await getByCid(cid);
+      }
+    }
+
+    if (result) {
+      if (!result.description && cid) {
+        try {
+          result.description = await getDescription(cid);
+        } catch (err) {
+          // ignore
+        }
+      }
+      return {
+        name: result.name,
+        formula: result.formula,
+        weight: result.weight,
+        iupacName: result.iupacName,
+        cid: result.cid,
+        smiles: result.smiles,
+        inchi: result.inchi,
+        inchiKey: result.inchiKey,
+        description: result.description
+      };
     }
   }
 
-  if (!result) return null;
-
-  // Try to enrich with description
-  if (!result.description && cid) {
-    try {
-      result.description = await getDescription(cid);
-    } catch (err) {
-      // ignore
-    }
-  }
-
-  return {
-    name: result.name,
-    formula: result.formula,
-    weight: result.weight,
-    iupacName: result.iupacName,
-    cid: result.cid,
-    smiles: result.smiles,
-    inchi: result.inchi,
-    inchiKey: result.inchiKey,
-    description: result.description
-  };
+  return null;
 }
 
 /**
@@ -224,5 +346,9 @@ module.exports = {
   searchByName,
   searchByFormula,
   getByCid,
-  getDescription
+  getDescription,
+  cleanPubChemQuery,
+  isMechanismOnlyQuery,
+  ORGANIC_COMPOUND_MAP,
+  ORGANIC_MECHANISM_ONLY
 };

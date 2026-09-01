@@ -937,7 +937,7 @@ function getSpectroscopy(query) {
   const wantMS = isGenericMS || ['ms', 'mass', 'fragment', 'm/z', 'molecular ion', '91', 'mclafferty', 'tropylium', 'isotope'].some((k) => qLower.includes(k));
 
   // If no specific wants detected, search all
-  let out = _header(`Spectroscopy — Search "${query}"`, '🔬');
+  let out = _header(`Spectroscopy — Search "${_esc(query)}"`, '🔬');
 
   if ((wantIR || (!wantIR && !wantNMR && !wantMS)) && ir.tables) {
     out += _subHeader('IR matches');
@@ -976,7 +976,7 @@ function getSpectroscopy(query) {
     }
   }
 
-  if (out.trim() === _header(`Spectroscopy — Search "${query}"`, '🔬').trim()) {
+  if (out.trim() === _header(`Spectroscopy — Search "${_esc(query)}"`, '🔬').trim()) {
     out += `No direct spectrum match for "<b>${_esc(query)}</b>".\n`;
     out += `Try keywords: IR, carbonyl, 1710, O-H, alkyne, NMR, aldehyde, aromatic, MS, fragmentation, 91.\n`;
     out += `Or call with no argument for the complete IR/NMR/MS tables and worked problem.\n`;
@@ -1261,6 +1261,12 @@ function organic(query) {
   if (['polymer', 'pet', 'nylon', 'poly', 'plastic', 'monomer', 'carbohydrate', 'starch', 'cellulose', 'lipid', 'protein', 'dna', 'rna', 'biomolecule', 'enzyme', 'triglyceride', 'nucleic'].some((k) => q.includes(k))) {
     return getPolymersBiomolecules(query);
   }
+  // Formula-aware routing — detects organic formulas like "C2H5OH", "CH3COOH", "C6H6"
+  // and returns an enriched functional-group/hydrocarbon card instead of the generic hub.
+  // Placed after keyword checks so "SN1" (which also looks formula-like) is correctly
+  // handled by the mechanism keyword route above.
+  const formulaRes = _formulaOrganicResponse(String(query || '').trim());
+  if (formulaRes) return formulaRes;
   // Default: give a hub with hints for all sections
   let out = _header('Organic Chemistry — Hub', '🧪');
   out += `No specific section matched "<b>${_esc(query)}</b>". Choose a section:\n\n`;
@@ -1285,6 +1291,24 @@ function organic(query) {
  */
 function getOrganicInfo(section, query) {
   const s = _norm(section);
+  // Formula shortcut — ensures dispatcher satisfies "C2H5OH" → alcohol and similar.
+  // Handles both single-arg (section is formula) and query-as-formula cases before
+  // falling through to keyword-based section routing.
+  const rawSec = String(section || '').trim();
+  const rawQry = query ? String(query).trim() : '';
+  if (rawSec && !rawQry) {
+    const fr = _formulaOrganicResponse(rawSec);
+    if (fr) return fr;
+  }
+  if (rawQry) {
+    const frQ = _formulaOrganicResponse(rawQry);
+    if (frQ) {
+      // If section is a known category, respect it (e.g., functional + C2H5OH already handled above)
+      // Otherwise the formula enrichment is the most useful answer.
+      const isKnown = ['hydro', 'function', 'mechan', 'reaction', 'stereo', 'spect', 'analy', 'ir', 'nmr', 'ms', 'polym', 'biomo', 'carbo', 'lipid', 'protein', 'dna', 'nucleic'].some((p) => s.startsWith(p));
+      if (!isKnown) return frQ;
+    }
+  }
   if (s.startsWith('hydro')) return getHydrocarbons(query);
   if (s.startsWith('function')) return getFunctionalGroups(query);
   if (s.startsWith('mechan') || s.startsWith('reaction')) return getReactionMechanisms(query);
@@ -1313,6 +1337,87 @@ function _isFormulaLike(s) {
   if (!t || t.includes(' ') || t.length > 30) return false;
   // Must look like chemical formula: starts with element symbol, contains only elements and numbers/brackets
   return /^[A-Z][A-Za-z0-9()\[\].·*+-]+$/.test(t) && /[A-Z]/.test(t);
+}
+
+/**
+ * Internal helper — if raw looks like an organic formula (contains C) return an
+ * enriched organic response (mass + DBE + best section). Returns null if not applicable.
+ * Used by both `organic()` and `getOrganicInfo()` dispatchers to satisfy the
+ * requirement that queries like "C2H5OH" route to the functional-group (alcohol) card
+ * while "SN1" still routes to mechanisms via keyword checks.
+ * Does NOT call `organic()` recursively — it directly delegates to section functions.
+ * @param {string} rawInput
+ * @returns {string|null}
+ */
+function _formulaOrganicResponse(rawInput) {
+  const raw = String(rawInput || '').trim();
+  if (!_isFormulaLike(raw)) return null;
+  try {
+    const parser = _getParser();
+    if (!parser.parseCompound) return null;
+    const p = parser.parseCompound(raw);
+    if (!p || !p.isValid || !p.elements || !p.elements.C) return null;
+    const el = p.elements;
+    let header = `🧪 <b>Organic Analysis — ${_esc(raw)}</b>\n\n`;
+    try {
+      if (parser.molecularWeight) {
+        const mw = parser.molecularWeight(raw);
+        header += `Molar mass: <b>${mw.weight.toFixed(3)} g/mol</b> (${Object.entries(el).map(([k, v]) => `${k}${v > 1 ? v : ''}`).join(' ')})\n`;
+      }
+    } catch (_) {}
+    try {
+      const dbe = _calculateDBE(el);
+      const dbeDesc = dbe === 0 ? 'saturated (alkane, all sp³)' : dbe === 1 ? 'one unsaturation (C=C or ring)' : dbe >= 4 ? 'possible aromatic (≥4)' : 'unsaturated';
+      header += `DBE (unsaturation): <b>${dbe}</b> — ${dbeDesc}\n`;
+      const keys = Object.keys(el);
+      const isHydroOnly = keys.every((k) => ['C', 'H'].includes(k));
+      if (isHydroOnly) {
+        if (dbe === 0) header += `Hydrocarbon: <b>alkane</b> CnH2n+2\n`;
+        else if (dbe === 1) header += `Hydrocarbon: <b>alkene or cycloalkane</b> CnH2n\n`;
+        else if (dbe === 2) header += `Hydrocarbon: <b>alkyne/diene</b> CnH2n-2\n`;
+        else if (dbe === 4) header += `Hydrocarbon: <b>aromatic</b> (e.g., benzene C6H6)\n`;
+      } else {
+        header += `Organic — ${el.O ? 'O-containing' : el.N ? 'N-containing' : 'C-containing'}; DBE helps infer functional groups\n`;
+      }
+    } catch (_) {}
+    header += `Composition: ${Object.entries(el).map(([k, v]) => `${k}${v > 1 ? v : ''}`).join(' ')}\n`;
+    header += '\n' + _sep();
+    let fgRes = null;
+    try { fgRes = getFunctionalGroups(raw); } catch (_) {}
+    const isFgHit = fgRes && !fgRes.includes('No exact match');
+    let hcRes = null;
+    try { hcRes = getHydrocarbons(raw); } catch (_) {}
+    const isHcHit = hcRes && !hcRes.includes('No exact match');
+    const hasHetero = Object.keys(el).some((k) => !['C', 'H'].includes(k));
+    if (hasHetero && isFgHit) return header + fgRes;
+    if (!hasHetero && isHcHit) return header + hcRes;
+    if (isFgHit) return header + fgRes;
+    if (isHcHit) return header + hcRes;
+    if (hasHetero) {
+      // Heuristic for heteroatoms where direct exampleFormula didn't match
+      // e.g. "C2H5Cl" should map to halide, "CH3COOH" already hit but "C2H5Cl" needs fallback
+      const upper = raw.toUpperCase();
+      let hint = null;
+      if (el.F || el.Cl || el.Br || el.I || upper.includes('CL') || upper.includes('BR')) {
+        try { hint = getFunctionalGroups('halide'); } catch (_) {}
+        if (hint && !hint.includes('No exact match')) return header + hint;
+      }
+      if ((el.O || upper.includes('OH')) && !el.N) {
+        // generic O-containing saturated -> alcohol is most common for C2H5OH-style
+        try { hint = getFunctionalGroups('alcohol'); } catch (_) {}
+        if (hint && !hint.includes('No exact match')) return header + hint;
+      }
+      if (el.N) {
+        try { hint = getFunctionalGroups('amine'); } catch (_) {}
+        if (hint && !hint.includes('No exact match')) return header + hint;
+      }
+      let fallback = null;
+      try { fallback = getFunctionalGroups(''); } catch (_) {}
+      return header + (fallback || '');
+    }
+    return header + (hcRes || getHydrocarbons(''));
+  } catch (_) {}
+  return null;
 }
 
 function analyzeOrganic(query) {

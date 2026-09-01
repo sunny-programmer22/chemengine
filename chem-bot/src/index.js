@@ -92,7 +92,13 @@ function startPollingMode() {
       { command: 'iupac', description: 'Look up IUPAC name' },
       { command: 'ask', description: 'Ask a chemistry question' },
       { command: 'safety', description: 'Get safety information' },
-      { command: 'search', description: 'Search chemistry databases' }
+      { command: 'search', description: 'Search chemistry databases' },
+      { command: 'organic', description: 'Organic chemistry help and concepts' },
+      { command: 'hydrocarbon', description: 'Hydrocarbon classification and nomenclature' },
+      { command: 'functional', description: 'Identify functional groups' },
+      { command: 'mechanism', description: 'Explain organic reaction mechanisms' },
+      { command: 'stereo', description: 'Stereochemistry and chirality (R/S, E/Z)' },
+      { command: 'spectroscopy', description: 'Analyze IR, NMR, and mass spectra' }
     ];
     bot.setMyCommands(commands).catch((err) => logger.warn('Failed to set bot commands (polling):', err.message));
   }
@@ -152,7 +158,13 @@ function startWebhookMode() {
       { command: 'iupac', description: 'Look up IUPAC name' },
       { command: 'ask', description: 'Ask a chemistry question' },
       { command: 'safety', description: 'Get safety information' },
-      { command: 'search', description: 'Search chemistry databases' }
+      { command: 'search', description: 'Search chemistry databases' },
+      { command: 'organic', description: 'Organic chemistry help and concepts' },
+      { command: 'hydrocarbon', description: 'Hydrocarbon classification and nomenclature' },
+      { command: 'functional', description: 'Identify functional groups' },
+      { command: 'mechanism', description: 'Explain organic reaction mechanisms' },
+      { command: 'stereo', description: 'Stereochemistry and chirality (R/S, E/Z)' },
+      { command: 'spectroscopy', description: 'Analyze IR, NMR, and mass spectra' }
     ];
     bot.setMyCommands(commands).catch((err) => logger.warn('Failed to set bot commands (webhook):', err.message));
   }
@@ -272,7 +284,13 @@ function main() {
     { command: 'iupac', description: 'Look up IUPAC name' },
     { command: 'ask', description: 'Ask a chemistry question' },
     { command: 'safety', description: 'Get safety information' },
-    { command: 'search', description: 'Search chemistry databases' }
+    { command: 'search', description: 'Search chemistry databases' },
+    { command: 'organic', description: 'Organic chemistry help and concepts' },
+    { command: 'hydrocarbon', description: 'Hydrocarbon classification and nomenclature' },
+    { command: 'functional', description: 'Identify functional groups' },
+    { command: 'mechanism', description: 'Explain organic reaction mechanisms' },
+    { command: 'stereo', description: 'Stereochemistry and chirality (R/S, E/Z)' },
+    { command: 'spectroscopy', description: 'Analyze IR, NMR, and mass spectra' }
   ]).catch((err) => {
     logger.error('Failed to set bot commands:', err.message);
   });

@@ -100,6 +100,27 @@ For the full command reference, see [`docs/COMMANDS.md`](docs/COMMANDS.md).
 
 ---
 
+## Organic Chemistry — Button UI (no slash commands)
+
+Organic chemistry is **button-driven** — not slash commands. Open `🏠 Menu` (`/start`) and tap a button, then type a formula/name when prompted. Every answer ends with a follow-up keyboard so you can hop sections in one tap.
+
+| Button | Section | What you get | Try: tap → type |
+|--------|---------|--------------|-----------------|
+| 🧬 Organic | General analysis | DBE, classification, molar mass, hybridization, likely groups | `C2H5OH` → alcohol, `benzene` → aromatic DBE=4 |
+| ⛽ Hydrocarbon | Hydrocarbons | Alkane (`CnH2n+2`)/alkene (`CnH2n`)/alkyne (`CnH2n-2`)/aromatic check, DBE, isomer note | `C4H10` → alkane, `C2H4` → alkene, `C6H6` → benzene |
+| 🧩 Functional | Functional groups | Alcohol, aldehyde, ketone, acid, ester, amine, amide, nitrile, thiol, haloalkane, aromatic… | `CH3CHO` → aldehyde, `C6H5OH` → phenol |
+| ⚙️ Mechanism | Reaction mechanisms | SN1/SN2/E1/E2, electrophilic addition (Markovnikov), EAS, radical — steps, conditions, stereochemistry | `SN1` → racemization, `E2` → anti-periplanar, `addition` |
+| 🔬 Stereo | Stereochemistry | Chirality R/S (CIP), E/Z, enantiomers/diastereomers, meso, racemization | `lactic acid` → R/S, `but-2-ene` → Z/E, `tartaric acid` → meso |
+
+**Example button flows:**
+- `🏠 Menu` → tap `🧬 Organic` → send `C2H5OH` → DBE=0 + alcohol hint → tap `🧩 Functional` for full group list
+- Tap `⛽ Hydrocarbon` → send `C4H8` → `Alkene or Cycloalkane (DBE=1, CnH2n)` → tap `⚙️ Mechanism` → send `addition` → Markovnikov steps
+- Free-text `explain SN1 vs SN2` → LLM answer ends with `[🧬 Next: Functional Groups] [⚗️ Next: Reactions]` (`topic_groups`/`topic_reactions`) → tap for deep-dive; `📚 Help` / `🏠 Menu` always available
+
+> Callbacks are `cmd_organic`, `cmd_hydrocarbon`, `cmd_functional`, `cmd_mechanism`, `cmd_stereo` plus topic follow-ups (`topic_groups`, `topic_mechanism`, etc.) — slash aliases (`/organic` etc.) exist for power users but buttons are canonical.
+
+---
+
 ## Architecture
 
 ```

@@ -552,7 +552,8 @@ async function askChem(question, context = {}) {
 
   // 2) For general/explain questions, try online sources (Wikipedia) first
   //    because they are free and often give a good answer.
-  if (taskType === TASK_TYPES.GENERAL || taskType === TASK_TYPES.EXPLAIN) {
+  // Skip online sources for casual greetings like "how are you" -> let LLM answer "I'm good!"
+  if ((taskType === TASK_TYPES.GENERAL || taskType === TASK_TYPES.EXPLAIN) && !isCasualGreeting(trimmed)) {
     const online = await tryOnlineSources(trimmed);
     if (online && online.confidence >= 0.7) {
       let answer = online.answer;
@@ -620,5 +621,6 @@ module.exports = {
   classify,
   TASK_TYPES,
   tryLocalTools,
-  tryOnlineSources
+  tryOnlineSources,
+  isCasualGreeting
 };

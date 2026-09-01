@@ -680,6 +680,32 @@ function registerHandlers(bot) {
     }
   });
 
+  // Edited message support — node-telegram-bot-api#processUpdate (lib/telegram.js:827-835)
+  // only emits 'edited_message' / 'edited_message_text' for update.edited_message,
+  // it does NOT run _textRegexpCallbacks (onText) for edited messages.
+  // If user sent "/molar" (empty -> error) then edited to "/molar H2SO4", onText never fires.
+  // Re-dispatch edited text through the same onText callbacks to fix the 9:47/9:48 edge.
+  bot.on('edited_message', (msg) => {
+    const text = msg.text || msg.caption || '';
+    if (!text) return;
+    let matched = false;
+    if (bot._textRegexpCallbacks && bot._textRegexpCallbacks.length) {
+      bot._textRegexpCallbacks.some((reg) => {
+        if (!(reg.regexp instanceof RegExp)) reg.regexp = new RegExp(reg.regexp);
+        const result = reg.regexp.exec(text);
+        if (!result) return false;
+        reg.regexp.lastIndex = 0;
+        reg.callback(msg, result);
+        matched = true;
+        return bot.options && bot.options.onlyFirstMatch;
+      });
+    }
+    // Non-command edited text: run auto-detection (equations / formulas / greetings)
+    if (!matched && !text.trim().startsWith('/') && msg.chat && msg.chat.type !== 'channel') {
+      routeMessage(bot, msg);
+    }
+  });
+
   logger.info('Bot handlers registered successfully');
 }
 

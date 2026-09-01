@@ -78,6 +78,25 @@ function startPollingMode() {
   attachMiddleware(bot);
   registerHandlers(bot);
 
+  // Register Telegram command menu (appears in app's "Menu" / "/" autocomplete) – node-telegram-bot-api 0.66
+  if (typeof bot.setMyCommands === 'function') {
+    const commands = [
+      { command: 'start', description: 'Get started with the bot' },
+      { command: 'help', description: 'Show all commands' },
+      { command: 'balance', description: 'Balance chemical equations' },
+      { command: 'predict', description: 'Predict reaction products' },
+      { command: 'molar', description: 'Calculate molar mass' },
+      { command: 'stoich', description: 'Stoichiometry calculations' },
+      { command: 'ph', description: 'Calculate pH of a solution' },
+      { command: 'element', description: 'Get element information' },
+      { command: 'iupac', description: 'Look up IUPAC name' },
+      { command: 'ask', description: 'Ask a chemistry question' },
+      { command: 'safety', description: 'Get safety information' },
+      { command: 'search', description: 'Search chemistry databases' }
+    ];
+    bot.setMyCommands(commands).catch((err) => logger.warn('Failed to set bot commands (polling):', err.message));
+  }
+
   bot.on('polling_error', (err) => {
     logger.error('Polling error:', err.message);
   });
@@ -118,6 +137,25 @@ function startWebhookMode() {
 
   attachMiddleware(bot);
   registerHandlers(bot);
+
+  // Register Telegram command menu for webhook mode as well
+  if (typeof bot.setMyCommands === 'function') {
+    const commands = [
+      { command: 'start', description: 'Get started with the bot' },
+      { command: 'help', description: 'Show all commands' },
+      { command: 'balance', description: 'Balance chemical equations' },
+      { command: 'predict', description: 'Predict reaction products' },
+      { command: 'molar', description: 'Calculate molar mass' },
+      { command: 'stoich', description: 'Stoichiometry calculations' },
+      { command: 'ph', description: 'Calculate pH of a solution' },
+      { command: 'element', description: 'Get element information' },
+      { command: 'iupac', description: 'Look up IUPAC name' },
+      { command: 'ask', description: 'Ask a chemistry question' },
+      { command: 'safety', description: 'Get safety information' },
+      { command: 'search', description: 'Search chemistry databases' }
+    ];
+    bot.setMyCommands(commands).catch((err) => logger.warn('Failed to set bot commands (webhook):', err.message));
+  }
 
   // Webhook route with error handling so a bad payload doesn't crash the server
   app.post(`/webhook/${config.telegramBotToken}`, (req, res) => {
@@ -220,6 +258,24 @@ function main() {
     .catch((err) => {
       logger.error('Could not get bot info:', err.message);
     });
+
+  // Register bot command menu for Telegram clients
+  bot.setMyCommands([
+    { command: 'start', description: 'Start the bot and see welcome message' },
+    { command: 'help', description: 'Show help and all commands' },
+    { command: 'balance', description: 'Balance a chemical equation' },
+    { command: 'predict', description: 'Predict reaction products' },
+    { command: 'molar', description: 'Calculate molar mass' },
+    { command: 'stoich', description: 'Stoichiometry calculations' },
+    { command: 'ph', description: 'Calculate pH of a solution' },
+    { command: 'element', description: 'Get element information' },
+    { command: 'iupac', description: 'Look up IUPAC name' },
+    { command: 'ask', description: 'Ask a chemistry question' },
+    { command: 'safety', description: 'Get safety information' },
+    { command: 'search', description: 'Search chemistry databases' }
+  ]).catch((err) => {
+    logger.error('Failed to set bot commands:', err.message);
+  });
 }
 
 // Run the bot

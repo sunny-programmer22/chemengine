@@ -57,8 +57,22 @@ ${formatList([
 <i>Powered by PubChem, Wikidata, and AI</i>
 `;
 
+  const keyboard = {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '⚖️ Balance', callback_data: 'cmd_balance' }, { text: '🔮 Predict', callback_data: 'cmd_predict' }],
+        [{ text: '⚛️ Molar Mass', callback_data: 'cmd_molar' }, { text: '🔬 Element', callback_data: 'cmd_element' }],
+        [{ text: '⚗️ pH', callback_data: 'cmd_ph' }, { text: '📊 Stoichiometry', callback_data: 'cmd_stoich' }],
+        [{ text: '📖 IUPAC', callback_data: 'cmd_iupac' }, { text: '⚠️ Safety', callback_data: 'cmd_safety' }],
+        [{ text: '🔍 Search', callback_data: 'cmd_search' }, { text: '🤖 Ask AI', callback_data: 'cmd_ask' }],
+        [{ text: '📚 Help', callback_data: 'cmd_help' }]
+      ]
+    },
+    parse_mode: 'HTML'
+  };
+
   try {
-    await bot.sendMessage(chatId, welcomeText.trim(), { parse_mode: 'HTML' });
+    await bot.sendMessage(chatId, welcomeText.trim(), keyboard);
   } catch (err) {
     logger.error('Error sending start message:', err);
     await bot.sendMessage(chatId, formatError(err));
@@ -516,6 +530,79 @@ async function sendFormattedMessage(bot, chatId, text) {
 }
 
 /**
+ * Handle callback_query from inline keyboards
+ * @param {Object} bot - Telegram bot instance
+ * @param {Object} query - Callback query object
+ */
+async function handleCallbackQuery(bot, query) {
+  try {
+    await bot.answerCallbackQuery(query.id);
+  } catch (err) {
+    logger.warn('answerCallbackQuery failed:', err.message);
+  }
+
+  const data = query.data;
+  const chatId = query.message?.chat?.id;
+  // Synthetic msg for handlers that expect msg object
+  const syntheticMsg = { chat: { id: chatId }, from: query.from };
+
+  if (!chatId) return;
+
+  try {
+    switch (data) {
+      case 'cmd_start':
+        await handleStart(bot, syntheticMsg);
+        break;
+      case 'cmd_help':
+        await handleHelp(bot, syntheticMsg);
+        break;
+      case 'cmd_balance':
+        await bot.sendMessage(chatId, '⚖️ <b>Balance Chemical Equations</b>\n\nSend: <code>/balance H2 + O2 -> H2O</code>\nOr just type an equation like <code>H2 + O2 -> H2O</code>', { parse_mode: 'HTML' });
+        break;
+      case 'cmd_predict':
+        await bot.sendMessage(chatId, '🔮 <b>Predict Reaction Products</b>\n\nSend: <code>/predict Na + Cl2</code>\nExample: <code>/predict Zn + HCl</code>', { parse_mode: 'HTML' });
+        break;
+      case 'cmd_molar':
+        await bot.sendMessage(chatId, '⚛️ <b>Molar Mass Calculator</b>\n\nSend: <code>/molar H2SO4</code>\nExamples: <code>/molar NaCl</code>, <code>/molar Ca(OH)2</code>', { parse_mode: 'HTML' });
+        break;
+      case 'cmd_stoich':
+        await bot.sendMessage(chatId, '📊 <b>Stoichiometry</b>\n\nSend: <code>/stoich 2H2 + O2 -> 2H2O H2O 10 mol</code>', { parse_mode: 'HTML' });
+        break;
+      case 'cmd_element':
+        await bot.sendMessage(chatId, '🔬 <b>Element Information</b>\n\nSend: <code>/element Fe</code> or <code>/element Iron</code> or <code>/element 26</code>', { parse_mode: 'HTML' });
+        break;
+      case 'cmd_ph':
+        await bot.sendMessage(chatId, '⚗️ <b>pH Calculator</b>\n\nSend: <code>/ph HCl 0.1</code>\nUsage: <code>/ph &lt;formula&gt; &lt;concentration&gt;</code>', { parse_mode: 'HTML' });
+        break;
+      case 'cmd_iupac':
+        await bot.sendMessage(chatId, '📖 <b>IUPAC Lookup</b>\n\nSend: <code>/iupac acetic acid</code>', { parse_mode: 'HTML' });
+        break;
+      case 'cmd_ask':
+        await bot.sendMessage(chatId, '🤖 <b>Ask Chemistry Question</b>\n\nSend: <code>/ask What is the mechanism of SN1 reactions?</code>', { parse_mode: 'HTML' });
+        break;
+      case 'cmd_safety':
+        await bot.sendMessage(chatId, '⚠️ <b>Safety Information</b>\n\nSend: <code>/safety H2SO4</code>', { parse_mode: 'HTML' });
+        break;
+      case 'cmd_search':
+        await bot.sendMessage(chatId, '🔍 <b>Search Chemistry Databases</b>\n\nSend: <code>/search Vitamin C</code>', { parse_mode: 'HTML' });
+        break;
+      default:
+        // Generic fallback for any cmd_* not explicitly listed
+        if (data && data.startsWith('cmd_')) {
+          const cmd = data.replace(/^cmd_/, '');
+          await bot.sendMessage(chatId, `Send: /${cmd} &lt;your input&gt;\nUse /help to see all commands.`, { parse_mode: 'HTML' });
+        } else {
+          await bot.sendMessage(chatId, 'Unknown action. Use /help to see available commands.', { parse_mode: 'HTML' });
+        }
+        break;
+    }
+  } catch (err) {
+    logger.error('Callback query error:', err);
+    try { await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML' }); } catch {}
+  }
+}
+
+/**
  * Register all bot handlers
  * @param {Object} bot - Telegram bot instance (node-telegram-bot-api classic)
  */
@@ -568,6 +655,9 @@ function registerHandlers(bot) {
 
   // Inline query handler - classic: query object directly
   bot.on('inline_query', (query) => handleInlineQuery(bot, query));
+
+  // Callback query handler for inline keyboard button presses
+  bot.on('callback_query', (query) => handleCallbackQuery(bot, query));
 
   // Message router for non-command messages
   bot.on('message', (msg) => {

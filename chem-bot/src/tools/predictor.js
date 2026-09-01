@@ -52,6 +52,83 @@ const NON_METALS = new Set([
 ]);
 const SEMI_METALS = new Set(['B', 'Si', 'Ge', 'As', 'Sb', 'Te', 'Po']);
 
+const metalChargeMap = {
+  'Li': 1, 'Na': 1, 'K': 1, 'Rb': 1, 'Cs': 1, 'Fr': 1,
+  'Be': 2, 'Mg': 2, 'Ca': 2, 'Sr': 2, 'Ba': 2, 'Ra': 2,
+  'Al': 3, 'Sc': 3, 'Y': 3, 'La': 3,
+  'Ti': 4, 'Zr': 4, 'Hf': 4,
+  'V': 3, 'Nb': 3, 'Ta': 3,
+  'Cr': 3, 'Mo': 3, 'W': 3,
+  'Mn': 2, 'Tc': 2, 'Re': 2,
+  'Fe': 2, 'Fe3': 3, 'Ru': 2, 'Os': 2,
+  'Co': 2, 'Rh': 2, 'Ir': 2,
+  'Ni': 2, 'Pd': 2, 'Pt': 2,
+  'Cu': 2, 'Ag': 1, 'Au': 3,
+  'Zn': 2, 'Cd': 2, 'Hg': 2,
+  'Ga': 3, 'In': 3, 'Tl': 3,
+  'Sn': 2, 'Pb': 2,
+  'Sb': 3, 'Bi': 3,
+};
+
+const TRANSITION_METALS = new Set([
+  'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn',
+  'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd',
+  'La', 'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg',
+  'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn',
+]);
+
+function _gcd(a, b) {
+  a = Math.abs(a); b = Math.abs(b);
+  while (b) { const t = b; b = a % b; a = t; }
+  return a || 1;
+}
+
+function _getMetalCharge(sym) {
+  if (metalChargeMap[sym] !== undefined) return metalChargeMap[sym];
+  if (TRANSITION_METALS.has(sym)) return 2;
+  if (ALKALI.has(sym)) return 1;
+  if (ALKALINE_EARTH.has(sym)) return 2;
+  return 1;
+}
+
+function _buildFormulaFromElements(elementsMap, excludeSet) {
+  let formula = '';
+  for (const [sym, cnt] of Object.entries(elementsMap)) {
+    if (excludeSet.has(sym)) continue;
+    if (!cnt) continue;
+    formula += sym + (cnt > 1 ? String(cnt) : '');
+  }
+  return formula;
+}
+
+function _isPolyatomic(formula) {
+  if (!formula) return false;
+  const parsed = parseCompound(formula);
+  if (parsed && parsed.isValid) {
+    const n = Object.keys(parsed.elements).length;
+    if (n >= 2) return true;
+  }
+  const elems = formula.match(/[A-Z][a-z]?/g);
+  if (elems && elems.length >= 2) return true;
+  return formula.length > 2;
+}
+
+function _buildSaltFormula(metalSym, metalCharge, anionFormula, anionCharge) {
+  const g = _gcd(metalCharge, anionCharge);
+  const x = anionCharge / g;
+  const y = metalCharge / g;
+  const metalPart = x > 1 ? `${metalSym}${x}` : metalSym;
+  let anionPart = anionFormula;
+  if (y > 1) {
+    if (_isPolyatomic(anionFormula)) {
+      anionPart = `(${anionFormula})${y}`;
+    } else {
+      anionPart = `${anionFormula}${y}`;
+    }
+  }
+  return `${metalPart}${anionPart}`;
+}
+
 function _hasMetal(composition) {
   for (const sym of _elements(composition)) {
     if (NOBLE_GASES.has(sym)) continue;
@@ -325,22 +402,191 @@ function elemsAreCompound(p) {
 }
 
 function _singleReplace(element, compound) {
-  const sym = _elements(element.elements)[0];
-  const target = _cation(compound.elements);
-  if (target && _activityRank(sym) >= 0 && _activityRank(target) >= 0) {
-    if (_activityRank(sym) > _activityRank(target)) {
-      const anion = _anion(compound.elements);
-      const newCompound = anion ? `${sym}${anion}` : `${sym}?`;
-      return _respond('single replacement (redox)', [newCompound, target],
-        `${sym} + ${target}-compound -> ${newCompound} + ${target}`,
-        `Single replacement: ${sym} is more reactive than ${target} (activity series), so it displaces ${target} from its compound.`);
-    } else {
-      return _respond('no reaction', [], `${sym} + ${target}-compound -> no reaction`,
-        `${sym} is below ${target} in the activity series, so no displacement occurs.`);
+  const metalSym = _elements(element.elements)[0];
+  const metalCharge = _getMetalCharge(metalSym);
+
+  // Acid-metal single replacement: Metal + Acid -> Salt + H2
+  if (_isAcid(compound)) {
+    const nH = compound.elements.H;
+    const anionFormula = _buildFormulaFromElements(compound.elements, new Set(['H']));
+    const anionCharge = nH;
+    const saltFormula = _buildSaltFormula(metalSym, metalCharge, anionFormula, anionCharge);
+
+    const metalRank = _activityRank(metalSym);
+    const hRank = _activityRank('H');
+    if (metalRank !== -1 && hRank !== -1 && metalRank > hRank) {
+      return _respond('no reaction', [], `${metalSym} + ${compound.formula} -> no reaction`,
+        `${metalSym} is below H in the activity series, so no displacement occurs.`);
     }
+
+    // Brute force balancing for a Metal + b Acid -> c Salt + d H2
+    let saltElements = null;
+    try { saltElements = parseCompound(saltFormula).elements; } catch (_) { saltElements = null; }
+    if (!saltElements) {
+      return _respond('single replacement (redox)', [saltFormula, 'H2'],
+        `${metalSym} + ${compound.formula} -> ${saltFormula} + H2`,
+        `Single replacement: ${metalSym} is more reactive than H (activity series), so it displaces H from the acid to form ${saltFormula} and hydrogen gas.`);
+    }
+    const acidElements = compound.elements;
+    const metalElements = element.elements;
+    const h2Elements = { H: 2 };
+
+    let best = null;
+    let bestSum = Infinity;
+    for (let a = 1; a <= 12; a++) {
+      for (let b = 1; b <= 12; b++) {
+        for (let c = 1; c <= 12; c++) {
+          for (let d = 1; d <= 12; d++) {
+            const allElems = new Set([
+              ...Object.keys(metalElements),
+              ...Object.keys(acidElements),
+              ...Object.keys(saltElements),
+              ...Object.keys(h2Elements),
+            ]);
+            let ok = true;
+            for (const el of allElems) {
+              const left = (metalElements[el] || 0) * a + (acidElements[el] || 0) * b;
+              const right = (saltElements[el] || 0) * c + (h2Elements[el] || 0) * d;
+              if (left !== right) { ok = false; break; }
+            }
+            if (ok) {
+              const sum = a + b + c + d;
+              if (sum < bestSum) {
+                bestSum = sum;
+                best = [a, b, c, d];
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (best) {
+      const [a, b, c, d] = best;
+      const leftMetal = a === 1 ? metalSym : `${a} ${metalSym}`;
+      const leftAcid = b === 1 ? compound.formula : `${b} ${compound.formula}`;
+      const rightSalt = c === 1 ? saltFormula : `${c} ${saltFormula}`;
+      const rightH2 = d === 1 ? 'H2' : `${d} H2`;
+      const balancedEquation = `${leftMetal} + ${leftAcid} -> ${rightSalt} + ${rightH2}`;
+      return _respond('single replacement (redox)', [saltFormula, 'H2'], balancedEquation,
+        `Single replacement: ${metalSym} is more reactive than H (activity series), so it displaces H from the acid to form ${saltFormula} and hydrogen gas.`);
+    }
+    // Fallback if no balance found
+    const fallbackEq = `${metalSym} + ${compound.formula} -> ${saltFormula} + H2`;
+    return _respond('single replacement (redox)', [saltFormula, 'H2'], fallbackEq,
+      `Single replacement: ${metalSym} is more reactive than H (activity series), so it displaces H from the acid to form ${saltFormula} and hydrogen gas.`);
   }
+
+  // Salt case: free metal + salt -> new salt + displaced metal
+  const targetCation = _cation(compound.elements);
+  if (targetCation) {
+    let anionFormula2 = _buildFormulaFromElements(compound.elements, new Set([targetCation]));
+    if (!anionFormula2) {
+      return _respond('single replacement (redox)', ['?'],
+        `${metalSym} + compound -> ?`,
+        'Single replacement (redox) reaction. The free element may displace another from its compound if it is higher in the activity series.');
+    }
+    // Handle total anion part that may contain multiple empirical units (e.g., AlCl3 -> Cl3)
+    // Reduce to empirical anion formula and derive per-unit charge
+    let anionCharge;
+    let empiricalAnion = anionFormula2;
+    try {
+      const parsedTotal = parseCompound(anionFormula2);
+      if (parsedTotal.isValid) {
+        const anionElems = parsedTotal.elements;
+        const counts = Object.values(anionElems);
+        let gEmp = counts[0];
+        for (let i = 1; i < counts.length; i++) gEmp = _gcd(gEmp, counts[i]);
+        const targetCount = compound.elements[targetCation] || 1;
+        const targetChg = _getMetalCharge(targetCation);
+        const totalPos = targetChg * targetCount;
+        if (gEmp > 1 && totalPos % gEmp === 0) {
+          anionCharge = totalPos / gEmp;
+          // build empirical formula
+          let emp = '';
+          for (const [s, cnt] of Object.entries(anionElems)) {
+            const rc = cnt / gEmp;
+            emp += s + (rc > 1 ? String(rc) : '');
+          }
+          empiricalAnion = emp;
+        } else {
+          anionCharge = targetChg;
+        }
+      } else {
+        anionCharge = _getMetalCharge(targetCation);
+      }
+    } catch (_) {
+      anionCharge = _getMetalCharge(targetCation);
+    }
+    // If still not set, fallback to targetCharge
+    if (anionCharge === undefined) anionCharge = _getMetalCharge(targetCation);
+
+    const newSaltFormula = _buildSaltFormula(metalSym, metalCharge, empiricalAnion, anionCharge);
+
+    const metalRank = _activityRank(metalSym);
+    const targetRank = _activityRank(targetCation);
+    if (metalRank !== -1 && targetRank !== -1 && metalRank > targetRank) {
+      return _respond('no reaction', [], `${metalSym} + ${compound.formula} -> no reaction`,
+        `${metalSym} is below ${targetCation} in the activity series, so no displacement occurs.`);
+    }
+
+    // Brute force balance: a Metal + b OldSalt -> c NewSalt + d TargetMetal
+    let newSaltElements = null;
+    let oldSaltElements = compound.elements;
+    try { newSaltElements = parseCompound(newSaltFormula).elements; } catch (_) { newSaltElements = null; }
+    if (!newSaltElements) {
+      return _respond('single replacement (redox)', [newSaltFormula, targetCation],
+        `${metalSym} + ${compound.formula} -> ${newSaltFormula} + ${targetCation}`,
+        `Single replacement: ${metalSym} is more reactive than ${targetCation} (activity series), so it displaces ${targetCation} from its compound.`);
+    }
+    const metalElements = element.elements;
+    const targetElements = { [targetCation]: 1 };
+
+    let best = null;
+    let bestSum = Infinity;
+    for (let a = 1; a <= 12; a++) {
+      for (let b = 1; b <= 12; b++) {
+        for (let c = 1; c <= 12; c++) {
+          for (let d = 1; d <= 12; d++) {
+            const allElems = new Set([
+              ...Object.keys(metalElements),
+              ...Object.keys(oldSaltElements),
+              ...Object.keys(newSaltElements),
+              ...Object.keys(targetElements),
+            ]);
+            let ok = true;
+            for (const el of allElems) {
+              const left = (metalElements[el] || 0) * a + (oldSaltElements[el] || 0) * b;
+              const right = (newSaltElements[el] || 0) * c + (targetElements[el] || 0) * d;
+              if (left !== right) { ok = false; break; }
+            }
+            if (ok) {
+              const sum = a + b + c + d;
+              if (sum < bestSum) { bestSum = sum; best = [a, b, c, d]; }
+            }
+          }
+        }
+      }
+    }
+
+    if (best) {
+      const [a, b, c, d] = best;
+      const leftMetal = a === 1 ? metalSym : `${a} ${metalSym}`;
+      const leftSalt = b === 1 ? compound.formula : `${b} ${compound.formula}`;
+      const rightNew = c === 1 ? newSaltFormula : `${c} ${newSaltFormula}`;
+      const rightTarget = d === 1 ? targetCation : `${d} ${targetCation}`;
+      const balancedEquation = `${leftMetal} + ${leftSalt} -> ${rightNew} + ${rightTarget}`;
+      return _respond('single replacement (redox)', [newSaltFormula, targetCation], balancedEquation,
+        `Single replacement: ${metalSym} is more reactive than ${targetCation} (activity series), so it displaces ${targetCation} from its compound.`);
+    }
+
+    const simpleEq = `${metalSym} + ${compound.formula} -> ${newSaltFormula} + ${targetCation}`;
+    return _respond('single replacement (redox)', [newSaltFormula, targetCation], simpleEq,
+      `Single replacement: ${metalSym} is more reactive than ${targetCation} (activity series), so it displaces ${targetCation} from its compound.`);
+  }
+
   return _respond('single replacement (redox)', ['?'],
-    `${sym} + compound -> ?`,
+    `${metalSym} + compound -> ?`,
     'Single replacement (redox) reaction. The free element may displace another from its compound if it is higher in the activity series.');
 }
 
@@ -384,12 +630,7 @@ function _synthesise(metalSym, metalParsed, nonMetalSym, nonMetalParsed) {
     'N': 3, 'P': 3,
     'H': 1,
   };
-  const metalChargeMap = {
-    'Li': 1, 'Na': 1, 'K': 1, 'Rb': 1, 'Cs': 1, 'Fr': 1,
-    'Be': 2, 'Mg': 2, 'Ca': 2, 'Sr': 2, 'Ba': 2, 'Ra': 2,
-    'Al': 3,
-  };
-  const mChg = metalChargeMap[metalSym] || 1;
+  const mChg = _getMetalCharge(metalSym);
   const xChg = chargeMap[nonMetalSym] || 1;
 
   // Product formula: Metal_xNonMetal_y where mChg * y = xChg * x (charge balance).
@@ -398,8 +639,7 @@ function _synthesise(metalSym, metalParsed, nonMetalSym, nonMetalParsed) {
   //   Na+ + Cl-  : mChg=1, xChg=1 → x=1, y=1 → NaCl ✓
   //   Mg2+ + O2- : mChg=2, xChg=2 → x=1, y=1 → MgO ✓
   //   Al3+ + Br- : mChg=3, xChg=1 → x=1, y=3 → AlBr3 ✓
-  const g = (a, b) => { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, a % b]; } return a || 1; };
-  const gd = g(mChg, xChg);
+  const gd = _gcd(mChg, xChg);
   const xSub = xChg / gd;
   const ySub = mChg / gd;
 

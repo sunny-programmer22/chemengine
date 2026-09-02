@@ -13,19 +13,60 @@ document.addEventListener('DOMContentLoaded', () => {
   const solveBtn = document.getElementById('predict-solve');
   const exampleBtn = document.getElementById('predict-example');
 
+  /* Categorized examples covering all 9 reaction types + edge cases */
   const examples = [
-    'CH4, O2','Fe, O2','H2, O2','HCl, NaOH','Na, H2O','C2H6, O2',
-    'AgNO3, NaCl','CaCO3','Zn, HCl','H2SO4, NaOH','CO, O2',
-    'Na2CO3, HCl','CH3COOH, NaOH','H2O2','SO2, O2',
-    'Na + H2O','CuSO4, NaOH','CaO, H2O','Mg + O2','C2H4, H2',
-    'Fe2O3 + C','NaCl + H2O','P4O10 + H2O','C2H4 + H2O',
-    'KMnO4 + H2SO4 + H2O2'
+    // Combination / Synthesis
+    'Na, Cl2', 'CaO, CO2', 'Ca(OH)2, CO2', 'Mg, O2', 'H2, O2', 'P4, O2', 'SO2, O2', 'CO, O2',
+    // Decomposition
+    'CaCO3', 'H2O2', 'NH4Cl', 'NaHCO3', 'Cu(OH)2',
+    // Single Replacement
+    'Zn, HCl', 'Fe, CuSO4', 'Cl2, NaBr', 'Al, Fe2O3',
+    // Double Replacement / Precipitation
+    'AgNO3, NaCl', 'BaCl2, Na2SO4', 'Pb(NO3)2, NaCl', 'CuSO4, NaOH', 'FeCl3, NaOH',
+    // Combustion
+    'CH4, O2', 'C2H6, O2', 'C2H5OH, O2', 'C6H12O6, O2',
+    // Acid-Base Neutralization
+    'HCl, NaOH', 'H2SO4, NaOH', 'HNO3, KOH', 'CH3COOH, NaOH', 'H2SO4, Ca(OH)2',
+    // Gas Evolution
+    'Na2CO3, HCl', 'Na2SO3, HCl', 'Na2S, HCl', 'NH4Cl, NaOH', 'CaCO3, HCl',
+    // Redox
+    'CuS, O2', 'Fe2O3, C', 'Fe2O3, Al', 'Fe2O3, CO', 'CuO, H2',
+    // Hydration / Hydrolysis
+    'CaO, H2O', 'SO3, H2O', 'P4O10, H2O', 'NaCl, H2O', 'C2H4, H2O',
+    // Addition / Organic
+    'C2H4, H2', 'C2H4, Br2', 'C2H4, HCl', 'CH3CHO, H2', 'C2H4, HCN',
+    // Multi-reactant Redox
+    'KMnO4 + H2SO4 + H2O2', 'K2Cr2O7 + FeSO4 + H2SO4', 'FeSO4 + HNO3 + H2SO4'
   ];
   let exIdx = 0;
 
-  exampleBtn.addEventListener('click', () => {
-    input.value = examples[exIdx % examples.length];
+  /* Helper: cycle examples and show type hint in placeholder */
+  function cycleExample() {
+    const val = examples[exIdx % examples.length];
+    input.value = val;
+    input.placeholder = val;
+    /* Briefly hint the reaction category */
+    try {
+      const hint = predictReaction(val);
+      input.title = hint.type;
+    } catch (_) { input.title = ''; }
     exIdx++;
+  }
+
+  exampleBtn.addEventListener('click', cycleExample);
+
+  /* Autocomplete-style hint on typing: show quick type preview */
+  let hintTimeout = null;
+  input.addEventListener('input', () => {
+    clearTimeout(hintTimeout);
+    const v = input.value.trim();
+    if (v.length < 2) return;
+    hintTimeout = setTimeout(() => {
+      try {
+        const preview = predictReaction(v);
+        input.title = preview.type + ' → ' + preview.equation;
+      } catch (_) { input.title = ''; }
+    }, 450);
   });
 
   function viewStructure(formula) {
@@ -59,15 +100,35 @@ document.addEventListener('DOMContentLoaded', () => {
     return [...new Set(compounds)];
   }
 
+  /* Reaction-type → icon/short label for UX */
+  function getTypeMeta(type) {
+    const low = (type || '').toLowerCase();
+    if (low.includes('combustion')) return { icon: '🔥', badge: 'Combustion', color: '#ff6b35' };
+    if (low.includes('precipitation')) return { icon: '⬇️', badge: 'Precipitation ↓', color: '#4dabf7' };
+    if (low.includes('double displacement')) return { icon: '⇄', badge: 'Double Replacement', color: '#845ef7' };
+    if (low.includes('single displacement')) return { icon: '↔️', badge: 'Single Replacement', color: '#ff922b' };
+    if (low.includes('neutralization') || low.includes('acid-base')) return { icon: '⚗️', badge: 'Neutralization', color: '#20c997' };
+    if (low.includes('gas') || low.includes('carbonate-acid') || low.includes('co₂') || low.includes('co2')) return { icon: '↑', badge: 'Gas Evolution ↑', color: '#74b816' };
+    if (low.includes('synthesis') || low.includes('addition') || low.includes('combination')) return { icon: '🔗', badge: 'Synthesis', color: '#fcc419' };
+    if (low.includes('decomposition')) return { icon: '💥', badge: 'Decomposition', color: '#f06595' };
+    if (low.includes('redox') || low.includes('roasting') || low.includes('thermite') || low.includes('reduction')) return { icon: '⚡', badge: 'Redox', color: '#e64980' };
+    if (low.includes('hydration') || low.includes('hydrolysis')) return { icon: '💧', badge: 'Hydration', color: '#339af0' };
+    if (low.includes('polymer')) return { icon: '🧬', badge: 'Polymerization', color: '#ae3ec9' };
+    if (low.includes('hydrogenation') || low.includes('halogenation')) return { icon: '➕', badge: 'Addition', color: '#7950f2' };
+    return { icon: '🧪', badge: type || 'Reaction', color: 'var(--text-link)' };
+  }
+
   solveBtn.addEventListener('click', () => {
     const raw = input.value.trim();
-    if (!raw) { displayError(output, 'Enter reactants.'); return; }
+    if (!raw) { displayError(output, 'Enter reactants (e.g. Ca(OH)2, CO2 or Na, Cl2).'); return; }
     showSpinner('predict');
     setTimeout(() => {
       try {
         const result = predictReaction(raw);
         output.innerHTML = '';
         const compounds = extractCompounds(result.equation);
+        const meta = getTypeMeta(result.type);
+        const displayType = meta.icon + ' ' + result.type;
         const actions = [
           { label: '📋 Copy', fn: () => { navigator.clipboard.writeText(result.equation); } }
         ];
@@ -75,27 +136,71 @@ document.addEventListener('DOMContentLoaded', () => {
         if (structF) {
           actions.push({ label: '🔬 View Structure', fn: () => viewStructure(structF) });
         }
-        const card = buildResultCard(result.type, result.equation, actions);
+        /* Add quick balancer shortcut */
+        actions.push({ label: '⚖️ Balance', fn: () => {
+          const balInput = document.getElementById('balance-input');
+          const balTab = document.querySelector('[data-tab="balance"]');
+          if (balInput) balInput.value = result.equation;
+          if (balTab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            balTab.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active'));
+            document.getElementById('sec-balance').classList.add('active');
+          }
+          window.location.hash = 'balance';
+        }});
+        const card = buildResultCard(displayType, result.equation, actions);
+        /* Color the badge by reaction family */
+        const badge = card.querySelector('.type-badge');
+        if (badge) { badge.style.background = meta.color; badge.style.color = '#fff'; badge.textContent = meta.badge + ' — ' + result.type; }
         output.appendChild(card);
+
+        /* Secondary predictions (e.g., dehydration vs dehydrogenation) */
         if (result.predictions.length > 1) {
           const optsDiv = document.createElement('div');
           optsDiv.style.marginTop = '0.5rem';
           optsDiv.style.padding = '0.5rem';
           optsDiv.style.borderTop = '1px solid var(--border)';
+          optsDiv.innerHTML = '<div style="font-weight:600;font-size:0.9rem;margin-bottom:0.35rem;">Alternative pathways:</div>';
           result.predictions.forEach((p, i) => {
+            if (p === result.equation) return;
             const opt = document.createElement('div');
             opt.style.marginTop = '0.25rem';
             opt.style.fontSize = '0.85rem';
+            opt.style.cursor = 'pointer';
             opt.innerHTML = '<span style="color:var(--text-link);font-weight:500;">Option ' + (i + 1) + ':</span> ' + p;
+            opt.title = 'Click to copy';
+            opt.addEventListener('click', () => navigator.clipboard.writeText(p));
             optsDiv.appendChild(opt);
           });
           output.appendChild(optsDiv);
         }
+
+        /* Gas/precipitate footer hint */
+        const lowType = result.type.toLowerCase();
+        let hint = '';
+        if (lowType.includes('gas') || result.equation.includes('CO2') && raw.toLowerCase().includes('co3') ||
+            result.equation.includes('SO2') || result.equation.includes('H2S') || result.equation.includes('NH3')) {
+          hint = '↑ Gas evolved (drives reaction to completion)';
+        } else if (lowType.includes('precipitat')) {
+          hint = '⬇️ Precipitate formed (insoluble salt)';
+        } else if (lowType.includes('neutralization')) {
+          hint = '💧 Water formed — classic acid-base drive';
+        }
+        if (hint) {
+          const hDiv = document.createElement('div');
+          hDiv.style.marginTop = '0.4rem';
+          hDiv.style.fontSize = '0.82rem';
+          hDiv.style.opacity = '0.85';
+          hDiv.textContent = hint;
+          output.appendChild(hDiv);
+        }
+
         output.classList.remove('error');
         output.classList.add('show', 'success');
         displaySteps(rxnsDiv, result.steps);
         addHistory('predict', result.type + ' | ' + result.equation);
-      } catch (e) { displayError(output, 'Error: ' + e.message); }
+      } catch (e) { displayError(output, 'Error: ' + e.message + ' — check formula spelling (e.g. Ca(OH)2, CO2).'); }
       hideSpinner('predict');
     }, 50);
   });
@@ -525,11 +630,30 @@ function handleTwoReactants(reactants, rTypes, rEls, steps) {
     }
   }
 
-  /* 13. Carbonate + acid → Salt + H2O + CO2 */
+  /* 13. Carbonate + acid → Salt + H2O + CO2 (Gas Evolution) */
   else if (isCarbonate(r1) && isAcid(r2) || isAcid(r1) && isCarbonate(r2))
     return handleCarbonateAcid(reactants);
 
-  /* 13a. Base + non-metal oxide (CO2/SO2/SO3) → Salt + H2O */
+  /* 13a. Sulfite + acid → Salt + SO2 + H2O (Gas Evolution) */
+  else if ((typeof isSulfite !== 'undefined' && isSulfite(r1) && isAcid(r2)) || (typeof isSulfite !== 'undefined' && isSulfite(r2) && isAcid(r1)))
+    return handleSulfiteAcid(reactants);
+
+  /* 13b. Sulfide + acid → Salt + H2S ↑ (Gas Evolution) */
+  else if ((typeof isSulfide !== 'undefined' && isSulfide(r1) && isAcid(r2)) || (typeof isSulfide !== 'undefined' && isSulfide(r2) && isAcid(r1)))
+    return handleSulfideAcid(reactants);
+
+  /* 13c. Ammonium salt + base → Salt + NH3 ↑ + H2O (Gas Evolution / Acid-Base) */
+  else if ((isAmmoniumSalt(r1) && (t2 === 'hydroxide' || t2 === 'base' || hasHydroxide(r2) || r2 === 'NH4OH' || containsMetal(r2))) ||
+           (isAmmoniumSalt(r2) && (t1 === 'hydroxide' || t1 === 'base' || hasHydroxide(r1) || r1 === 'NH4OH' || containsMetal(r1))))
+    return handleAmmoniumBase(reactants);
+
+  /* 13d. Basic oxide + Acidic oxide → Salt (Combination / Synthesis) - e.g. CaO + CO2 → CaCO3 */
+  else if ((t1 === 'monoxide' || t1 === 'dioxide' || t1 === 'trioxide' || t1 === 'pentoxide' || t1 === 'oxide') &&
+           (t2 === 'monoxide' || t2 === 'dioxide' || t2 === 'trioxide' || t2 === 'pentoxide' || t2 === 'oxide') &&
+           ((containsMetal(r1) && !containsMetal(r2)) || (!containsMetal(r1) && containsMetal(r2))))
+    return handleOxideCombination(r1, r2, rEls);
+
+  /* 13e. Base + non-metal oxide (CO2/SO2/SO3) → Salt + H2O */
   else if ((t1 === 'hydroxide' || t1 === 'base' || (containsMetal(r1) && hasHydroxide(r1)) || r1 === 'NH3' || r1 === 'NH4OH') &&
            (t2 === 'dioxide' || t2 === 'trioxide' || t2 === 'pentoxide' || t2 === 'oxide'))
     return handleBaseNonMetalOxide(r1, r2);
@@ -573,10 +697,10 @@ function handleTwoReactants(reactants, rTypes, rEls, steps) {
   else if ((t2 === 'monoxide' || t2 === 'dioxide' || t2 === 'trioxide' || t2 === 'tetraoxide' || t2 === 'pentoxide' || t2 === 'oxide') && isHydrogen(r1))
     return handleReductionByHydrogen(r2, r1);
 
-  /* 16. Reduction by Carbon: metal oxide + C → metal + CO2 (Smelting) */
-  else if ((t1 === 'monoxide' || t1 === 'dioxide' || t1 === 'trioxide' || t1 === 'tetraoxide' || t1 === 'pentoxide' || t1 === 'oxide') && parseCompoundElements(r2).C && Object.keys(parseCompoundElements(r2)).length <= 2)
+  /* 16. Reduction by Carbon: metal oxide + C/CO → metal + CO2 (Smelting) — restrict to true reductants C and CO only */
+  else if ((t1 === 'monoxide' || t1 === 'dioxide' || t1 === 'trioxide' || t1 === 'tetraoxide' || t1 === 'pentoxide' || t1 === 'oxide') && ['C','CO'].includes(r2.toUpperCase()))
     return handleCarbonReduction(r1, r2);
-  else if ((t2 === 'monoxide' || t2 === 'dioxide' || t2 === 'trioxide' || t2 === 'tetraoxide' || t2 === 'pentoxide' || t2 === 'oxide') && parseCompoundElements(r1).C && Object.keys(parseCompoundElements(r1)).length <= 2)
+  else if ((t2 === 'monoxide' || t2 === 'dioxide' || t2 === 'trioxide' || t2 === 'tetraoxide' || t2 === 'pentoxide' || t2 === 'oxide') && ['C','CO'].includes(r1.toUpperCase()))
     return handleCarbonReduction(r2, r1);
 
   /* 17. Alkene Hydration: unsaturated + H2O → alcohol */
@@ -1416,6 +1540,11 @@ function handleBaseNonMetalOxide(base, oxide) {
   if (oxideForm === 'CO2') { anion = 'CO3'; anionCharge = 2; type = 'Acid-Base (Base + CO₂ → Carbonate + H₂O)'; }
   else if (oxideForm === 'SO2') { anion = 'SO3'; anionCharge = 2; type = 'Acid-Base (Base + SO₂ → Sulfite + H₂O)'; }
   else if (oxideForm === 'SO3') { anion = 'SO4'; anionCharge = 2; type = 'Acid-Base (Base + SO₃ → Sulfate + H₂O)'; }
+  else if (oxideForm === 'P4O10' || oxideForm === 'P2O5') { anion = 'PO4'; anionCharge = 3; type = 'Acid-Base (Base + P₂O₅/P₄O₁₀ → Phosphate + H₂O)'; }
+  else if (oxideForm === 'N2O5') { anion = 'NO3'; anionCharge = 1; type = 'Acid-Base (Base + N₂O₅ → Nitrate + H₂O)'; }
+  else if (oxideForm === 'N2O3') { anion = 'NO2'; anionCharge = 1; type = 'Acid-Base (Base + N₂O₃ → Nitrite + H₂O)'; }
+  else if (oxideForm === 'SIO2' || oxideForm === 'SI O2') { anion = 'SiO3'; anionCharge = 2; type = 'Acid-Base (Base + SiO₂ → Silicate + H₂O)'; }
+  else if (oxideForm === 'CL2O7') { anion = 'ClO4'; anionCharge = 1; type = 'Acid-Base (Base + Cl₂O₇ → Perchlorate + H₂O)'; }
   else throw new Error('Unrecognized non-metal oxide: ' + oxide);
 
   const cationCharge = POLYATOMIC_IONS[cation] ? POLYATOMIC_IONS[cation].charge : (getElementOxidationStateInCompound(base, cation) || getOxidationState(cation));
@@ -1485,10 +1614,211 @@ function handleCarbonateAcid(reactants) {
   else if (cationCharge === 3 && aCharge === 2) { salt = mEl + '2(' + anion + ')3'; }
   else { salt = mEl + anion; }
 
-  const type = 'Carbonate-Acid (Neutralization with CO₂)';
-  steps.push('Salt: ' + salt + ', CO₂ + H₂O');
+  const type = 'Gas Evolution (Carbonate + Acid → Salt + CO₂ ↑ + H₂O)';
+  steps.push('Salt: ' + salt + ', CO₂ ↑ + H₂O');
   const products = [salt, 'H2O', 'CO2'];
   const eqStr = tryBalanceOneWay([carb, acid], products, type);
+  steps.push('Balanced: ' + eqStr);
+  return { type, equation: eqStr, predictions: [eqStr], steps };
+}
+
+/* --- Sulfite + Acid → Salt + SO₂ ↑ + H₂O (Gas Evolution) --- */
+function handleSulfiteAcid(reactants) {
+  const steps = [];
+  const sulfIdx = reactants.findIndex(r => typeof isSulfite !== 'undefined' ? isSulfite(r) : false);
+  const acidIdx = reactants.findIndex(r => isAcid(r));
+  if (sulfIdx < 0 || acidIdx < 0) throw new Error('Need sulfite and acid.');
+  const sulf = reactants[sulfIdx], acid = reactants[acidIdx];
+  steps.push('Sulfite: ' + sulf + ', Acid: ' + acid);
+  const mEl = getFirstMetal(sulf) || (sulf.includes('NH4') ? 'NH4' : null);
+  if (!mEl) throw new Error('No metal in sulfite ' + sulf);
+  const aEls = parseCompoundElements(acid);
+  let anion;
+  if (aEls.S && aEls.O === 4) anion = 'SO4';
+  else if (aEls.N && aEls.O === 3) anion = 'NO3';
+  else if (aEls.N && aEls.O === 2) anion = 'NO2';
+  else if (aEls.Cl && !aEls.O) anion = 'Cl';
+  else if (aEls.Br && !aEls.O) anion = 'Br';
+  else if (aEls.I && !aEls.O) anion = 'I';
+  else if (aEls.F && !aEls.O) anion = 'F';
+  else anion = Object.keys(aEls).find(e => e !== 'H' && e !== 'O') || 'Cl';
+  const cationCharge = (mEl === 'NH4') ? 1 : (getElementOxidationStateInCompound(sulf, mEl) || getOxidationState(mEl));
+  const anionChargeMap = {'F':1,'Cl':1,'Br':1,'I':1,'NO3':1,'NO2':1,'SO4':2,'PO4':3};
+  const aCharge = anionChargeMap[anion] || 1;
+  const isPolyCation = mEl === 'NH4';
+  let salt;
+  if (cationCharge === aCharge) salt = mEl + anion;
+  else if (cationCharge === 2 && aCharge === 1) salt = isPolyCation ? mEl + '(' + anion + ')2' : mEl + anion + '2';
+  else if (cationCharge === 1 && aCharge === 2) salt = isPolyCation ? '(' + mEl + ')2' + anion : mEl + '2' + anion;
+  else if (cationCharge === 3 && aCharge === 1) salt = mEl + anion + '3';
+  else if (cationCharge === 1 && aCharge === 3) salt = isPolyCation ? '(' + mEl + ')3' + anion : mEl + '3' + anion;
+  else if (cationCharge === 2 && aCharge === 3) salt = mEl + '3(' + anion + ')2';
+  else if (cationCharge === 3 && aCharge === 2) salt = mEl + '2(' + anion + ')3';
+  else salt = mEl + anion;
+  const type = 'Gas Evolution (Sulfite + Acid → Salt + SO₂ ↑ + H₂O)';
+  steps.push('Salt: ' + salt + ', SO₂ ↑ + H₂O');
+  const products = [salt, 'SO2', 'H2O'];
+  const eqStr = tryBalanceOneWay([sulf, acid], products, type);
+  steps.push('Balanced: ' + eqStr);
+  return { type, equation: eqStr, predictions: [eqStr], steps };
+}
+
+/* --- Sulfide + Acid → Salt + H₂S ↑ (Gas Evolution) --- */
+function handleSulfideAcid(reactants) {
+  const steps = [];
+  const sulfIdx = reactants.findIndex(r => typeof isSulfide !== 'undefined' ? isSulfide(r) : false);
+  const acidIdx = reactants.findIndex(r => isAcid(r));
+  if (sulfIdx < 0 || acidIdx < 0) throw new Error('Need sulfide and acid.');
+  const sulf = reactants[sulfIdx], acid = reactants[acidIdx];
+  steps.push('Sulfide: ' + sulf + ', Acid: ' + acid);
+  const mEl = getFirstMetal(sulf) || (sulf.includes('NH4') ? 'NH4' : null);
+  if (!mEl) throw new Error('No metal in sulfide ' + sulf);
+  const aEls = parseCompoundElements(acid);
+  let anion;
+  if (aEls.S && aEls.O === 4) anion = 'SO4';
+  else if (aEls.N && aEls.O === 3) anion = 'NO3';
+  else if (aEls.Cl && !aEls.O) anion = 'Cl';
+  else if (aEls.Br && !aEls.O) anion = 'Br';
+  else if (aEls.I && !aEls.O) anion = 'I';
+  else if (aEls.F && !aEls.O) anion = 'F';
+  else anion = Object.keys(aEls).find(e => e !== 'H' && e !== 'O') || 'Cl';
+  const cationCharge = (mEl === 'NH4') ? 1 : (getElementOxidationStateInCompound(sulf, mEl) || getOxidationState(mEl));
+  const anionChargeMap = {'F':1,'Cl':1,'Br':1,'I':1,'NO3':1,'SO4':2,'PO4':3};
+  const aCharge = anionChargeMap[anion] || 1;
+  let salt;
+  if (cationCharge === aCharge) salt = mEl + anion;
+  else if (cationCharge === 2 && aCharge === 1) salt = mEl + anion + '2';
+  else if (cationCharge === 1 && aCharge === 2) salt = mEl + '2' + anion;
+  else if (cationCharge === 3 && aCharge === 1) salt = mEl + anion + '3';
+  else if (cationCharge === 1 && aCharge === 3) salt = mEl + '3' + anion;
+  else if (cationCharge === 2 && aCharge === 3) salt = mEl + '3(' + anion + ')2';
+  else if (cationCharge === 3 && aCharge === 2) salt = mEl + '2(' + anion + ')3';
+  else salt = mEl + anion;
+  const type = 'Gas Evolution (Sulfide + Acid → Salt + H₂S ↑)';
+  steps.push('Salt: ' + salt + ', H₂S ↑');
+  const products = [salt, 'H2S'];
+  const eqStr = tryBalanceOneWay([sulf, acid], products, type);
+  steps.push('Balanced: ' + eqStr);
+  return { type, equation: eqStr, predictions: [eqStr], steps };
+}
+
+/* --- Ammonium Salt + Base → Salt + NH₃ ↑ + H₂O (Gas Evolution) --- */
+function handleAmmoniumBase(reactants) {
+  const steps = [];
+  const amIdx = reactants.findIndex(r => isAmmoniumSalt(r));
+  const baseIdx = reactants.findIndex((r,i) => i !== amIdx);
+  if (amIdx < 0 || baseIdx < 0) throw new Error('Need ammonium salt and base.');
+  const amSalt = reactants[amIdx];
+  const base = reactants[baseIdx];
+  steps.push('Ammonium salt: ' + amSalt + ', Base: ' + base);
+  const bMetal = getFirstMetal(base);
+  const isNH4Base = base.includes('NH4');
+  let cation;
+  if (bMetal) cation = bMetal;
+  else if (isNH4Base) cation = 'NH4';
+  else {
+    const bEls = parseCompoundElements(base);
+    const metals = Object.keys(bEls).filter(e => e !== 'O' && e !== 'H');
+    cation = metals.length ? metals[0] : 'Na';
+  }
+  const amEls = parseCompoundElements(amSalt);
+  const anionCandidates = Object.keys(amEls).filter(e => e !== 'N' && e !== 'H');
+  const poly = extractPolyatomic(amSalt);
+  let anion;
+  if (poly && POLYATOMIC_IONS[poly] && POLYATOMIC_IONS[poly].charge < 0) anion = poly;
+  else if (anionCandidates.length) anion = anionCandidates[0];
+  else anion = getHalogen(amSalt) || 'Cl';
+  const cationCharge = (cation === 'NH4') ? 1 : (getElementOxidationStateInCompound(base, cation) || getOxidationState(cation));
+  const anionCharge = POLYATOMIC_IONS[anion] ? Math.abs(POLYATOMIC_IONS[anion].charge) : 1;
+  let salt;
+  if (isAmmoniumSalt(amSalt) && anion === 'CO3') {
+    /* Special: (NH4)2CO3 + base edge - already handled but fallback */
+    anion = 'CO3';
+  }
+  const isPolyAnion = POLYATOMIC_IONS[anion] !== undefined;
+  const isPolyCation2 = cation === 'NH4';
+  if (Math.abs(cationCharge) === 1 && anionCharge === 1) salt = cation + anion;
+  else if (Math.abs(cationCharge) === 2 && anionCharge === 1) salt = isPolyAnion ? cation + '(' + anion + ')2' : cation + anion + '2';
+  else if (Math.abs(cationCharge) === 1 && anionCharge === 2) salt = isPolyCation2 ? '(' + cation + ')2' + anion : cation + '2' + anion;
+  else if (Math.abs(cationCharge) === 2 && anionCharge === 2) salt = cation + anion;
+  else if (Math.abs(cationCharge) === 3 && anionCharge === 1) salt = isPolyAnion ? cation + '(' + anion + ')3' : cation + anion + '3';
+  else if (Math.abs(cationCharge) === 1 && anionCharge === 3) salt = isPolyCation2 ? '(' + cation + ')3' + anion : cation + '3' + anion;
+  else if (Math.abs(cationCharge) === 2 && anionCharge === 3) salt = cation + '3(' + anion + ')2';
+  else if (Math.abs(cationCharge) === 3 && anionCharge === 2) salt = cation + '2(' + anion + ')3';
+  else salt = cation + anion;
+  const type = 'Gas Evolution (Ammonium Salt + Base → Salt + NH₃ ↑ + H₂O)';
+  steps.push('Salt: ' + salt + ', NH₃ ↑ + H₂O');
+  const products = [salt, 'NH3', 'H2O'];
+  const eqStr = tryBalanceOneWay([amSalt, base], products, type);
+  steps.push('Balanced: ' + eqStr);
+  return { type, equation: eqStr, predictions: [eqStr], steps };
+}
+
+/* --- Basic Oxide + Acidic Oxide → Salt (Combination) --- */
+function handleOxideCombination(rA, rB, rEls) {
+  const steps = [];
+  steps.push('Oxide combination: ' + rA + ' + ' + rB);
+  /* Identify basic (metal oxide) and acidic (non-metal oxide) */
+  let basic, acidic;
+  if (containsMetal(rA) && !containsMetal(rB)) { basic = rA; acidic = rB; }
+  else if (!containsMetal(rA) && containsMetal(rB)) { basic = rB; acidic = rA; }
+  else {
+    /* Fallback: choose metal-containing as basic */
+    const mA = getFirstMetal(rA);
+    const mB = getFirstMetal(rB);
+    if (mA && !mB) { basic = rA; acidic = rB; }
+    else if (!mA && mB) { basic = rB; acidic = rA; }
+    else throw new Error('Cannot identify basic/acidic oxides');
+  }
+  const mEl = getFirstMetal(basic);
+  if (!mEl) throw new Error('No metal in basic oxide ' + basic);
+  const acidicUp = acidic.toUpperCase();
+  const bEls = parseCompoundElements(basic);
+  const aEls = parseCompoundElements(acidic);
+  const centralAcid = Object.keys(aEls).find(e => e !== 'O') || 'C';
+  let anion = null, anionCharge = 2, type = 'Synthesis (Basic Oxide + Acidic Oxide → Salt)';
+  if (acidicUp === 'CO2') { anion = 'CO3'; anionCharge = 2; type = 'Synthesis (Basic Oxide + CO₂ → Carbonate)'; }
+  else if (acidicUp === 'SO2') { anion = 'SO3'; anionCharge = 2; type = 'Synthesis (Basic Oxide + SO₂ → Sulfite)'; }
+  else if (acidicUp === 'SO3') { anion = 'SO4'; anionCharge = 2; type = 'Synthesis (Basic Oxide + SO₃ → Sulfate)'; }
+  else if (acidicUp === 'P4O10' || acidicUp === 'P2O5') { anion = 'PO4'; anionCharge = 3; type = 'Synthesis (Basic Oxide + P₂O₅/P₄O₁₀ → Phosphate)'; }
+  else if (acidicUp === 'N2O5') { anion = 'NO3'; anionCharge = 1; type = 'Synthesis (Basic Oxide + N₂O₅ → Nitrate)'; }
+  else if (acidicUp === 'N2O3') { anion = 'NO2'; anionCharge = 1; type = 'Synthesis (Basic Oxide + N₂O₃ → Nitrite)'; }
+  else if (acidicUp === 'SIO2' || acidicUp === 'SI O2') { anion = 'SiO3'; anionCharge = 2; type = 'Synthesis (Basic Oxide + SiO₂ → Silicate)'; }
+  else if (acidicUp === 'CL2O7') { anion = 'ClO4'; anionCharge = 1; type = 'Synthesis (Basic Oxide + Cl₂O₇ → Perchlorate)'; }
+  else {
+    /* Generic: acidic oxide + basic oxide -> salt of acidic central */
+    const oCount = aEls.O || 1;
+    /* Infer anion by adding one O to acidic oxide (hydration analogy) */
+    if (centralAcid === 'C' && oCount === 2) { anion = 'CO3'; anionCharge = 2; }
+    else if (centralAcid === 'S' && oCount === 2) { anion = 'SO3'; anionCharge = 2; }
+    else if (centralAcid === 'S' && oCount === 3) { anion = 'SO4'; anionCharge = 2; }
+    else if (centralAcid === 'P' && oCount >= 5) { anion = 'PO4'; anionCharge = 3; }
+    else if (centralAcid === 'N' && oCount === 5) { anion = 'NO3'; anionCharge = 1; }
+    else if (centralAcid === 'Si' && oCount === 2) { anion = 'SiO3'; anionCharge = 2; }
+    else { anion = centralAcid + 'O' + (oCount + 1); anionCharge = 2; }
+  }
+  const cationCharge = getElementOxidationStateInCompound(basic, mEl) || getOxidationState(mEl);
+  const isPolyCation = POLYATOMIC_IONS[mEl] !== undefined;
+  let salt;
+  if (Math.abs(cationCharge) === 1 && anionCharge === 1) salt = mEl + anion;
+  else if (Math.abs(cationCharge) === 2 && anionCharge === 1) salt = POLYATOMIC_IONS[anion] ? mEl + '(' + anion + ')2' : mEl + anion + '2';
+  else if (Math.abs(cationCharge) === 1 && anionCharge === 2) salt = mEl + '2' + anion;
+  else if (Math.abs(cationCharge) === 2 && anionCharge === 2) salt = mEl + anion;
+  else if (Math.abs(cationCharge) === 3 && anionCharge === 1) salt = POLYATOMIC_IONS[anion] ? mEl + '(' + anion + ')3' : mEl + anion + '3';
+  else if (Math.abs(cationCharge) === 1 && anionCharge === 3) salt = mEl + '3' + anion;
+  else if (Math.abs(cationCharge) === 3 && anionCharge === 2) salt = mEl + '2(' + anion + ')3';
+  else if (Math.abs(cationCharge) === 2 && anionCharge === 3) salt = mEl + '3(' + anion + ')2';
+  else salt = mEl + anion;
+  /* Special handling for phosphate where 2 oxides combine */
+  if (anion === 'PO4' && acidicUp.includes('P4')) {
+    /* P4O10 actually needs 6 basic oxides for full conversion */
+    /* Balancing will handle stoichiometry */
+  }
+  steps.push('Basic oxide: ' + basic + ' (' + mEl + ' +' + cationCharge + ')');
+  steps.push('Acidic oxide: ' + acidic + ' → ' + anion + ' (' + anionCharge + '-)');
+  steps.push('Salt: ' + salt);
+  const products = [salt];
+  const eqStr = tryBalanceOneWay([basic, acidic], products, type);
   steps.push('Balanced: ' + eqStr);
   return { type, equation: eqStr, predictions: [eqStr], steps };
 }

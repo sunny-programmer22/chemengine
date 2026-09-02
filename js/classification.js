@@ -308,7 +308,29 @@ function isHydroxide(formula) { return formula.includes('OH'); }
 
 function isCarbonate(formula) {
   const els = parseCompoundElements(formula);
-  return els.C && els.O && containsMetal(formula);
+  return els.C && els.O && (containsMetal(formula) || formula.includes('NH4') || formula.includes('HCO3'));
+}
+
+function isSulfite(formula) {
+  const els = parseCompoundElements(formula);
+  return els.S && els.O && els.O === 3 && (containsMetal(formula) || formula.includes('NH4'));
+}
+
+function isSulfide(formula) {
+  const els = parseCompoundElements(formula);
+  return els.S && !els.O && (containsMetal(formula) || formula.includes('NH4'));
+}
+
+function isBicarbonate(formula) {
+  return formula.includes('HCO3');
+}
+
+function isAmmoniumSalt(formula) {
+  return formula.includes('NH4');
+}
+
+function isAmmoniumCarbonate(formula) {
+  return isAmmoniumSalt(formula) && isCarbonate(formula);
 }
 
 function isOxygen(formula) { return ['O','O2','O3'].includes(formula.toUpperCase()); }

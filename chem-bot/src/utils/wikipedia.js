@@ -28,6 +28,7 @@ const CHEM_KEYWORDS = [
   // Organic chemistry extensions (mechanisms, named reactions, stereochemistry)
   'nucleophilic', 'electrophilic', 'substitution', 'elimination', 'addition',
   'rearrangement', 'condensation', 'hydrolysis', 'esterification', 'saponification',
+  'decarboxylation', 'decarboxylate', 'kolbe electrolysis',
   'carbocation', 'carbanion', 'radical', 'heterocycle', 'aliphatic',
   'stereochemistry', 'enantiomer', 'diastereomer', 'chiral', 'achiral', 'racemic', 'meso',
   'conformation', 'resonance', 'tautomer', 'enol', 'enolate',
@@ -52,7 +53,7 @@ const ORGANIC_KEYWORDS = [
   'aldol', 'aldol condensation', 'aldol reaction', 'claisen', 'claisen condensation',
   'grignard', 'grignard reagent', 'friedel-crafts', 'friedel crafts', 'friedel–crafts',
   'diels-alder', 'diels alder', 'diels–alder', 'wittig', 'wittig reaction', 'cannizzaro', 'cannizzaro reaction', 'perkin',
-  'wurtz', 'kolbe', 'fischer esterification', 'michael addition',
+  'wurtz', 'kolbe', 'kolbe electrolysis', 'decarboxylation', 'decarboxylate', 'fischer esterification', 'michael addition',
   'mannich', 'heck', 'suzuki', 'esterification', 'saponification',
   'polymerization', 'condensation', 'hydrolysis',
   'alkane', 'alkene', 'alkyne', 'aromatic', 'alcohol', 'phenol', 'ether',
@@ -101,6 +102,9 @@ const ORGANIC_SEARCH_MAP = {
   'perkin': 'Perkin reaction',
   'wurtz': 'Wurtz reaction',
   'kolbe': 'Kolbe electrolysis',
+  'kolbe electrolysis': 'Kolbe electrolysis',
+  'decarboxylation': 'Decarboxylation',
+  'decarboxylate': 'Decarboxylation',
   'fischer esterification': 'Fischer esterification',
   'michael addition': 'Michael reaction',
   'michael': 'Michael reaction'

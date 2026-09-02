@@ -21,6 +21,8 @@ services:
         value: "gemini-1.5-flash"
       - key: TELEGRAM_BOT_TOKEN
         sync: false
+      - key: OPENAI_API_KEY
+        sync: false
       - key: GEMINI_API_KEY
         sync: false
       - key: WEBHOOK_URL

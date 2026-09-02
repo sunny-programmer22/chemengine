@@ -23,6 +23,9 @@ const llm = require('../llm/index');
 const EQUATION_PATTERN = /(?:->|→|<->|⇌|[0-9]?\s*[A-Z][a-z]?[0-9]*(?:\([^)]+\)[0-9]*)*\s*(?:\+|→|->|<->|⇌)\s*)+/i;
 const FORMULA_WITH_NUMBER_PATTERN = /^([A-Z][a-z]?[0-9]*(?:\([^)]+\)[0-9]*)*)\s+(\d+(?:\.\d+)?)\s*$/i;
 const GREETINGS = ['hello', 'hi', 'hey', 'greetings', 'good morning', 'good afternoon', 'good evening', 'sup', 'how are you', 'how are you?', 'how r u', "how's it going", "what's up", 'whats up', 'how are u'];
+const THANKS = ['thanks', 'thank you', 'thank u', 'thx', 'ty', 'tysm', 'thanks a lot', 'thanks so much', 'thank you so much', 'much thanks', 'appreciate it'];
+const ACK = ['ok', 'okay', 'k', 'kk', 'got it', 'cool', 'nice', 'great', 'alright', 'bet', 'sure', 'awesome', 'perfect', 'sounds good', 'roger'];
+const BYE = ['bye', 'goodbye', 'see ya', 'cya', 'later', 'gn', 'good night', 'goodnight', 'take care', 'see you', 'see you later', 'adios', 'farewell', 'ttyl'];
 
 // User state map for button flow — after clicking a button, next plain text is treated as input for that action without slash
 const userAwaiting = new Map(); // chatId -> {action, expires}
@@ -945,8 +948,9 @@ async function routeMessage(bot, msg) {
     }
   }
 
-  // Check for greetings / casual human chat - very short replies with quick nav
+  // Check for greetings / casual human chat - very short replies with quick nav (Reacto: casual, short, human)
   const lowerText = text.toLowerCase().trim();
+  const norm = lowerText.replace(/[!?.,]+$/g, '').trim();
   const casualPhrases = ['how are you', 'how r u', "how's it going", "what's up", 'whats up', 'how are u', 'hru', 'wbu', 'what about you', 'i am fine', "i'm fine", 'i am good', "i'm good"];
   if (GREETINGS.some(g => lowerText === g || lowerText.startsWith(g + ' ') || lowerText.startsWith(g + '?') || lowerText.startsWith(g + '!'))) {
     const greetings = ['Hey! 👋', 'Hi there! 🧪', 'Hello! 😊', 'Hey there!'];
@@ -964,6 +968,23 @@ async function routeMessage(bot, msg) {
       await bot.sendMessage(chatId, "Not much! Just chilling with chemistry 🧪 You?", { ...KB.greeting });
       return;
     }
+  }
+  // — Human small-talk: thanks / ack / bye — short, casual, Reacto style (emoji sparingly)
+  const isThanks = lowerText.includes('thank') || norm === 'thx' || norm === 'ty' || norm === 'tysm' || lowerText.includes('appreciate');
+  if (isThanks) {
+    const replies = ['anytime! 😊', 'you got it! 👍', 'happy to help! 😊', 'np! anytime'];
+    await bot.sendMessage(chatId, replies[Math.floor(Math.random() * replies.length)], { ...KB.greeting });
+    return;
+  }
+  if (['ok','okay','k','kk','got it','cool','nice','great','alright','bet','sure','awesome','perfect','sounds good','roger'].some(a => norm === a)) {
+    const replies = ['gotcha 👍', 'cool cool 😊', 'yep! lmk if you need anything', '👍'];
+    await bot.sendMessage(chatId, replies[Math.floor(Math.random() * replies.length)], { ...KB.greeting });
+    return;
+  }
+  if (BYE.some(b => norm === b || lowerText === b || lowerText.startsWith(b + ' ') || lowerText.startsWith(b + '!') || lowerText.endsWith(' ' + b))) {
+    const replies = ['see ya! 👋', 'bye! take care 😊', 'later! 👋', 'catch you later! 😊'];
+    await bot.sendMessage(chatId, replies[Math.floor(Math.random() * replies.length)], { ...KB.greeting });
+    return;
   }
 
   // Check for chemical equation pattern
@@ -993,7 +1014,13 @@ async function routeMessage(bot, msg) {
     await sendFormattedMessage(bot, chatId, answer, KB.organic_short);
     return;
   } catch {}
-  await bot.sendMessage(chatId, 'Hey! 😊 Try tapping 📚 Help for chemistry stuff!', { parse_mode: 'HTML', ...KB.help });
+  // Human fallback — never robotic "I'm not sure..." — short, friendly, Reacto style
+  const fallbacks = [
+    'hmm not quite got that 😅 try a formula like H2O or tap 📚 Help?',
+    'you got me there lol — send something like NaCl or H2SO4 and I\'ll do the rest!',
+    'ahh didn\'t catch that 😅 try H2 + O2 -> H2O or check 📚 Help for ideas'
+  ];
+  await bot.sendMessage(chatId, fallbacks[Math.floor(Math.random() * fallbacks.length)], { parse_mode: 'HTML', ...KB.help });
 }
 
 /**

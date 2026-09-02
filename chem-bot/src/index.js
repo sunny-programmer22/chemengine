@@ -138,6 +138,58 @@ function startWebhookMode() {
     res.json({ status: 'ok', bot: 'chem-bot', mode: 'webhook' });
   });
 
+  // CORS for web chat API (same-origin + localhost dev)
+  app.use((req, res, next) => {
+    const origin = req.headers.origin || '';
+    const allowed = ['https://chemengine.onrender.com', 'https://chem-bot.onrender.com', 'http://localhost:3000', 'http://localhost:5500', ''];
+    if (allowed.includes(origin) || origin.startsWith('http://localhost')) {
+      res.header('Access-Control-Allow-Origin', origin || '*');
+    }
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    if (req.method === 'OPTIONS') return res.sendStatus(200);
+    next();
+  });
+
+  // Rate limiting for web chat API (simple in-memory)
+  const rateLimitMap = new Map();
+  function rateLimit(req, res, next) {
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    const now = Date.now();
+    const windowMs = 60000;
+    const maxRequests = 30;
+    const entry = rateLimitMap.get(ip) || { count: 0, resetAt: now + windowMs };
+    if (now > entry.resetAt) {
+      rateLimitMap.set(ip, { count: 1, resetAt: now + windowMs });
+      return next();
+    }
+    if (entry.count >= maxRequests) {
+      return res.status(429).json({ reply: 'Too many requests. Please slow down.', source: 'rate-limit' });
+    }
+    entry.count++;
+    rateLimitMap.set(ip, entry);
+    next();
+  }
+
+  // Web chat API — reuses the same chemistry tools as the Telegram bot
+  app.post('/api/chat', rateLimit, express.json({ limit: '1mb' }), async (req, res) => {
+    const { message } = req.body || {};
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ reply: 'Please send a message.', source: 'error' });
+    }
+    const trimmed = message.trim().slice(0, 500);
+    if (!trimmed) {
+      return res.status(400).json({ reply: 'Please send a message.', source: 'error' });
+    }
+    try {
+      const { routeWebMessage } = require('./web-chat');
+      const result = await routeWebMessage(trimmed);
+      return res.json(result);
+    } catch (err) {
+      return res.status(500).json({ reply: 'Something went wrong. Please try again.', source: 'error' });
+    }
+  });
+
   // Webhook endpoint
   const bot = new TelegramBot(config.telegramBotToken);
 

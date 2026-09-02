@@ -279,8 +279,15 @@ function getCoefficientsFromBalance(balanceResult, parsed) {
  */
 async function calculate(equation, knownCompound, amount, unit) {
   try {
-    if (!equation || !knownCompound || amount === undefined || amount === null || !unit) {
-      return '*Stoichiometry calculation*\n  Required: equation, knownCompound, amount, unit.';
+    if (!equation) {
+      return '*Stoichiometry calculation*\n  Required: equation.';
+    }
+    // AMOUNT OPTIONAL: if no amount/compound provided, normalize smallest coefficient to 1
+    let isNormalizedMode = false;
+    if (!knownCompound || amount === undefined || amount === null || !unit) {
+      isNormalizedMode = true;
+      if (!unit) unit = 'mol';
+      if (amount === undefined || amount === null) amount = 1;
     }
 
     // Parse the equation first
@@ -332,14 +339,22 @@ async function calculate(equation, knownCompound, amount, unit) {
     const productStrs = products.map((s, i) => (allCoeffs[reactants.length + i] === 1 ? s : `${allCoeffs[reactants.length + i]} ${s}`));
     const balanced = `${reactantStrs.join(' + ')} -> ${productStrs.join(' + ')}`;
 
-    // Identify the known compound
-    const knownStripped = _stripCoeff(knownCompound);
-    const knownFormula = knownStripped.formula;
-    // allCompounds already has coefficients stripped (since reactants/products
-    // were _stripCoeff'd above), so direct comparison works.
-    const idx = allCompounds.findIndex((c) => c === knownFormula);
-    if (idx === -1) {
-      return `*Stoichiometry calculation*\n  Equation: ${balanced}\n  Compound '${knownFormula}' not found in equation. Available: ${allCompounds.join(', ')}.`;
+    // Identify the known compound — AMOUNT OPTIONAL: auto-determine smallest coeff if not provided
+    let knownFormula;
+    let idx;
+    if (isNormalizedMode) {
+      const minCoeff = Math.min(...allCoeffs);
+      idx = allCoeffs.indexOf(minCoeff);
+      knownFormula = allCompounds[idx];
+    } else {
+      const knownStripped = _stripCoeff(knownCompound);
+      knownFormula = knownStripped.formula;
+      // allCompounds already has coefficients stripped (since reactants/products
+      // were _stripCoeff'd above), so direct comparison works.
+      idx = allCompounds.findIndex((c) => c === knownFormula);
+      if (idx === -1) {
+        return `*Stoichiometry calculation*\n  Equation: ${balanced}\n  Compound '${knownFormula}' not found in equation. Available: ${allCompounds.join(', ')}.`;
+      }
     }
 
     // Validate that the formula parses (molecularWeight throws on bad)
@@ -380,6 +395,9 @@ async function calculate(equation, knownCompound, amount, unit) {
     const lines = [];
     lines.push('*Stoichiometry calculation*');
     lines.push(`  Equation: ${balanced}`);
+    if (isNormalizedMode) {
+      lines.push(`  Normalized: smallest coefficient = 1 (${knownFormula} = 1 ${unit})`);
+    }
     lines.push(`  Known: ${amount} ${unit} of ${knownFormula}`);
     lines.push(`  Moles of known: ${_fmtValue(knownMoles)} mol`);
     lines.push('');

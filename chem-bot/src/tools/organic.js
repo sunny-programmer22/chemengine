@@ -77,6 +77,58 @@ function _contains(hay, needle) {
   return _norm(hay).includes(_norm(needle));
 }
 
+function _normalizeSpectroscopyQuery(query) {
+  const q = _norm(query);
+  if (!q) return { query: '', tokens: [], aliases: [] };
+
+  const aliases = new Set([q]);
+  const add = (value) => {
+    const v = _norm(value);
+    if (v) aliases.add(v);
+  };
+
+  const tokenPatterns = [
+    [/\bcarbonyl\b/g, ['c=o', 'c=o ketone', 'c=o aldehyde', 'c=o ester', 'c=o acid']],
+    [/\bhydroxyl\b/g, ['o-h', 'oh', 'alcohol', 'phenol', 'acid o-h']],
+    [/\baldehyde\b/g, ['cho', 'c=h', 'formyl']],
+    [/\bketone\b/g, ['c=o', 'carbonyl']],
+    [/\bcarboxyl(?:ic)? acid\b/g, ['cooh', 'c=o', 'o-h', 'carboxylic acid']],
+    [/\besters?\b/g, ['coo', 'c=o', 'c-o']],
+    [/\bnitrile\b/g, ['c#n', 'c≡n', 'c=n']],
+    [/\balkyne\b/g, ['c#c', 'c≡c']],
+    [/\balkene\b/g, ['c=c']],
+    [/\bamine\b/g, ['n-h', 'nh2', 'nh']],
+    [/\bamide\b/g, ['conh2', 'c=o', 'n-h']],
+    [/\bether\b/g, ['c-o']],
+    [/\balkyl\b/g, ['c-h']],
+  ];
+
+  for (const [pattern, mapped] of tokenPatterns) {
+    if (pattern.test(q)) {
+      for (const item of mapped) add(item);
+    }
+    pattern.lastIndex = 0;
+  }
+
+  const cleaned = q.replace(/[^a-z0-9\-+]/g, ' ').replace(/\s+/g, ' ').trim();
+  const tokens = cleaned ? cleaned.split(' ') : [];
+  // Only add tokens of length >= 3. Two-letter tokens like "ir"/"ms" match
+  // substring noise inside row text and cause unrelated rows to pass the filter.
+  for (const t of tokens) if (t.length >= 3) add(t);
+
+  return { query: q, tokens, aliases: Array.from(aliases) };
+}
+
+function _spectroscopyMatch(hay, queryInfo) {
+  if (!queryInfo || !queryInfo.query) return true;
+  const text = _norm(hay);
+  if (text.includes(queryInfo.query)) return true;
+  for (const alias of queryInfo.aliases || []) {
+    if (alias && text.includes(alias)) return true;
+  }
+  return false;
+}
+
 function _anyContains(arr, needle) {
   if (!Array.isArray(arr)) return _contains(String(arr), needle);
   return arr.some((v) => _contains(String(v), needle));
@@ -831,8 +883,9 @@ function _spectroscopyData() {
 
 function _formatIrTable(rows, filter) {
   const lines = [];
+  const queryInfo = typeof filter === 'string' ? _normalizeSpectroscopyQuery(filter) : null;
   for (const r of rows) {
-    if (filter && !_contains([r.group, r.frequency, r.notes].join(' '), filter)) continue;
+    if (queryInfo && !_spectroscopyMatch([r.group, r.frequency, r.notes].join(' '), queryInfo)) continue;
     lines.push(`  <b>${r.group}</b> — ${r.frequency} cm⁻¹ (${r.intensity}) — ${r.notes}`);
   }
   return lines.length ? lines.join('\n') : '  (no IR bands matched filter)';
@@ -840,12 +893,14 @@ function _formatIrTable(rows, filter) {
 
 function _formatNmrShifts(shifts, filter) {
   const lines = [];
+  const queryInfo = typeof filter === 'string' ? _normalizeSpectroscopyQuery(filter) : null;
   for (const s of shifts) {
-    if (filter && !_contains([s.type, s.delta, s.example, s.notes].join(' '), filter)) continue;
+    if (queryInfo && !_spectroscopyMatch([s.type, s.delta, s.example, s.notes].join(' '), queryInfo)) continue;
     lines.push(`  <b>${s.type}</b> δ ${s.delta} — e.g. ${s.example || s.notes} — ${s.notes || ''}`);
   }
   return lines.length ? lines.join('\n') : '  (no NMR shifts matched filter)';
 }
+
 
 /**
  * Spectroscopy & analysis — IR frequencies, ¹H/¹³C NMR chemical shifts,
@@ -954,7 +1009,8 @@ function getSpectroscopy(query) {
     out += _formatNmrShifts(nmr.hNmrShifts || [], nmrFilter) + '\n';
     if (Array.isArray(nmr.cNmrShifts)) {
       const cFilter = isGenericNMR ? null : query;
-      const cMatches = cFilter == null ? nmr.cNmrShifts : nmr.cNmrShifts.filter((c) => _contains([c.type, c.delta, c.notes].join(' '), cFilter));
+      const cInfo = cFilter == null ? null : _normalizeSpectroscopyQuery(cFilter);
+      const cMatches = cInfo == null ? nmr.cNmrShifts : nmr.cNmrShifts.filter((c) => _spectroscopyMatch([c.type, c.delta, c.notes].join(' '), cInfo));
       if (cMatches.length) {
         out += `\n¹³C NMR matches:\n`;
         for (const c of cMatches) out += `  <b>${c.type}</b> δ ${c.delta} — ${c.notes}\n`;
@@ -964,7 +1020,8 @@ function getSpectroscopy(query) {
   }
   if ((wantMS || (!wantIR && !wantNMR && !wantMS)) && ms.commonFragmentations) {
     const msFilter = isGenericMS ? null : query;
-    const msHits = msFilter == null ? ms.commonFragmentations : ms.commonFragmentations.filter((f) => _contains([f.type, f.description, ...(f.examples || []), f.example, f.tip].join(' '), msFilter));
+    const msInfo = msFilter == null ? null : _normalizeSpectroscopyQuery(msFilter);
+    const msHits = msInfo == null ? ms.commonFragmentations : ms.commonFragmentations.filter((f) => _spectroscopyMatch([f.type, f.description, ...(f.examples || []), f.example, f.tip].join(' '), msInfo));
     if (msHits.length) {
       out += _subHeader('MS matches');
       for (const f of msHits) {

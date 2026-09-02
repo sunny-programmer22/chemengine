@@ -6,7 +6,7 @@
 <title>Engine - Scientific Calculator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <script src="js/math.min.js"></script>
 <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
@@ -37,48 +37,49 @@
   <div class="home-hero">
     <span class="home-badge">9 tools · 100% client-side · free forever</span>
     <h1>Chem Engine</h1>
-    <p>Precision chemistry toolkit — balance equations, predict reactions, solve stoichiometry, and explore molecules.</p>
+    <p>Built for accurate work — null-space balancing, mole-to-mass conversions, and PubChem 3D conformers, all computed locally in your browser.</p>
   </div>
   <div class="home-grid">
-    <div class="home-card" data-tab="linear">
+    <div class="home-card" tabindex="0" role="button" aria-label="Linear Equations" data-tab="linear">
       <span class="home-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></span>
-      <h3>Linear Equations</h3>
-      <p>Solve systems of linear equations</p>
+      <h3>Linear systems</h3>
+      <p>Gaussian elimination with step-by-step working for n variables</p>
     </div>
-    <div class="home-card" data-tab="nonlinear">
+    <div class="home-card" tabindex="0" role="button" aria-label="Non-Linear Equations" data-tab="nonlinear">
       <span class="home-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>
-      <h3>Non-Linear Equations</h3>
-      <p>Newton-Raphson solver</p>
+      <h3>Non-linear systems</h3>
+      <p>Newton–Raphson iteration with Jacobian and convergence trace</p>
     </div>
     <div class="home-card" data-tab="balance">
       <span class="home-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg></span>
-      <h3>Balance Equation</h3>
-      <p>Balance chemical equations</p>
+      <h3>Reaction balancer</h3>
+      <p>Coefficients via matrix null-space, with support for parentheses and charge</p>
     </div>
     <div class="home-card" data-tab="predict">
       <span class="home-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.5a2 2 0 0 1-.2.9L4.7 20.6a1 1 0 0 0 .9 1.4h12.8a1 1 0 0 0 .9-1.4L14.2 10.4a2 2 0 0 1-.2-.9V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg></span>
-      <h3>Predict Reaction</h3>
-      <p>Predict reaction products</p>
+      <h3>Product prediction</h3>
+      <p>Combustion, precipitation, and acid–base templates from formula alone</p>
     </div>
-    <div class="home-card" data-tab="structure">
+    <div class="home-card home-card--with-image" data-tab="structure">
+      <img class="home-card-img" src="https://picsum.photos/seed/molecule/400/240" alt="Molecule structure" loading="lazy">
       <span class="home-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><path d="M20.2 20.2c2-2 .02-7.36-4.5-11.9S6.32 2.28 4.3 4.3c-2.04 2.03-.02 7.36 4.5 11.9s9.37 7.03 11.4 5Z"/><path d="M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.02-2.02-7.36-.02-11.9 4.5s-6.52 9.87-4.5 11.9c2.04 2.03 7.38.02 11.9-4.5Z"/></svg></span>
-      <h3>Molecular Structure</h3>
-      <p>3D molecular viewer</p>
+      <h3>3D structure viewer</h3>
+      <p>PubChem conformers in WebGL — rotate, zoom, and inspect bond geometry</p>
     </div>
     <div class="home-card" data-tab="stoichiometry">
       <span class="home-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><path d="M8 11h.01"/><path d="M12 11h.01"/><path d="M16 11h.01"/><path d="M8 15h.01"/><path d="M12 15h.01"/><path d="M16 15h.01"/><path d="M8 19h.01"/><path d="M12 19h4"/></svg></span>
       <h3>Stoichiometry</h3>
-      <p>Moles, grams &amp; volume calc</p>
+      <p>Mass, moles, and gas volume at STP scaled from a single reference quantity</p>
     </div>
     <div class="home-card" data-tab="periodic">
       <span class="home-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg></span>
-      <h3>Periodic Table</h3>
-      <p>Interactive element explorer</p>
+      <h3>Periodic table</h3>
+      <p>All 118 elements with properties, electron configuration, and trend view</p>
     </div>
     <div class="home-card" data-tab="ph">
       <span class="home-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7Z"/></svg></span>
-      <h3>pH Calculator</h3>
-      <p>Acid/base pH calculations</p>
+      <h3>pH calculator</h3>
+      <p>Strong, weak, and polyprotic acids and bases with auto-detection</p>
     </div>
   </div>
 </section>
@@ -266,5 +267,173 @@
 <script src="js/stoichiometry.js"></script>
 <script src="js/periodic.js"></script>
 <script src="js/ph-calc.js"></script>
+
+<!-- ===== FLOATING COMMAND PALETTE HINT — glassmorphism pill (desktop only) ===== -->
+<button id="cmd-palette-hint" class="cmd-palette-hint" type="button" aria-label="Open command palette — press Ctrl+K">
+  <kbd>Ctrl</kbd><kbd>K</kbd>
+  <span>Quick navigation</span>
+</button>
+
+<!-- ===== BOT WIDGET — Floating Telegram bot + web fallback ===== -->
+<div id="bot-widget-root" aria-live="polite">
+  <div id="bot-panel" role="dialog" aria-label="Reacto Chemistry Bot" aria-hidden="true">
+    <div class="bot-panel-header">
+      <span class="bot-avatar" aria-hidden="true">🧪</span>
+      <div>
+        <strong>Reacto — Chemistry Bot</strong>
+        <span>@ReactoLab_bot &middot; Telegram &middot; AI + PubChem</span>
+      </div>
+      <button id="bot-panel-close" type="button" aria-label="Close chat panel">×</button>
+    </div>
+    <div class="bot-panel-body">
+      <p class="bot-panel-desc">Balance equations, predict reactions, get molar mass &amp; pH — directly in Telegram. Web health fallback below.</p>
+      <div class="bot-panel-actions">
+        <!-- Primary: required id="bot-widget" per spec -->
+        <a id="bot-widget" href="https://t.me/ReactoLab_bot" target="_blank" rel="noopener noreferrer" class="bot-btn bot-btn-primary" aria-label="Open ReactoLab_bot on Telegram">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="18" height="18"><path d="M12 2.5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 12 2.5Zm4.6 7.2-1.5 7.1a1 1 0 0 1-1.6.5l-2.2-1.6-1.1.9a1 1 0 0 1-1.6-.6l-.4-1.6-2.1-.7a1 1 0 0 1 0-1.7l8.4-3.2a1 1 0 0 1 1.35 1.1c-.02.14-.15.64-.25.8Z"/></svg>
+          Open in Telegram — @ReactoLab_bot
+        </a>
+        <a id="bot-web-link" href="https://chem-bot.onrender.com/health" target="_blank" rel="noopener noreferrer" class="bot-btn bot-btn-secondary">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16"><circle cx="12" cy="12" r="10"/><path d="M12 8v5l3 2"/><circle cx="12" cy="16" r="0"/></svg>
+          Check web health — chem-bot.onrender.com
+        </a>
+        <button id="bot-toggle-iframe" type="button" class="bot-btn bot-btn-ghost">▸ Preview web chat (iframe)</button>
+      </div>
+
+      <div id="bot-health" role="status" aria-live="polite">
+        <span id="bot-health-dot" aria-hidden="true"></span>
+        <span id="bot-health-text">Checking bot status…</span>
+      </div>
+
+      <div id="bot-iframe-wrap" hidden>
+        <iframe id="bot-iframe" title="Chem Engine web chat fallback" src="about:blank" loading="lazy" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" style="width:100%;height:260px;border:0;"></iframe>
+      </div>
+
+      <p class="bot-panel-foot">
+        Fallback health endpoint also at<br>
+        <a href="https://chemengine.onrender.com/health" target="_blank" rel="noopener noreferrer">chemengine.onrender.com/health</a>
+        &middot; <a href="https://t.me/ReactoLab_bot" target="_blank" rel="noopener noreferrer">t.me/ReactoLab_bot</a>
+      </p>
+    </div>
+  </div>
+
+  <button id="bot-fab" type="button" aria-label="Open Reacto chemistry bot" aria-expanded="false" aria-controls="bot-panel" style="position:relative;">
+    <span id="bot-fab-dot" aria-hidden="true"></span>
+    <!-- Telegram plane icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M21 5 3 11l7 2 2 7 7-15Z"/>
+      <path d="m10 13 6-6"/>
+    </svg>
+  </button>
+</div>
+
+<script>
+(function () {
+  var fab = document.getElementById('bot-fab');
+  var panel = document.getElementById('bot-panel');
+  var closeBtn = document.getElementById('bot-panel-close');
+  var healthDot = document.getElementById('bot-health-dot');
+  var healthText = document.getElementById('bot-health-text');
+  var toggleIframeBtn = document.getElementById('bot-toggle-iframe');
+  var iframeWrap = document.getElementById('bot-iframe-wrap');
+  var iframe = document.getElementById('bot-iframe');
+
+  function setOpen(open) {
+    panel.classList.toggle('open', open);
+    panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+    fab.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  fab.addEventListener('click', function () {
+    setOpen(!panel.classList.contains('open'));
+  });
+  closeBtn.addEventListener('click', function () { setOpen(false); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && panel.classList.contains('open')) setOpen(false);
+  });
+  document.addEventListener('click', function (e) {
+    if (!panel.classList.contains('open')) return;
+    if (panel.contains(e.target) || fab.contains(e.target)) return;
+    setOpen(false);
+  });
+
+  // Health check — try chem-bot.onrender.com first, then chemengine.onrender.com
+  var HEALTH_URLS = [
+    'https://chem-bot.onrender.com/health',
+    'https://chemengine.onrender.com/health'
+  ];
+  var controller;
+  function fetchWithTimeout(url, ms) {
+    controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var opts = { method: 'GET', headers: { 'Accept': 'application/json' } };
+    if (controller) { opts.signal = controller.signal; setTimeout(function(){ try{controller.abort();}catch(_){} }, ms); }
+    return fetch(url, opts);
+  }
+  async function checkHealth() {
+    healthText.textContent = 'Checking bot status…';
+    healthDot.className = '';
+    for (var i = 0; i < HEALTH_URLS.length; i++) {
+      var url = HEALTH_URLS[i];
+      try {
+        var res = await fetchWithTimeout(url, 4500);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        var data = await res.json().catch(function(){ return {}; });
+        var mode = data.mode || 'webhook';
+        var status = data.status || 'ok';
+        healthDot.className = status === 'ok' ? 'ok' : 'err';
+        healthText.innerHTML = 'Bot <strong style="color:var(--success)">online</strong> · ' + mode + ' · <a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url.replace('https://','') + '</a>';
+        var fabDot = document.getElementById('bot-fab-dot');
+        if (fabDot) fabDot.style.background = 'var(--success)';
+        return;
+      } catch (err) {
+        // try next URL
+        if (i === HEALTH_URLS.length - 1) {
+          healthDot.className = 'err';
+          healthText.innerHTML = 'Bot unreachable — <a href="https://t.me/ReactoLab_bot" target="_blank" rel="noopener noreferrer">open Telegram fallback</a> · ' + err.message;
+        }
+      }
+    }
+  }
+  // defer health check slightly so page load isn't blocked; retry every 60s
+  setTimeout(checkHealth, 900);
+  setInterval(checkHealth, 60000);
+
+  // Command palette hint — focus main nav / scroll to top via keyboard shortcut
+  (function () {
+    var hint = document.getElementById('cmd-palette-hint');
+    if (!hint) return;
+    function openPalette() {
+      // simple palette: focus first visible nav link and hint sidebar expansion
+      var first = document.querySelector('#main-nav a');
+      if (first) first.focus();
+      hint.style.transform = 'translateX(-50%) scale(0.98)';
+      setTimeout(function(){ hint.style.transform = 'translateX(-50%)'; }, 120);
+    }
+    hint.addEventListener('click', openPalette);
+    document.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        openPalette();
+      }
+    });
+  })();
+
+  // Iframe preview toggle
+  toggleIframeBtn.addEventListener('click', function () {
+    var willShow = iframeWrap.hasAttribute('hidden');
+    if (willShow) {
+      iframeWrap.removeAttribute('hidden');
+      // load health JSON in iframe (or a friendly page); use first health URL
+      if (!iframe.src || iframe.src === 'about:blank') {
+        iframe.src = HEALTH_URLS[0];
+      }
+      toggleIframeBtn.textContent = '▾ Hide web preview';
+    } else {
+      iframeWrap.setAttribute('hidden', '');
+      toggleIframeBtn.textContent = '▸ Preview web chat (iframe)';
+    }
+  });
+})();
+</script>
 </body>
 </html>

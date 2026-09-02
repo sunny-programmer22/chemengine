@@ -4,3 +4,12 @@ node_modules/
 dist/
 dist_bak/
 dist_old_*/
+test-api-chat.js
+a.txt
+b.txt
+c.txt
+research.txt
+mock-button-flow-test.js
+test_handler_integration.js
+test_organic_handler.js
+chem-bot/mock-button-flow-test.js

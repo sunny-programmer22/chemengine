@@ -64,6 +64,7 @@ const ORGANIC_KEYWORDS = [
   'diels-alder','diels alder','diels–alder','wittig','wittig reaction','cannizzaro','cannizzaro reaction','perkin',
   'wurtz','kolbe','fischer esterification','michael addition','mannich','heck','suzuki',
   'esterification','saponification','polymerization','condensation','hydrolysis',
+  'decarboxylation','decarboxylate','kolbe electrolysis',
   'reduction','oxidation','alkane','alkene','alkyne','aromatic','alcohol','phenol',
   'ether','aldehyde','ketone','carboxylic acid','ester','amide','amine','nitrile',
   'haloalkane','heterocycle','epoxide','anhydride','organometallic','organolithium',
@@ -117,7 +118,7 @@ const ORGANIC_WIKI_PRIORITY = [
   'aldol','aldol condensation','aldol reaction','claisen','claisen condensation',
   'grignard','grignard reagent','friedel-crafts','friedel crafts','friedel–crafts',
   'diels-alder','diels alder','diels–alder','wittig','wittig reaction','cannizzaro','cannizzaro reaction',
-  'perkin','wurtz','kolbe','fischer esterification','michael addition','mannich','heck','suzuki',
+  'perkin','wurtz','kolbe','kolbe electrolysis','decarboxylation','decarboxylate','fischer esterification','michael addition','mannich','heck','suzuki',
   'carbocation','carbanion','free radical','enol','enolate','tautomerization','resonance','hyperconjugation',
   'chirality','chiral','enantiomer','diastereomer','racemic','meso','optical isomer','stereochemistry'
 ];
@@ -538,9 +539,10 @@ async function tryOnlineSources(question) {
         const results = await searchWikipedia(cleanTarget);
         if (results && results.length > 0 && results[0].extract && results[0].extract.length > 20) {
           const top = results[0];
-          let answer = `From Wikipedia (${top.title}):\n${top.extract}\nSource: ${top.url}`;
+          let answer = `${top.title}: ${top.extract}`;
           if (results.length > 1) {
-            answer += `\n\nOther results:\n` + results.slice(1).map(r => `- ${r.title}: ${r.url}`).join('\n');
+            const extras = results.slice(1, 3).map(r => r.title).filter(Boolean);
+            if (extras.length) answer += `\n\nRelated topics: ${extras.join(', ')}`;
           }
           return { answer, source: 'wikipedia', confidence: 0.85 };
         }
@@ -550,9 +552,10 @@ async function tryOnlineSources(question) {
             const altResults = await searchWikipedia(`${cleanTarget} organic chemistry`);
             if (altResults && altResults.length > 0 && altResults[0].extract && altResults[0].extract.length > 30) {
               const top = altResults[0];
-              let answer = `From Wikipedia (${top.title}):\n${top.extract}\nSource: ${top.url}`;
+              let answer = `${top.title}: ${top.extract}`;
               if (altResults.length > 1) {
-                answer += `\n\nOther results:\n` + altResults.slice(1).map(r => `- ${r.title}: ${r.url}`).join('\n');
+                const extras = altResults.slice(1, 3).map(r => r.title).filter(Boolean);
+                if (extras.length) answer += `\n\nRelated topics: ${extras.join(', ')}`;
               }
               return { answer, source: 'wikipedia', confidence: 0.82 };
             }
@@ -561,7 +564,7 @@ async function tryOnlineSources(question) {
         // Even if extract is empty, return title/url if we have a hit (better than LLM hallucination)
         if (results && results.length > 0) {
           const top = results[0];
-          let answer = `From Wikipedia (${top.title}):\n${top.extract || 'No extract available.'}\nSource: ${top.url}`;
+          let answer = top.extract ? `${top.title}: ${top.extract}` : `${top.title}: no summary available.`;
           return { answer, source: 'wikipedia', confidence: 0.78 };
         }
       }
@@ -621,7 +624,7 @@ async function tryOnlineSources(question) {
       const results = await searchWikipedia(fallbackTarget);
       if (results && results.length > 0) {
         const top = results[0];
-        let answer = `From Wikipedia (${top.title}):\n${top.extract || 'No extract available.'}\nSource: ${top.url}`;
+        let answer = top.extract ? `${top.title}: ${top.extract}` : `${top.title}: no summary available.`;
         return { answer, source: 'wikipedia', confidence: 0.75 };
       }
     } catch (_) {}
@@ -680,9 +683,10 @@ async function tryOnlineSources(question) {
     const results = await searchWikipedia(target);
     if (results && results.length > 0) {
       const top = results[0];
-      let answer = `From Wikipedia (${top.title}):\n${top.extract || 'No extract available.'}\nSource: ${top.url}`;
+      let answer = top.extract ? `${top.title}: ${top.extract}` : `${top.title}: no summary available.`;
       if (results.length > 1) {
-        answer += `\n\nOther results:\n` + results.slice(1).map(r => `- ${r.title}: ${r.url}`).join('\n');
+        const extras = results.slice(1, 3).map(r => r.title).filter(Boolean);
+        if (extras.length) answer += `\n\nRelated topics: ${extras.join(', ')}`;
       }
       return { answer, source: 'wikipedia', confidence: 0.7 };
     }
@@ -834,12 +838,31 @@ async function askChem(question, context = {}) {
     // if LLM unavailable, fall through to fallback flow below
   }
 
-  // 2) For general/explain/organic questions, try online sources (Wikipedia) first
-  //    because they are free and often give a good answer.
-  // Skip online sources for casual greetings like "how are you" -> let LLM answer "I'm good!"
-  // Also skip for short GENERAL (<80) already handled by fast path above (except organic)
+  // 2) For EXPLAIN, prioritize LLM (specific concise answer) over Wikipedia link dump when LLM available.
+  //    Fixes "what is decarboxylation reaction?" returning generic Wikipedia (Acetoacetic acid) + link.
+  //    Previously Wikipedia was tried first for EXPLAIN, now LLM answers directly if OpenAI/Gemini/local available.
+  if (taskType === TASK_TYPES.EXPLAIN && (openai.isAvailable() || gemini.isAvailable() || localLlm.isEnabled())) {
+    const systemPromptEarly = chooseSystemPrompt(taskType, trimmed);
+    const messagesEarly = [
+      { role: 'system', content: systemPromptEarly },
+      { role: 'user', content: trimmed }
+    ];
+    const llmEarly = await callLlm(messagesEarly, { max_tokens: 400, temperature: 0.3 });
+    if (llmEarly && llmEarly.content) {
+      let answer = llmEarly.content;
+      if (safety.note) answer += `\n\n${safety.note}`;
+      const result = { source: llmEarly.source, answer, taskType, confidence: 0.85 };
+      askCacheSet(cacheKey, result);
+      return result;
+    }
+    // LLM failed -> fall through to online sources as fallback
+  }
+
+  // 2b) For general/explain (when LLM unavailable)/organic questions, try online sources
+  //     Skip for EXPLAIN when LLM was available (already tried above) -> will retry online after main LLM block if needed
   if ((taskType === TASK_TYPES.GENERAL || taskType === TASK_TYPES.EXPLAIN || isOrganicQuery(trimmed)) && !isCasualGreeting(trimmed)) {
-    const shouldSkipOnline = (taskType === TASK_TYPES.GENERAL && trimmed.length < 80 && !isOrganicQuery(trimmed));
+    const isExplainWithLlm = taskType === TASK_TYPES.EXPLAIN && (openai.isAvailable() || gemini.isAvailable() || localLlm.isEnabled());
+    const shouldSkipOnline = (taskType === TASK_TYPES.GENERAL && trimmed.length < 80 && !isOrganicQuery(trimmed)) || isExplainWithLlm;
     if (!shouldSkipOnline) {
       const online = await tryOnlineSources(trimmed);
       if (online && online.confidence >= 0.7) {
@@ -876,9 +899,9 @@ async function askChem(question, context = {}) {
   }
 
   // 4) Fall back to online sources if LLM is unavailable
-  // Includes retry for organic queries with looser confidence, plus all non-GENERAL/EXPLAIN types
+  // Includes retry for all non-GENERAL types and organic queries (EXPLAIN now retries Wikipedia if early LLM failed)
   const isOrganicFallback = isOrganicQuery(trimmed);
-  const needsOnlineRetry = (taskType !== TASK_TYPES.GENERAL && taskType !== TASK_TYPES.EXPLAIN) || isOrganicFallback;
+  const needsOnlineRetry = (taskType !== TASK_TYPES.GENERAL) || isOrganicFallback;
   if (needsOnlineRetry) {
     const online = await tryOnlineSources(trimmed);
     if (online) {

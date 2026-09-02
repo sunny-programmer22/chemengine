@@ -886,9 +886,16 @@ function _singleReplace(element, compound) {
 
     const metalRank = _activityRank(metalSym);
     const hRank = _activityRank('H');
-    if (metalRank !== -1 && hRank !== -1 && metalRank > hRank) {
+    // Oxidising acids (HNO3, hot concentrated H2SO4) react even with metals below H.
+    const isOxidisingAcid = /\bh?no3\b/i.test(compound.formula) || /\bh2so4/i.test(compound.formula);
+    if (metalRank !== -1 && hRank !== -1 && metalRank > hRank && !isOxidisingAcid) {
       return _respond('no reaction', [], `${metalSym} + ${compound.formula} -> no reaction`,
         `${metalSym} is below H in the activity series, so no displacement occurs.`);
+    }
+    if (isOxidisingAcid) {
+      return _respond('single replacement (redox / oxidising acid)', [`${metalSym} salt`, 'NO2 or NO', 'H2O'],
+        `${metalSym} + ${compound.formula} -> ${metalSym} salt + NO2/NO + H2O`,
+        `${compound.formula} is an oxidising acid: even metals below H in the activity series (like ${metalSym}) dissolve, being oxidised while the nitrate is reduced to NO2 or NO (no H2 gas forms).`);
     }
 
     // Brute force balancing for a Metal + b Acid -> c Salt + d H2

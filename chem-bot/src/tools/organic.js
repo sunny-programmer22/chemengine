@@ -1376,6 +1376,418 @@ function getOrganicInfo(section, query) {
 }
 
 // ---------------------------------------------------------------------------
+// 7. REACTION TYPE CLASSIFICATION (30-type taxonomy)
+// ---------------------------------------------------------------------------
+
+/**
+ * The 30 reaction types requested by the user, with canonical id, label and
+ * one-line description.  Used as the backing data for classifyReactionType().
+ * Order loosely follows the user's original numbering.
+ * @type {Array<{id:string, label:string, desc:string}>}
+ */
+const _TYPES = [
+  { id: 'synthesis', label: 'Synthesis (Combination)', desc: 'Two or more simple substances combine into one compound, e.g. A + B → AB.' },
+  { id: 'decomposition', label: 'Decomposition', desc: 'A single compound breaks down into simpler substances, often upon heating or light.' },
+  { id: 'single_displacement', label: 'Single Displacement (Replacement)', desc: 'A more reactive element displaces a less reactive one from a compound.' },
+  { id: 'double_displacement', label: 'Double Displacement (Metathesis)', desc: 'Two compounds exchange partners: AB + CD → AD + CB.' },
+  { id: 'combustion', label: 'Combustion', desc: 'Fuel + O2 → oxides + heat (complete: CO2 + H2O; incomplete: CO/C).' },
+  { id: 'precipitation', label: 'Precipitation', desc: 'Two aqueous salts form an insoluble solid (ppt) that settles out.' },
+  { id: 'acid_base', label: 'Acid–Base (Neutralisation)', desc: 'Acid + base → salt + water (or conjugate pair).' },
+  { id: 'exothermic', label: 'Exothermic', desc: 'Reaction releases thermal energy (ΔH < 0) to the surroundings.' },
+  { id: 'endothermic', label: 'Endothermic', desc: 'Reaction absorbs thermal energy (ΔH > 0) from the surroundings.' },
+  { id: 'reversible', label: 'Reversible Reaction', desc: 'Can proceed in both directions; equilibrium is reached dynamically.' },
+  { id: 'irreversible', label: 'Irreversible Reaction', desc: 'Proceeds effectively in one direction until a reactant is consumed.' },
+  { id: 'oxidation', label: 'Oxidation', desc: 'Species loses electrons; oxidation number increases.' },
+  { id: 'reduction', label: 'Reduction', desc: 'Species gains electrons; oxidation number decreases.' },
+  { id: 'disproportionation', label: 'Disproportionation', desc: 'The same species is simultaneously oxidised and reduced.' },
+  { id: 'photochemical', label: 'Photochemical Reaction', desc: 'Driven or initiated by absorption of a photon (light).' },
+  { id: 'electrolysis', label: 'Electrolysis', desc: 'Non-spontaneous redox driven by an applied direct current.' },
+  { id: 'radiolytic', label: 'Radiolytic Reaction', desc: 'Decomposition driven by ionizing radiation (α/β/γ).' },
+  { id: 'nucleophilic_addition', label: 'Nucleophilic Addition', desc: 'A nucleophile forms a σ-bond with an electrophilic center (often C=O, C≡N, C=C).' },
+  { id: 'electrophilic_addition', label: 'Electrophilic Addition', desc: 'An electrophile adds across a π-bond (C=C, C≡C). Markovnikov regiochemistry for HX/H2O.' },
+  { id: 'nucleophilic_substitution', label: 'Nucleophilic Substitution (SN1/SN2)', desc: 'Incoming nucleophile replaces a leaving group. SN1 via carbocation; SN2 is concerted backside.' },
+  { id: 'electrophilic_substitution', label: 'Electrophilic Aromatic Substitution (EAS)', desc: 'Electrophile replaces H on an aromatic ring via a σ-complex (nitration, halogenation, Friedel-Crafts).' },
+  { id: 'elimination', label: 'Elimination (E1/E2)', desc: 'Two groups leave from adjacent atoms to form a new π-bond; Saytzeff vs Hofmann regiochemistry.' },
+  { id: 'isomerization', label: 'Isomerization', desc: 'Atom connectivity reorganises without composition change — a structural isomer forms.' },
+  { id: 'rearrangement', label: 'Rearrangement', desc: 'Carbon skeleton or functional group migrates to give an isomer (Beckmann, Wagner–Meerwein, etc.).' },
+  { id: 'polymerization', label: 'Polymerization', desc: 'Monomers link covalently into long chains — addition (no by-product) or condensation (releases H2O/alcohol).' },
+  { id: 'complexation', label: 'Complexation (Coordination)', desc: 'Lewis-base ligand donates a lone pair to a metal center, forming a coordination complex.' },
+  { id: 'condensation', label: 'Condensation', desc: 'Two molecules join and lose a small molecule (H2O, alcohol) — ester/amide/phosphodiester formation.' },
+  { id: 'hydrolysis', label: 'Hydrolysis', desc: 'Water cleaves a bond — the reverse of condensation (ester/amide/nitrile + H2O → acids/alcohols).' },
+  { id: 'enzymatic_catalysis', label: 'Enzymatic Catalysis', desc: 'An enzyme lowers the activation energy without being consumed; highly specific under physiological conditions.' },
+  { id: 'autocatalysis', label: 'Autocatalysis', desc: 'A product accelerates its own formation — the rate rises as the product accumulates (permanganate–oxalate).' },
+];
+
+/**
+ * Classify a reaction query into the 30-type taxonomy.
+ *
+ * The function is self-contained — it never requires predictor.js at load
+ * time (so it works even if the predictor's parser is temporarily unavailable)
+ * and falls back gracefully to a keyword-based heuristic.  When the query
+ * contains ionic/organic formulas the function also inspects the reactant
+ * pattern to assign the type (e.g. two aqueous salts → precipitation, halogen
+ * in alkali → disproportionation).
+ *
+ * @param {string} query - Raw user input (e.g. "CH3COOH + NaOH", "Na + Cl2", "H2O2 photochemical").
+ * @returns {Promise<{reactionType:string, description:string, id:string}>}
+ */
+async function classifyReactionType(query) {
+  const raw = String(query || '').trim();
+  if (!raw) {
+    return { id: 'unspecified', reactionType: _TYPES[0].label, description: 'Please provide a reaction or reactants to classify.' };
+  }
+
+  const L = raw.toLowerCase();
+  const cleanL = L.replace(/\s*\+\s*/g, ' + ').trim();
+
+  // ── Keyword-driven overrides (user explicitly named a process) ─────────
+  const kw = (re) => re.test(L);
+
+  // These keyword wins override formula-pattern inspection — user told us the type.
+  if (kw(/\b(photo|photochem|photon|h[νv]\b|\buv\b)/i) && !kw(/\b(photo)?(synth|decomp)/i)) {
+    const t = _TYPES.find((x) => x.id === 'photochemical');
+    return { id: t.id, reactionType: t.label, description: t.desc + '  Products depend on molecule and wavelength (e.g., halogen photo-dissociation, photosynthesis).' };
+  }
+  if (kw(/\b(electrolys|electrolytic|applied\s*dc|electric\s*current)/i)) {
+    const t = _TYPES.find((x) => x.id === 'electrolysis');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  if (kw(/\b(radiolyt|ionizing\s*radiation|\bα|\bγ\b|\balpha-?ray|\bbeta-?ray)/i)) {
+    const t = _TYPES.find((x) => x.id === 'radiolytic');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  if (kw(/\b(enzym|biocatal|biological\s*catal)/i)) {
+    const t = _TYPES.find((x) => x.id === 'enzymatic_catalysis');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  if (kw(/\bautocatal|\bself-?catal/i)) {
+    const t = _TYPES.find((x) => x.id === 'autocatalysis');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  if (kw(/\bisomeriz|isomeris/i)) {
+    const t = _TYPES.find((x) => x.id === 'isomerization');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  if (kw(/\brearrang/i)) {
+    const t = _TYPES.find((x) => x.id === 'rearrangement');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  if (kw(/\bpolymeriz|polymeris|addition polymer|condensation polymer/i)) {
+    const t = _TYPES.find((x) => x.id === 'polymerization');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  if (kw(/\bhydrolysis\b/i)) {
+    const t = _TYPES.find((x) => x.id === 'hydrolysis');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  if (kw(/\bcondensation\b/i) && !kw(/\bhydrolysis\b/i)) {
+    const t = _TYPES.find((x) => x.id === 'condensation');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  if (kw(/\bcomplex|coordination/i)) {
+    const t = _TYPES.find((x) => x.id === 'complexation');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  if (kw(/\bprecipit/i)) {
+    const t = _TYPES.find((x) => x.id === 'precipitation');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  // Thermochemistry/reversibility before redox, so "exothermic oxidation" still hits exothermic.
+  if (kw(/\bendothermic|\babsorbs?\s*(heat|energy)/i) && !kw(/\bexothermic/i)) {
+    const t = _TYPES.find((x) => x.id === 'endothermic');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  if (kw(/\bexothermic|\breleases?\s*(heat|energy)/i) && !kw(/\bendothermic/i)) {
+    const t = _TYPES.find((x) => x.id === 'exothermic');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  if (kw(/\breversible\b|⇌|<=>/)) {
+    const t = _TYPES.find((x) => x.id === 'reversible');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  if (kw(/\birreversible\b/)) {
+    const t = _TYPES.find((x) => x.id === 'irreversible');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  // Redox fine-grained
+  if (kw(/\boxid|\bredox/i) && !kw(/\bredu/) ) {
+    const t = _TYPES.find((x) => x.id === 'oxidation');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  if (kw(/\bredu/i) && !kw(/\boxid/i)) {
+    const t = _TYPES.find((x) => x.id === 'reduction');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  if (kw(/\bdisprop/i)) {
+    const t = _TYPES.find((x) => x.id === 'disproportionation');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  // Organic keyword types — check before formula fallback
+  if (kw(/\b(substitution|substitutive)\b/) && kw(/\b(nucleophil|sn1|sn2|leaving group)/i)) {
+    const t = _TYPES.find((x) => x.id === 'nucleophilic_substitution');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  if (kw(/\b(eas|electrophilic\s*substitut|nitration|sulfonation|friedel)/i)) {
+    const t = _TYPES.find((x) => x.id === 'electrophilic_substitution');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  if (kw(/\b(elimination\b|e1\b|e2\b|dehydrohalogenation|dehydration)/i) && !kw(/\baddition/i)) {
+    const t = _TYPES.find((x) => x.id === 'elimination');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  if (kw(/\b(nucleophilic\s*addition|nu.*addition)/i)) {
+    const t = _TYPES.find((x) => x.id === 'nucleophilic_addition');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  if (kw(/\b(electrophilic\s*addition|addition\s*across|markovnikov)/i)) {
+    const t = _TYPES.find((x) => x.id === 'electrophilic_addition');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+  if (kw(/\b(addition\b|add.*alkene|add.*alkyne)/i)) {
+    // Generic addition → electrophilic addition (more common) unless query mentions C=O/C≡N
+    const t = _TYPES.find((x) => x.id === 'electrophilic_addition');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+
+  // ── Formula-pattern inspection (when no keyword won) ──────────────────
+  // Parse using the project's parser if available; fall back to keyword above.
+  const partsRaw = raw.split('+').map((s) => s.trim()).filter(Boolean);
+  if (partsRaw.length === 0) {
+    return { id: 'unspecified', reactionType: 'Unspecified', description: 'No reactants found — enter something like "Na + Cl2" or "H2 + O2".' };
+  }
+
+  // Single reactant → decomposition (or isomerisation if it was keyword-caught)
+  if (partsRaw.length === 1) {
+    const t = _TYPES.find((x) => x.id === 'decomposition');
+    return { id: t.id, reactionType: t.label, description: t.desc };
+  }
+
+  // 2-reactant pattern inspection
+  if (partsRaw.length === 2) {
+    const aL = partsRaw[0].trim().toLowerCase();
+    const bL = partsRaw[1].trim().toLowerCase();
+
+    // Helper: last element of a formula is usually its anion symbol (e.g. "cl2" → "cl").
+    const _lastSym = (formula) => {
+      const m = String(formula).toLowerCase().replace(/[^a-z0-9]/g, '');
+      const caps = m.replace(/^.*?(nad?co3|oh|cro4|no3|so4|po4|clo4|clo3|cl|br|i|f|s|o2|h2o)$/i, (_, g) => g);
+      return caps || null;
+    };
+
+    // Acid–base: one side has H (acid) and the other has OH/oxide/amine (base)
+    // Strong inorganic acid list (unambiguous acid–base signals). Weak organic
+    // acids like ethanol should NOT trigger this on their own.
+    const STRONG_ACIDS = ['hcl', 'hbr', 'hi', 'h2so4', 'hno3', 'h3po4', 'hclo4', 'ch3cooh', 'acetic acid'];
+    // Strong/base metal hydroxides & amines.
+    const STRONG_BASES = ['naoh', 'koh', 'ca(oh)2', 'mg(oh)2', 'ba(oh)2', 'al(oh)3', 'fe(oh)3', 'fe(oh)2', 'nh3', 'nh4oh', 'lioh', 'csoh'];
+    const aAcid = STRONG_ACIDS.some((a) => aL.includes(a));
+    const bAcid = STRONG_ACIDS.some((a) => bL.includes(a));
+    const aBase = STRONG_BASES.some((b) => aL.includes(b));
+    const bBase = STRONG_BASES.some((b) => bL.includes(b));
+    // Require a genuine acid + base pair (at least one explicit strong side).
+    if ((aAcid && bBase) || (bAcid && aBase)) {
+      const t = _TYPES.find((x) => x.id === 'acid_base');
+      return { id: t.id, reactionType: t.label, description: t.desc };
+    }
+
+    // Combustion: hydrocarbon/element + O2
+    if (aL === 'o2' || bL === 'o2') {
+      const fuel = aL === 'o2' ? partsRaw[1] : partsRaw[0];
+      const fuelL = String(fuel).toLowerCase();
+      const hydroc = /^c\d*h\d*(?:o\d*)?$/i.test(fuelL.replace(/\s+/g, '')) || fuelL.includes('ch4') || fuelL.includes('c2h6') || fuelL.includes('ch');
+      // Any hydrocarbon + O2, or S/other fuel + O2, is combustion
+      if (hydroc || /^(h2|co|s|p4|nh3|metal)/i.test(fuelL)) {
+        const t = _TYPES.find((x) => x.id === 'combustion');
+        return { id: t.id, reactionType: t.label, description: t.desc };
+      }
+      // Fallback: _any_ + O2 is still treated as synthesis/combustion
+      const t = _TYPES.find((x) => x.id === 'combustion');
+      return { id: t.id, reactionType: t.label, description: t.desc };
+    }
+
+    // Try structured inspection via the project's parser if available
+    let aE = null, bE = null;
+    try {
+      const parser = require('../utils/parser');
+      aE = parser.parseCompound ? parser.parseCompound(partsRaw[0].trim()).elements : null;
+      bE = parser.parseCompound ? parser.parseCompound(partsRaw[1].trim()).elements : null;
+    } catch (_) {}
+
+    // Precipitation: both have a metal, and exchange would give an insoluble ion pair
+    // (heuristic: both cations are metal-like — Ag/Na/Ba etc. — and anion pairs mismatch)
+    if (aE && bE) {
+      const isMetalE = (el) => !(['H', 'C', 'N', 'O', 'F', 'P', 'S', 'Cl', 'Se', 'Br', 'I', 'B', 'Si', 'Ge', 'As', 'Sb', 'Te', 'Po'].includes(el));
+      const _cationSym = (comp) => Object.keys(comp).find((k) => isMetalE(k));
+      const _anionSym = (comp) => Object.keys(comp).find((k) => !isMetalE(k) && k !== 'H' && k !== 'O' || ['S', 'Cl', 'Br', 'I', 'O'].includes(k));
+      const catA = _cationSym(aE), catB = _cationSym(bE);
+      if (catA && catB && catA !== catB) {
+        // Known insoluble ions that often precipitate
+        const classics = ['ag', 'pb', 'ba', 'ca'];
+        const anionsL = (L.match(/(cl|br|i|so4|s|co3|po4|oh|cro4)/g) || []);
+        const usesKnownAnion = anionsL.some((s) => /cl|br|i|so4|s|co3|po4|oh/i.test(s));
+        const hitsMetalClassic = classics.includes(catA.toLowerCase()) || classics.includes(catB.toLowerCase());
+        if (hitsMetalClassic && usesKnownAnion) {
+          const t = _TYPES.find((x) => x.id === 'precipitation');
+          return { id: t.id, reactionType: t.label, description: t.desc };
+        }
+        // General double-displacement when both are ionic with distinct cations
+        const hasOIonic = (c) => (c.O || 0) >= 1;
+        const ionicA = !!catA, ionicB = !!catB;
+        if (ionicA && ionicB) {
+          const t = _TYPES.find((x) => x.id === 'double_displacement');
+          return { id: t.id, reactionType: t.label, description: t.desc };
+        }
+      }
+
+      // Single-element + compound → single displacement
+      const _isSingleElem = (p) => p && Object.keys(p.elements || {}).length === 1 && (p.elements[Object.keys(p.elements)[0]] <= 2);
+      // Simpler: check if raw token is a single symbol like "Na", "Zn", "Cl2", "Cu2"
+      const elemToken = (s) => /^[A-Z][a-z]?2?$/i.test(s.trim());
+      if (elemToken(partsRaw[0]) || elemToken(partsRaw[1])) {
+        // Double confirm via aE/bE composition size
+        const compoundHasMetal = aE && Object.keys(aE).some((k) => !(['H', 'C', 'N', 'O', 'F', 'P', 'S', 'Cl', 'Se', 'Br', 'I'].includes(k)));
+        if (compoundHasMetal) {
+          const t = _TYPES.find((x) => x.id === 'single_displacement');
+          return { id: t.id, reactionType: t.label, description: t.desc };
+        }
+      }
+
+      // Organic: alkyl halide criteria
+      const halogensSet = new Set(['F', 'Cl', 'Br', 'I']);
+      const aHasHal = Object.keys(aE).some((k) => halogensSet.has(k));
+      const bHasHal = Object.keys(bE).some((k) => halogensSet.has(k));
+      const aHasC = !!aE.C, bHasC = !!bE.C;
+      if ((aHasC && aHasHal) || (bHasC && bHasHal)) {
+        const other = (aHasC && aHasHal) ? bE : aE;
+        const otherKeys = new Set(Object.keys(other || {}));
+        const nucleophileAnions = ['OH', 'CN', 'I', 'Br', 'Cl', 'NH3', 'NH2'];
+        const otherStr = (bHasC ? partsRaw[1] : partsRaw[0]).toLowerCase().replace(/[^a-z0-9]/g, '');
+        const isNucleophile = ['oh', 'cn', 'i', 'br', 'nh3', 'h2o', 'oh-', 'cn-'].some((v) => otherStr === v);
+        if (isNucleophile) {
+          const t = _TYPES.find((x) => x.id === 'nucleophilic_substitution');
+          return { id: t.id, reactionType: t.label, description: t.desc };
+        }
+        // Alkene addition fingerprint: hydrocarbon + halogen/hydrohalic acid
+        const alkeneFormula = (aHasC && aHasHal) ? partsRaw[1] : partsRaw[0];
+        const alkeneL = String(alkeneFormula).toLowerCase();
+        if (/^(br2|cl2|hbr|hcl|h2o|hi)$/i.test(alkeneL.trim())) {
+          const t = _TYPES.find((x) => x.id === 'electrophilic_addition');
+          return { id: t.id, reactionType: t.label, description: t.desc };
+        }
+      }
+
+      // Disproportionation: halogen (X2) + alkali → halide + oxyhalide + H2O
+      const isHalogenElem = (comp) => comp && Object.keys(comp).length === 1 && halogensSet.has(Object.keys(comp)[0]) && Object.values(comp)[0] === 2;
+      const hasBaseWithOH = (comp) => !!comp && (comp.O || 0) >= 1 && ((comp.H || 0) >= 1 || (comp.Na || 0) >= 1 || (comp.K || 0) >= 1);
+      if ((isHalogenElem(aE) && hasBaseWithOH(bE)) || (isHalogenElem(bE) && hasBaseWithOH(aE))) {
+        const t = _TYPES.find((x) => x.id === 'disproportionation');
+        return { id: t.id, reactionType: t.label, description: t.desc };
+      }
+
+      // Hydrolysis vs condensation (two-organics with hetero)
+      if ((aE.C || 0) >= 1 && (bE.C || 0) >= 1) {
+        const hasOH = (aE.O || 0) >= 1 || (bE.O || 0) >= 1;
+        const hasNH = (aE.N || 0) >= 1 || (bE.N || 0) >= 1;
+        if ((aE.H || bE.H) && ((aL === 'h2o' || bL === 'h2o'))) {
+          const t = _TYPES.find((x) => x.id === 'hydrolysis');
+          return { id: t.id, reactionType: t.label, description: t.desc };
+        }
+        if ((hasOH || hasNH)) {
+          const t = _TYPES.find((x) => x.id === 'condensation');
+          return { id: t.id, reactionType: t.label, description: t.desc };
+        }
+      }
+      if (aL === 'h2o' || bL === 'h2o') {
+        // E.g. ester/amide + H2O
+        const t = _TYPES.find((x) => x.id === 'hydrolysis');
+        return { id: t.id, reactionType: t.label, description: t.desc };
+      }
+
+      // Complexation: metal + ligand
+      const metals = new Set(['Fe','Cu','Co','Ni','Zn','Al','Cr','Mn','Ag','Hg','Pb','Ca','Mg','Na','K','Cd','Pt','Pd','Au']);
+      const ligands = new Set(['nh3','h2o','co','cn','cl','br','i','oh','scn','oxalate','en']);
+      const aForm = partsRaw[0].trim().toLowerCase(), bForm = partsRaw[1].trim().toLowerCase();
+      const hasMetal = [...Object.keys(aE), ...Object.keys(bE)].some((k) => metals.has(k));
+      const hasLig = ligands.has(aForm) || ligands.has(bForm);
+      if (hasMetal && hasLig) {
+        const t = _TYPES.find((x) => x.id === 'complexation');
+        return { id: t.id, reactionType: t.label, description: t.desc };
+      }
+
+      // Combustion already handled; fallback among remaining two-ionics:
+      if (catA && catB) {
+        const t = _TYPES.find((x) => x.id === 'double_displacement');
+        return { id: t.id, reactionType: t.label, description: t.desc };
+      }
+    }
+
+    // 2-reactant fallback heuristics without parser
+    if (/^[a-z]+\s*\+\s*o2$/i.test(raw) || /\bo2$/i.test(L)) {
+      const t = _TYPES.find((x) => x.id === 'combustion');
+      return { id: t.id, reactionType: t.label, description: t.desc };
+    }
+    // Synthesis fallback: both simple elements → combination
+    if (/^[a-z]+2?\s*\+\s*[a-z]+2?$/i.test(raw)) {
+      const t = _TYPES.find((x) => x.id === 'synthesis');
+      return { id: t.id, reactionType: t.label, description: t.desc };
+    }
+
+    // ── Organic-form fallbacks (parser-agnostic regex) ─────────────────────
+    // Alkyl/aryl halide + nucleophile → nucleophilic substitution (SN1/SN2)
+    const doubleBondOrRing = /c=c|c#c|≡|h2c=|ch2=/i;
+    const halideTok = /(\b[a-z]{1,3}\d?[clbrif]|\bbr|\bcl)/i;
+    const nucleo = ['oh', 'oh-', 'cn', 'cn-', 'nh3', 'nh2-', 'i-', 'br-', 'h2o', 'roh', 'ch3oh', 'ch3ch2oh'];
+    const aStr = String(partsRaw[0]).toLowerCase();
+    const bStr = String(partsRaw[1]).toLowerCase();
+    const oneHasHal = /[clbrif]$/i.test(aStr) || /[clbrif]$/i.test(bStr);
+    const alkeneL = doubleBondOrRing.test(aStr) || doubleBondOrRing.test(bStr);
+    const nucleoL = nucleo.some((n) => aStr === n || bStr === n);
+    const dihalideL = /^(br2|cl2|i2)$/i.test(aStr) || /^(br2|cl2|i2)$/i.test(bStr);
+    const hxL = /^(hbr|hcl|hi|h2o|h2|h2so4)$/i.test(aStr) || /^(hbr|hcl|hi|h2o|h2|h2so4)$/i.test(bStr);
+    // Unsaturated organic: looks like alkene/alkyne formula (CnH2n, CnH2n-2), has double-bond literal,
+    // or has a known terminal-ene pattern like "ch2=", "ch=ch".  Saturated alkanes (CH4, C2H6, C3H8) do NOT match.
+    const _isUnsaturatedOrg = (f) => doubleBondOrRing.test(f) || /\bc\d+h\d+\b/i.test(f);
+    const aUnsat = _isUnsaturatedOrg(aStr);
+    const bUnsat = _isUnsaturatedOrg(bStr);
+    // Organic C-containing (for non-unsaturated but still organic, like nucleophilic substitution of alkyl halides)
+    const _isOrganicFormula = (f) => /\bc\d+/i.test(f);
+    const aOrg = _isOrganicFormula(aStr);
+    const bOrg = _isOrganicFormula(bStr);
+
+    // Electrophilic addition: unsaturated organic (CnH2n/CnH2n-2) + HX/Br2/Cl2/H2O/H2SO4/H2
+    if ((aUnsat || bUnsat) && (dihalideL || hxL)) {
+      const t = _TYPES.find((x) => x.id === 'electrophilic_addition');
+      return { id: t.id, reactionType: t.label, description: t.desc };
+    }
+    // Alkyl halide + nucleophile → SN1/SN2 (e.g. CH3CH2Br + OH-)
+    if (oneHasHal && !aUnsat && !bUnsat && nucleoL) {
+      const t = _TYPES.find((x) => x.id === 'nucleophilic_substitution');
+      return { id: t.id, reactionType: t.label, description: t.desc };
+    }
+  }
+
+  // 3+ reactants → predominantly synthesis or multi-displacement
+  if (partsRaw.length >= 3) {
+    // Multi-synthesis of simple substances (Na + Cl2 + O2 ...)
+    const elemish = partsRaw.every((p) => /^[A-Z][a-z]?2?$/i.test(p.trim()));
+    if (elemish) {
+      const t = _TYPES.find((x) => x.id === 'synthesis');
+      return { id: t.id, reactionType: t.label, description: t.desc + '  Three or more simple substances combine into a more complex compound.' };
+    }
+    // Multi-salt → double displacement / precipitation
+    if (partsRaw.every((p) => /(cl|br|i|so4|no3|oh|co3|po4)$/i.test(p.trim().toLowerCase()))) {
+      const t = _TYPES.find((x) => x.id === 'precipitation');
+      return { id: t.id, reactionType: t.label, description: t.desc };
+    }
+    const t = _TYPES.find((x) => x.id === 'synthesis');
+    return { id: t.id, reactionType: t.label, description: t.desc + '  Three or more reactants combine into one or more products.' };
+  }
+
+  // Ultimate fallback
+  return { id: 'unspecified', reactionType: 'Chemical Reaction', description: 'This input describes a chemical reaction. Add keywords such as "photochemical", "enzymatic", "acid-base" or "polymerization" to get a more specific class, or enter concrete reactants (e.g. "Na + Cl2").' };
+}
+
+// ---------------------------------------------------------------------------
 // Handler wrappers — formula-aware aliases for bot handler (task spec)
 // These ensure /organic C2H5OH gives DBE/mass, not just hub, while still
 // delegating to the comprehensive JSON-backed references for conceptual queries.
@@ -1626,6 +2038,9 @@ module.exports = {
   identifyFunctional,
   explainStereo,
   analyzeSpectroscopy,
+
+  // 30-type reaction classifier (used by web-chat.js + handler.js)
+  classifyReactionType,
 
   // Additional aliases for flexibility
   hydrocarbon: getHydrocarbons,

@@ -272,6 +272,67 @@ async function predict(reactantsStr) {
 
   const parsedList = parts.map((p) => parseCompound(p));
 
+  const LOWER_CLEAN = cleaned.toLowerCase();
+
+  // ── 0a) Named reaction conditions / triggers ─────────────────────────────
+  // The user named a process — tag the specific type. These win over the
+  // ordinary classification because the user told us what it is.
+  if (/\b(photo|photochem|photon|hν|uv)/i.test(LOWER_CLEAN) && !/\b(photo)?(synth|decomp)/.test(LOWER_CLEAN)) {
+    return _respond('photochemical reaction', ['products (light-driven)'],
+      `${parts.join(' + ')} + hν -> products`,
+      'A photochemical reaction is initiated or driven by absorption of a photon (light). Products depend on the molecule and wavelength (e.g. photosynthesis, halogen photo-dissociation).');
+  }
+  if (/\b(electrolys|electrolytic|electric\s*current|applied\s*dc)/i.test(LOWER_CLEAN)) {
+    return _respond('electrolysis', ['cathode product', 'anode product'],
+      `${parts.join(' + ')} -> products (applied DC current)`,
+      'Electrolysis applies a direct electric current to drive a non-spontaneous redox change at the electrodes (e.g. electrolysis of molten NaCl or water).');
+  }
+  if (/\b(radiolyt|radiolysis?|ionizing\s*radiation|γ|\balpha-?ray\b|\bbeta-?ray\b|radiation)/i.test(LOWER_CLEAN)) {
+    return _respond('radiolytic reaction', ['fragments (radiation-decomposed)'],
+      `${parts.join(' + ')} -> fragments (ionizing radiation)`,
+      'Radiolysis is chemical decomposition driven by ionizing radiation (γ-rays, α/β particles) — e.g. water radiolysis into H2 and H2O2.');
+  }
+  if (/\b(enzym|biocatal|biological)/i.test(LOWER_CLEAN)) {
+    return _respond('enzymatic catalysis', ['products (enzyme-catalysed)'],
+      `${parts.join(' + ')} -> products (enzyme)`,
+      'An enzyme accelerates the reaction under physiological conditions without being consumed, lowering the activation energy and giving high specificity.');
+  }
+  if (/\birreversible\b/i.test(LOWER_CLEAN)) {
+    return _respond('irreversible reaction', ['products'],
+      `${parts.join(' + ')} -> products`,
+      'This is an irreversible reaction: it proceeds in one direction until at least one reactant is fully consumed (e.g. combustion, most precipitations).');
+  }
+  if (/[⇌]|<=>|\breversible\b/i.test(cleaned)) {
+    return _respond('reversible reaction', ['products'],
+      `${parts.join(' + ')} ⇌ products`,
+      'This is a reversible reaction: the products can revert to reactants, so an equilibrium (dynamic balance) establishes between both sides.');
+  }
+  if (/\bo?xid\w*|oxidation|redox/i.test(LOWER_CLEAN) && !/reduc|reduc\w*/i.test(LOWER_CLEAN)) {
+    return _respond('oxidation (redox loss)', ['oxidised product'],
+      `${parts.join(' + ')} -> products (electrons lost)`,
+      'Oxidation is a reaction step where an atom or molecule loses electrons (increase in oxidation state).');
+  }
+  if (/\bredu(c\w*|ction|ct)/i.test(LOWER_CLEAN) && !/oxid|rearr/i.test(LOWER_CLEAN)) {
+    return _respond('reduction (redox gain)', ['reduced product'],
+      `${parts.join(' + ')} -> products (electrons gained)`,
+      'Reduction is a reaction step where an atom or molecule gains electrons (decrease in oxidation state). Oxidation and reduction always occur together (redox).');
+  }
+  if (/\bendothermic\b|\babsorbs?\s*(heat|energy)\b/i.test(LOWER_CLEAN) && !/exothermic/.test(LOWER_CLEAN)) {
+    return _respond('endothermic reaction', ['products'],
+      `${parts.join(' + ')} + heat -> products`,
+      'Endothermic reactions absorb thermal energy from the surroundings (ΔH > 0) — e.g. photosynthesis, thermal decomposition of CaCO3.');
+  }
+  if (/\bexothermic\b|\breleases?\s*(heat|energy)\b/i.test(LOWER_CLEAN) && !/endothermic/.test(LOWER_CLEAN)) {
+    return _respond('exothermic reaction', ['products', 'heat'],
+      `${parts.join(' + ')} -> products + heat`,
+      'Exothermic reactions release thermal energy to the surroundings (ΔH < 0) — e.g. combustion, neutralisation, most combination reactions.');
+  }
+  if (/\bautocatal|\bself-?catal/.test(LOWER_CLEAN)) {
+    return _respond('autocatalysis', ['products (catalysed by a product)'],
+      `${parts.join(' + ')} -> products`,
+      'Autocatalysis is a reaction where one of the products acts as the catalyst for its own formation (e.g. the permanganate–oxalate reaction).');
+  }
+
   // -- 1) Combustion: hydrocarbon + O2 -----------------------------------------
   if (parts.length === 2 && parts[1].toLowerCase() === 'o2') {
     const p = parsedList[0];
@@ -281,6 +342,24 @@ async function predict(reactantsStr) {
         'H2O',
       ], `${p.formula} + O2 -> CO2 + H2O`, 'Complete combustion of a hydrocarbon. With limited O2, CO and/or C may form instead.');
     }
+  }
+
+  // -- 1b) Polymerisation (keyword) — must precede single-reactant decomposition
+  if (parts.length === 1 && /\bpolymer|polymeriz|\bn\b|monomer/i.test(LOWER_CLEAN)) {
+    return _respond('polymerization (addition/condensation)', ['polymer chain'],
+      `n (${parts[0]}) -> [-repeat unit-]n`,
+      'Small repeating units (monomers) link covalently into long chains — addition polymerisation (no by-product) or condensation polymerisation (releases H2O/alcohol).');
+  }
+
+  // -- 1c) Isomerisation / rearrangement hints — must precede decomposition
+  if (parts.length === 1 && (/\bisomer/i.test(LOWER_CLEAN) || /\brearrang/i.test(LOWER_CLEAN))) {
+    return _respond(
+      LOWER_CLEAN.includes('rearrang') ? 'rearrangement (e.g. Beckmann, Wagner–Meerwein)' : 'isomerization',
+      ['structural isomer'],
+      `${parts[0]} -> structural isomer`,
+      LOWER_CLEAN.includes('rearrang')
+        ? 'A rearrangement re-organises the carbon skeleton/functional group to a structural isomer (e.g. Beckmann, Wagner–Meerwein, pinacol).'
+        : 'Isomerisation rearranges atoms within a molecule without changing its formula, producing a structural (or configurational) isomer.');
   }
 
   // -- 2) Single reactant decomposition ----------------------------------------
@@ -326,6 +405,34 @@ async function predict(reactantsStr) {
         'HA + BOH -> BA + H2O', 'Acid-base neutralisation produces a salt and water. The exact salt depends on the cation/anion involved.');
     }
 
+    // Combustion: one reactant is O2, the other a fuel (H2, hydrocarbon, or C/H/O compound)
+    const o2IsA = (a.formula || '').toLowerCase() === 'o2';
+    const o2IsB = (b.formula || '').toLowerCase() === 'o2';
+    const fuelA = (a.elements.C && a.elements.C > 0) || (a.elements.H && a.elements.H > 0);
+    const fuelB = (b.elements.C && b.elements.C > 0) || (b.elements.H && b.elements.H > 0);
+    if ((o2IsA && fuelB) || (o2IsB && fuelA)) {
+      const fuel = o2IsA ? b : a;
+      const isHydrocarbonFuel = fuel.elements.C > 0;
+      return _respond('combustion', isHydrocarbonFuel ? ['CO2', 'H2O'] : ['H2O'],
+        isHydrocarbonFuel ? 'CxHy + O2 -> CO2 + H2O (complete)' : 'H2 + O2 -> H2O',
+        isHydrocarbonFuel
+          ? 'Combustion of a hydrocarbon in oxygen produces carbon dioxide and water (complete combustion; incomplete gives CO or C).'
+          : 'Combustion of hydrogen in oxygen is the classic vigorous reaction producing water with a large exothermic release.');
+    }
+
+    // Complexation: transition-metal salt + a neutral ligand (NH3, H2O, CO, CN-)
+    // Guard: ligand must be a compound (not a free single element like Cl2 or Br2).
+    const _isLigandComp = (p) => _isLigand(p) && elemsAreCompound(p);
+    if ((_hasMetal(cA) && _isLigandComp(b)) || (_hasMetal(cB) && _isLigandComp(a))) {
+      const metalSalt = _hasMetal(cA) ? a : b;
+      const ligand = metalSalt === a ? b : a;
+      const metalSym = _cation(metalSalt.elements) || 'M';
+      const ligandSym = (ligand.formula || 'L').replace(/[0-9]/g, '');
+      return _respond('complexation (coordination)', [`[${metalSym}(${ligandSym})x]`],
+        `${metalSalt.formula} + ${ligand.formula} -> [${metalSym}(${ligandSym})x]`,
+        'A metal ion (Lewis acid) accepts electron pairs from the ligand (Lewis base) to form a coordination complex. Aqua/ammino/cyano complexes are common.');
+    }
+
     // Hydrocarbon + H2 (hydrogenation)
     if (_isHydrocarbon(cA) && (b.formula || '').toLowerCase() === 'h2') {
       return _respond('hydrogenation (addition)', ['alkane'],
@@ -342,6 +449,13 @@ async function predict(reactantsStr) {
 
     // Alkene + halogen (halogenation, addition)
     if (_isHydrocarbon(cA) && HALOGENS.has(Object.keys(cB)[0]) && Object.keys(cB).length === 1) {
+      // Aromatic rings undergo substitution, not addition — detect by C:H ratio
+      // benzene has C:H = 1:1; alkenes have C:H = 1:2 (alkenes) or higher.
+      if (cA.C > 0 && cA.H > 0 && cA.C === cA.H) {
+        return _respond('electrophilic substitution', ['aryl halide', 'HX'],
+          `${a.formula} + ${b.formula} -> Ar-X + HX`,
+          'Electrophilic aromatic substitution: the halogen replaces a ring H (requires Lewis-acid catalyst like FeBr3/AlCl3).');
+      }
       return _respond('halogenation (addition)', ['dihaloalkane'],
         'CnHm + X2 -> CnHmX2', 'Halogens add across C=C double bonds to give vicinal dihalides.');
     }
@@ -368,6 +482,23 @@ async function predict(reactantsStr) {
       }
     }
 
+    // -- 2b) Disproportionation (halogen + alkali hydroxide) --
+    // Must run before generic single-replacement or the halogen gets mis-classified.
+    const monoReactant = elemsAreSingle(a) && !elemsAreSingle(b) ? a
+      : (elemsAreSingle(b) && !elemsAreSingle(a) ? b : null);
+    if (monoReactant) {
+      const baseReactant = monoReactant === a ? b : a;
+      const monoElem = Object.keys(monoReactant.elements)[0];
+      if (HALOGENS.has(monoElem) && _isBase(baseReactant)) {
+        const metal = _cation(baseReactant.elements) || 'M';
+        const halide = `${metal}${monoElem}`;
+        const oxyhalide = `${metal}${monoElem}O`;
+        return _respond('disproportionation', [halide, oxyhalide, 'H2O'],
+          `${monoElem}2 + ${baseReactant.formula} -> ${halide} + ${oxyhalide} + H2O`,
+          `Disproportionation: the halogen ${monoElem}2 is simultaneously oxidised and reduced (e.g. ${monoElem}2 + 2OH- -> ${monoElem}- + ${monoElem}O- + H2O), a hallmark redox of a single species.`);
+      }
+    }
+
     // Single replacement: free element + compound
     if (elemsAreSingle(a) && !elemsAreSingle(b)) {
       return _singleReplace(a, b);
@@ -376,14 +507,135 @@ async function predict(reactantsStr) {
       return _singleReplace(b, a);
     }
 
-    // Both compounds: double replacement
-    if (!_hasMetal(cA) === false || !_hasMetal(cB) === false) {
-      // Heuristic: if both have at least one non-metal, suspect double replacement
-      if (elemsAreCompound(cA) && elemsAreCompound(cB)) {
+    // Both compounds: specific patterns first, then generic double-replace.
+    if (elemsAreCompound(a) && elemsAreCompound(b)) {
+
+      // Precipitation: two ionic salts forming an insoluble salt.
+      const aIonic = _hasMetal(cA);
+      const bIonic = _hasMetal(cB);
+      if (aIonic && bIonic) {
+        const cationA = _cation(cA), anionA = _anion(cA);
+        const cationB = _cation(cB), anionB = _anion(cB);
+        if (cationA && cationB && anionA && anionB) {
+          const p1 = `${cationA}${anionB}`, p2 = `${cationB}${anionA}`;
+          if (INSOLUBLE_SALTS.has(p1) || INSOLUBLE_SALTS.has(p2)) {
+            const ppt = INSOLUBLE_SALTS.has(p1) ? p1 : p2;
+            return _respond('precipitation', [p1, p2],
+              `${a.formula} + ${b.formula} -> ${p1} + ${p2}`,
+              `Precipitation: the insoluble salt ${ppt} forms as a solid from two soluble aqueous salts (a type of double displacement metathesis).`);
+          }
+        }
+      }
+
+      // Complexation: metal species + ligand (ligand must be a compound, not a free element).
+      if ((aIonic || bIonic) && elemsAreCompound(a) && elemsAreCompound(b)) {
+        const metalP = aIonic ? a : b;
+        const otherP = aIonic ? b : a;
+        const ligF = (otherP.formula || '').toLowerCase();
+        if (LIGANDS.has(ligF) || LIGANDS.has(ligF.replace(/[()]/g, ''))) {
+          const mSym = _cation(metalP.elements) || 'M';
+          const lSym = (otherP.formula || '').replace(/[()]/g, '');
+          return _respond('complexation (coordination)', [`[${mSym}(${lSym})n]`],
+            `${metalP.formula} + ${otherP.formula} -> [${mSym}(${lSym})n]`,
+            `Complexation: the Lewis base ligand ${lSym} donates a lone pair to the metal ${mSym}, forming a coordination complex.`);
+        }
+      }
+
+      // Hydrolysis: organic compound + H2O. Must run before organic-addition rules
+      // (which would otherwise mis-classify ester/amide/halide + H2O as electrophilic
+      // addition of H2O to an alkene).
+      const aLower = (a.formula || '').toLowerCase();
+      const bLower = (b.formula || '').toLowerCase();
+      const h2oP = aLower === 'h2o' ? a : bLower === 'h2o' ? b : null;
+      const otherP = h2oP ? (h2oP === a ? b : a) : null;
+      if (h2oP && otherP) {
+        const oc = otherP.elements;
+        const hasCO = (oc.C || 0) > 0 && (oc.O || 0) > 0;
+        const hasN = (oc.N || 0) > 0;
+        const hasHal = ['F', 'Cl', 'Br', 'I'].some(h => oc[h] > 0);
+        if (hasCO && hasN) {
+          return _respond('hydrolysis', ['carboxylic acid', 'amine'],
+            `${otherP.formula} + H2O -> R-COOH + R'-NH2`,
+            'Hydrolysis of an amide with water (acid- or base-catalysed) cleaves the C–N bond to give a carboxylic acid and an amine.');
+        }
+        if (hasCO) {
+          return _respond('hydrolysis', ['carboxylic acid', 'alcohol'],
+            `${otherP.formula} + H2O -> R-COOH + R'-OH`,
+            'Hydrolysis of an ester with water (acid-catalysed) cleaves the ester C–O bond to give a carboxylic acid and an alcohol.');
+        }
+        if (hasN && /cn/i.test(otherP.formula)) {
+          return _respond('hydrolysis', ['carboxylic acid', 'NH3'],
+            `${otherP.formula} + 2H2O -> R-COOH + NH3`,
+            'Hydrolysis of a nitrile with water converts the C≡N group to a carboxylic acid and ammonia.');
+        }
+        if (hasHal) {
+          return _respond('hydrolysis', ['alcohol/hydroxide', 'HX'],
+            `${otherP.formula} + H2O -> R-OH + HX`,
+            'Hydrolysis of an alkyl (or acyl) halide with water replaces the halogen with a hydroxyl group, releasing HX.');
+        }
+      }
+
+      // Organic nucleophilic / electrophilic substitution and addition.
+      const aOrg = _hasCH(cA), bOrg = _hasCH(cB);
+      const orgP = aOrg ? a : bOrg ? b : null;
+      const reP = aOrg ? b : bOrg ? a : null;
+      if (orgP && reP) {
+        const rc = reP.elements;
+        const reL = (reP.formula || '').toLowerCase();
+        const reSingle = elemsAreSingle(reP);
+        const reElem = reSingle ? Object.keys(rc)[0] : null;
+
+        // Aromatic ring → electrophilic substitution
+        if (/benzen|arene|ph|toluen|anilin|phenol/i.test(orgP.formula) && (HALOGENS.has(reElem) || /h2so4|hno3|so3|no2|br2|cl2/i.test(reL))) {
+          return _respond('electrophilic substitution', ['substituted arene', 'HX'],
+            `${orgP.formula} + ${reP.formula} -> Ar-X + HX`,
+            `Electrophilic substitution on an aromatic ring: an electrophile replaces a ring H (e.g. benzene halogenation/nitration/sulphonation).`);
+        }
+
+        // Alkyl halide + base/heat → elimination
+        const hasHal = ['F', 'Cl', 'Br', 'I'].some(h => cA[h] > 0 || cB[h] > 0);
+        const baseL = /^(naoh|koh|nah|kh|[a-z]*oh)$/i.test(reL);
+        if (hasHal && (baseL || /heat|Δ|warm/i.test(cleaned))) {
+          return _respond('elimination (E1/E2)', ['alkene', 'HX'],
+            `${orgP.formula} + ${reP.formula} -> R-CH=CH-R' + HX`,
+            'Elimination removes H and a leaving group (halide) from adjacent carbons to form an alkene.');
+        }
+
+        // Nucleophilic substitution
+        if (hasHal && /^(h2o|oh-|cn|nh3|nh2-|i-|br-|roh)$/i.test(reL)) {
+          return _respond('nucleophilic substitution (SN1/SN2)', ['substituted product', 'HX'],
+            `${orgP.formula} + ${reP.formula} -> R-Nu + HX`,
+            'Nucleophilic substitution swaps the leaving group (halide) for a nucleophile.');
+        }
+
+        // Electrophilic / nucleophilic addition to alkene/alkyne
+        if (reSingle && HALOGENS.has(reElem)) {
+          return _respond('electrophilic addition', ['vicinal dihalide'],
+            `${orgP.formula} + ${reP.formula} -> R-CHX-CHX-R'`,
+            'Halogen adds across a C=C / C≡C π-bond (electrophilic addition) to give a vicinal dihalide.');
+        }
+        if (/^(h2o|hcl|hbr|h2|h2so4|h3po4)$/i.test(reL)) {
+          return _respond('electrophilic addition', ['addition product'],
+            `${orgP.formula} + ${reP.formula} -> R-C-R'`,
+            'The reagent adds across an unsaturated π-bond (electrophilic addition; Markovnikov regiochemistry for HX/H2O).');
+        }
+        if (/^(nh3|cn-|oh-|roh|h2)$/i.test(reL)) {
+          return _respond('nucleophilic addition', ['addition product'],
+            `${orgP.formula} + ${reP.formula} -> R-C-Nu`,
+            'A nucleophile forms a σ-bond with an electron-deficient C=O or C≡N / C=C.');
+        }
+      }
+
+      // Generic double replacement fallback
+      if (!_hasMetal(cA) === false || !_hasMetal(cB) === false) {
         return _doubleReplace(a, b);
       }
     }
   }
+
+  // -- 3.5) Additional organic / complexation / precipitation / synthesis types
+  const extra = _reactsExtra(parsedList, parts, cleaned);
+  if (extra) return extra;
 
   // -- 4) Fallback ------------------------------------------------------------
   return _respond('unspecified', ['?'],
@@ -399,6 +651,216 @@ function elemsAreSingle(p) {
 
 function elemsAreCompound(p) {
   return _elements(p.elements).length > 1;
+}
+
+// Insoluble salts (used to flag precipitation within double displacement).
+const INSOLUBLE_SALTS = new Set([
+  'AgCl', 'AgBr', 'AgI', 'PbCl2', 'PbBr2', 'PbI2', 'Hg2Cl2',
+  'BaSO4', 'PbSO4', 'Ag2SO4', 'SrSO4',
+  'CaCO3', 'BaCO3', 'MgCO3', 'Ag2CO3', 'PbCO3', 'FeCO3', 'CuCO3',
+  'Ca3(PO4)2', 'Ba3(PO4)2', 'Ag3PO4', 'FePO4',
+  'Fe(OH)3', 'Al(OH)3', 'Cu(OH)2', 'Zn(OH)2', 'Mg(OH)2', 'Fe(OH)2', 'Pb(OH)2', 'Ni(OH)2', 'Co(OH)2',
+  'Ag2S', 'PbS', 'CuS', 'FeS', 'ZnS', 'CdS', 'SnS', 'HgS',
+]);
+
+// Neutral/monodentate or anionic ligands commonly found in coordination complexes.
+const LIGANDS = new Set(['nh3', 'h2o', 'co', 'cn', 'cn-', 'cl', 'br', 'i', 'oh', 'scn', 'oxalate', 'en']);
+
+function _isLigand(p) {
+  const f = (p.formula || '').toLowerCase().replace(/[0-9]/g, '').replace(/[()]/g, '');
+  return LIGANDS.has(f);
+}
+
+/**
+ * Reaction classification for patterns the main predict() switch does not
+ * already own: 3+-species synthesis, disproportionation, complexation,
+ * hydrolysis, organic addition/substitution/elimination/polymerisation/
+ * condensation, precipitation, and is omerisation/rearrangement hints.
+ *
+ * Returns a formatted string (via _respond) or null to let the caller
+ * fall through to the generic fallback.
+ *
+ * @param {Array} parsedList - parsed reactants
+ * @param {string[]} parts - raw reactant tokens
+ * @param {string} cleaned - joined/normalised input (lowercased copy available)
+ * @returns {string|null}
+ */
+function _reactsExtra(parsedList, parts, cleaned) {
+  const n = parsedList.length;
+  const singleElems = parsedList.map((p) => elemsAreSingle(p));
+  const cleanedL = cleaned.toLowerCase();
+
+  // ── 30) Autocatalysis (already caught in the named-conditions block) ──
+
+  // ── 1) Synthesis / combination of 3+ simple substances ───────────────────
+  // e.g. Na + Cl2 + O2  or  H2 + N2 + O2  -> a ternary/simple compound.
+  if (n >= 3 && singleElems.every(Boolean)) {
+    const syms = [];
+    for (const p of parsedList) {
+      for (const s of _elements(p.elements)) syms.push(s);
+    }
+    const product = syms.join('');
+    return _respond('synthesis (combination)', [product],
+      `${parts.join(' + ')} -> ${product}`,
+      'Multiple simple substances combine directly to form a more complex stoichiometric product (combination reaction, usually exothermic). The exact formula depends on oxidation states.');
+  }
+
+  // ── 2) Disproportionation: now handled in the main 2-reactant block ──
+
+  // ── 26) Complexation (coordination): metal species + ligand ──────────────
+  // e.g. Fe3+ + 6 NH3 -> [Fe(NH3)6]3+ ;  Cu2+ + 4 H2O -> [Cu(H2O)4]2+
+  // Guard: diatomic elements (Cl2, Br2, I2, O2, N2, H2) are NOT ligands.
+  const _isDiatomic = (p) => {
+    const keys = Object.keys(p.elements);
+    return keys.length === 1 && (p.elements[keys[0]] >= 2);
+  };
+  if (n === 2) {
+    const [a, b] = parsedList;
+    const hasMetal = _hasMetal(a.elements) || _hasMetal(b.elements);
+    const aIsDi = _isDiatomic(a), bIsDi = _isDiatomic(b);
+    const ligA = (a.formula || '').toLowerCase();
+    const ligB = (b.formula || '').toLowerCase();
+    const aIsLig = !aIsDi && (LIGANDS.has(ligA) || LIGANDS.has(ligA.replace(/[()]/g, '')));
+    const bIsLig = !bIsDi && (LIGANDS.has(ligB) || LIGANDS.has(ligB.replace(/[()]/g, '')));
+    if (hasMetal && (aIsLig || bIsLig)) {
+      const metalP = _hasMetal(a.elements) ? a : b;
+      const ligandP = aIsLig ? a : b;
+      const mSym = _cation(metalP.elements) || 'M';
+      const lSym = (ligandP.formula || '').replace(/[()]/g, '');
+      return _respond('complexation (coordination)', [`[${mSym}(${lSym})n]`],
+        `${metalP.formula} + ${ligandP.formula} -> [${mSym}(${lSym})n]`,
+        `Complexation: the Lewis base ligand ${lSym} donates a lone pair to the metal ${mSym}, forming a coordination complex. n is set by the metal's coordination number.`);
+    }
+  }
+
+  // ── 28) Hydrolysis: ester/amide/nitrile + H2O → acid + alcohol/amine ────
+  if (n === 2) {
+    const [a, b] = parsedList;
+    const h2oP = (a.formula || '').toLowerCase() === 'h2o' ? a : (b.formula || '').toLowerCase() === 'h2o' ? b : null;
+    const other = h2oP ? (h2oP === a ? b : a) : null;
+    if (h2oP && other) {
+      const c = other.elements;
+      const hasCO = (c.C || 0) > 0 && (c.O || 0) > 0;
+      const hasN = (c.N || 0) > 0;
+      const hasHalide = ['F', 'Cl', 'Br', 'I'].some((h) => c[h] > 0);
+      if (hasCO && hasN) {
+        return _respond('hydrolysis', ['carboxylic acid', 'amine'],
+          `${other.formula} + H2O -> R-COOH + R'-NH2`,
+          `Hydrolysis of an amide with water (acid- or base-catalysed) cleaves the C–N bond to give a carboxylic acid and an amine.`);
+      }
+      if (hasCO) {
+        return _respond('hydrolysis', ['carboxylic acid', 'alcohol'],
+          `${other.formula} + H2O -> R-COOH + R'-OH`,
+          `Hydrolysis of an ester with water (acid-catalysed) cleaves the ester C–O bond to give a carboxylic acid and an alcohol.`);
+      }
+      if (hasN && /cn/i.test(other.formula)) {
+        return _respond('hydrolysis', ['carboxylic acid', 'NH3'],
+          `${other.formula} + 2H2O -> R-COOH + NH3`,
+          `Hydrolysis of a nitrile with water converts the C≡N group to a carboxylic acid and ammonia.`);
+      }
+      if (hasHalide) {
+        return _respond('hydrolysis', ['alcohol/hydroxide', 'HX'],
+          `${other.formula} + H2O -> R-OH + HX`,
+          `Hydrolysis of an alkyl (or acyl) halide with water replaces the halogen with a hydroxyl group, releasing HX.`);
+      }
+    }
+  }
+
+  // ── 18/19/20/21/22) Organic addition / substitution / elimination ────────
+  if (n === 2) {
+    const [a, b] = parsedList;
+    const aOrg = _hasCH(a.elements);
+    const bOrg = _hasCH(b.elements);
+    const orgP = aOrg ? a : bOrg ? b : null;
+    const reP = aOrg ? b : bOrg ? a : null;
+    if (orgP && reP) {
+      const oc = orgP.elements;
+      const rc = reP.elements;
+      const reL = (reP.formula || '').toLowerCase();
+      const reSingle = elemsAreSingle(reP);
+      const reElem = reSingle ? Object.keys(rc)[0] : null;
+
+      // Aromatic ring → electrophilic substitution (e.g. benzene + Br2 with FeBr3)
+      if (/benzen|arene|ph|toluen|anilin|phenol/i.test(orgP.formula) && (HALOGENS.has(reElem) || /h2so4|hno3|so3|no2|br2|cl2/i.test(reL))) {
+        return _respond('electrophilic substitution', ['substituted arene', 'HX'],
+          `${orgP.formula} + ${reP.formula} -> Ar-X + HX`,
+          `Electrophilic substitution on an aromatic ring: an electrophile replaces a ring H (e.g. benzene halogenation/nitration/sulphonation, usually catalysed by a Lewis acid).`);
+      }
+
+      // Alkyl halide (C,H,halogen) + base/heat → elimination (E1/E2)
+      const hasHal = ['F', 'Cl', 'Br', 'I'].some((h) => oc[h] > 0);
+      const baseL = /^(naoh|koh|nah|kh|[a-z]*oh)$/i.test(reL);
+      if (hasHal && (baseL || /heat|Δ|warm/i.test(cleanedL))) {
+        return _respond('elimination (E1/E2)', ['alkene', 'HX'],
+          `${orgP.formula} + ${reP.formula} -> R-CH=CH-R' + HX`,
+          'Elimination removes H and a leaving group (halide) from adjacent carbons to form an alkene; a strong base favour E2, weak base/heat favours E1.');
+      }
+
+      // Nucleophilic substitution (SN1/SN2): alkyl halide + nucleophile
+      if (hasHal && /^(h2o|oh-|cn|nh3|nh2-|i-|br-|roh)$/i.test(reL)) {
+        return _respond('nucleophilic substitution (SN1/SN2)', ['substituted product', 'HX'],
+          `${orgP.formula} + ${reP.formula} -> R-Nu + HX`,
+          'Nucleophilic substitution swaps the leaving group (halide) for a nucleophile — SN2 (one step, backside) for 1°/2° substrates, SN1 (carbocation) for 3°.');
+      }
+
+      // Electrophilic / nucleophilic addition to an alkene/alkyne
+      if (reSingle && HALOGENS.has(reElem)) {
+        return _respond('electrophilic addition', ['vicinal dihalide'],
+          `${orgP.formula} + ${reP.formula} -> R-CHX-CHX-R'`,
+          'Halogen adds across a C=C / C≡C π-bond (electrophilic addition) to give a vicinal dihalide.');
+      }
+      if (/^(h2o|hcl|hbr|h2|h2so4|h3po4)$/i.test(reL)) {
+        return _respond('electrophilic addition', ['addition product'],
+          `${orgP.formula} + ${reP.formula} -> R-C-R'`,
+          'The reagent adds across an unsaturated π-bond (electrophilic addition; Markovnikov regiochemistry for HX/H2O).');
+      }
+      if (/^(nh3|cn-|oh-|roh|h2)$/i.test(reL)) {
+        return _respond('nucleophilic addition', ['addition product'],
+          `${orgP.formula} + ${reP.formula} -> R-C-Nu`,
+          'A nucleophile forms a σ-bond with an electron-deficient C=O or C≡N / C=C, giving the addition product.');
+      }
+    }
+  }
+
+  // ── 25) Polymerisation: now handled in main predict() ────────────────
+
+  // ── 27) Condensation: two organics losing a small molecule → dimer ──────
+  if (n === 2 && _hasCH(parsedList[0].elements) && _hasCH(parsedList[1].elements)) {
+    const hasOH = parsedList.some((p) => (p.elements.O || 0) >= 1);
+    const hasNH = parsedList.some((p) => (p.elements.N || 0) >= 1);
+    if (hasOH || hasNH) {
+      return _respond('condensation', ['condensed product', 'H2O'],
+        `${parts.join(' + ')} -> dimer + H2O`,
+        'Condensation joins two molecules with the concurrent loss of a small molecule (water or alcohol) — e.g. esterification, amide formation, glycoside formation.');
+    }
+  }
+
+  // ── 6) Precipitation: two ionic salts forming an insoluble salt ─────────
+  if (n === 2) {
+    const [a, b] = parsedList;
+    const aIonic = _hasMetal(a.elements);
+    const bIonic = _hasMetal(b.elements);
+    if (aIonic && bIonic) {
+      const cA2 = _cation(a.elements);
+      const aA2 = _anion(a.elements);
+      const cB2 = _cation(b.elements);
+      const aB2 = _anion(b.elements);
+      if (cA2 && cB2 && aA2 && aB2) {
+        const p1 = `${cA2}${aB2}`;
+        const p2 = `${cB2}${aA2}`;
+        if (INSOLUBLE_SALTS.has(p1) || INSOLUBLE_SALTS.has(p2)) {
+          const ppt = INSOLUBLE_SALTS.has(p1) ? p1 : p2;
+          return _respond('precipitation', [p1, p2],
+            `${a.formula} + ${b.formula} -> ${p1} + ${p2}`,
+            `Precipitation: the insoluble salt ${ppt} forms as a solid from two soluble aqueous salts (a type of double displacement metathesis).`);
+        }
+      }
+    }
+  }
+
+  // ── 23/24) Isomerisation/rearrangement: now handled in main predict() ──
+
+  return null;
 }
 
 function _singleReplace(element, compound) {

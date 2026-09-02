@@ -2,6 +2,7 @@ const balancer = require('./tools/balancer');
 const predictor = require('./tools/predictor');
 const molar = require('./tools/molar');
 const stoichiometry = require('./tools/stoichiometry');
+const organic = require('./tools/organic');
 const llm = require('./llm/index');
 
 const FORMULA_TOKEN = "[A-Z][a-z]?\\d*(?:\\([^()]+\\)\\d*|[A-Z][a-z]?\\d*)*";
@@ -47,6 +48,28 @@ async function routeWebMessage(text) {
     }
     const res = await balancer.balance(text);
     return { reply: stripFormatting(res), source: 'balance' };
+  }
+
+  // 2b. Reaction type classification (e.g. "classify CH3COOH + NaOH", "what type is Na + Cl2")
+  if (/\b(classify|what type|reaction type|which type)\b/i.test(text)) {
+    try {
+      const clean = text.replace(/\b(classify|what type of|what type|reaction type of|reaction type|which type|is)\b/gi, '').trim();
+      if (clean.length > 2) {
+        const cls = await organic.classifyReactionType(clean);
+        let toolResult = '';
+        const parts = clean.split('+').map((s) => s.trim()).filter(Boolean);
+        if (parts.length >= 2) {
+          try {
+            const pred = await predictor.predict(clean);
+            toolResult = '\n\n' + stripFormatting(pred);
+          } catch (_) {}
+        }
+        return {
+          reply: stripFormatting(`**Reaction type:** ${cls.reactionType}\n\n${cls.description}${toolResult}`),
+          source: 'classify'
+        };
+      }
+    } catch (_) {}
   }
 
   // 3. Fallback to AI

@@ -3,12 +3,27 @@
  * Supports both polling (development) and webhook (production) modes
  */
 
+const path = require('path');
 const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 
 const { config, validateConfig, logger } = require('./config');
 const { registerHandlers } = require('./bot/handler');
 const { attachMiddleware } = require('./bot/middleware');
+
+// The web UI lives at the repo root in www/ (outside the chem-bot rootDir).
+// Render clones the whole repo, so __dirname/../../www resolves to it here.
+const WWW_DIR = path.join(__dirname, '..', '..', 'www');
+
+/**
+ * Mount the static web UI. Serving it last means API routes (/api/chat,
+ * /webhook, /health) win over the static fallback, and GET / serves
+ * www/index.html — so the homepage IS the bot.
+ * @param {Object} app - Express app
+ */
+function mountStatic(app) {
+  app.use(express.static(WWW_DIR, { index: 'index.html' }));
+}
 
 /**
  * Create and start the bot
@@ -35,6 +50,8 @@ function startHealthServer(mode, sharedApp) {
   const app = sharedApp || express();
   if (!sharedApp) {
     app.use(express.json());
+    // Serve the static web UI (the homepage IS the bot) in standalone mode too
+    mountStatic(app);
   }
 
   // Trust Render's reverse proxy so req.ip / X-Forwarded-* work correctly
@@ -233,6 +250,10 @@ function startWebhookMode() {
       res.sendStatus(200);
     }
   });
+
+  // Static web UI — mounted LAST so API/webhook routes take precedence.
+  // GET / serves www/index.html (the homepage IS the bot).
+  mountStatic(app);
 
   // Set webhook
   bot.setWebHook(`${config.webhookUrl}/webhook/${config.telegramBotToken}`)

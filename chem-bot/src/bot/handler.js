@@ -156,6 +156,15 @@ const KB = {
       ]
     }
   },
+  classify: {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '🧬 Organic', callback_data: 'cmd_organic' }, { text: '⚛️ Molar Mass', callback_data: 'cmd_molar' }],
+        [{ text: '⚖️ Balance', callback_data: 'cmd_balance' }, { text: '🔮 Predict', callback_data: 'cmd_predict' }],
+        [{ text: '📚 Help', callback_data: 'cmd_help' }, { text: '🏠 Menu', callback_data: 'cmd_start' }]
+      ]
+    }
+  },
   iupac: {
     reply_markup: {
       inline_keyboard: [
@@ -193,8 +202,8 @@ const KB = {
         [{ text: '🧬 Organic', callback_data: 'cmd_organic' }, { text: '⛽ Hydrocarbon', callback_data: 'cmd_hydrocarbon' }],
         [{ text: '⚙️ Mechanism', callback_data: 'cmd_mechanism' }, { text: '🧩 Functional', callback_data: 'cmd_functional' }],
         [{ text: '🔬 Stereo', callback_data: 'cmd_stereo' }, { text: '🌈 Spectroscopy', callback_data: 'cmd_spectroscopy' }],
-        [{ text: '🤖 Ask AI', callback_data: 'cmd_ask' }, { text: '🔍 Search', callback_data: 'cmd_search' }],
-        [{ text: '🏠 Menu', callback_data: 'cmd_start' }]
+        [{ text: '🔍 Classify Reaction', callback_data: 'cmd_classify' }, { text: '🤖 Ask AI', callback_data: 'cmd_ask' }],
+        [{ text: '🔍 Search', callback_data: 'cmd_search' }, { text: '🏠 Menu', callback_data: 'cmd_start' }]
       ]
     }
   },
@@ -809,6 +818,39 @@ async function handleSpectroscopy(bot, msg, args) {
 }
 
 /**
+ * Handle /classify command - classify a reaction by type from 30-type taxonomy
+ * @param {Object} bot - Telegram bot instance
+ * @param {Object} msg - Telegram message object
+ * @param {string[]} args - Command arguments (joined into the query)
+ */
+async function handleClassify(bot, msg, args) {
+  const chatId = msg.chat.id;
+  const query = args.join(' ').trim();
+  if (!query) {
+    await bot.sendMessage(chatId, 'Please provide reactants or a reaction.\nTap 🔍 Classify and just type: <code>CH3COOH + NaOH</code>', { parse_mode: 'HTML', ...KB.classify });
+    return;
+  }
+  try {
+    await bot.sendChatAction(chatId, 'typing');
+    const { classifyReactionType } = require('../tools/organic');
+    const cls = await classifyReactionType(query);
+    let extra = '';
+    const parts = query.split('+').map((s) => s.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+      try {
+        const pred = await predictor.predict(query);
+        extra = '\n\n' + (typeof pred === 'string' ? pred : JSON.stringify(pred));
+      } catch (_) {}
+    }
+    const message = `<b>🔍 Reaction Type</b>\n\n<b>${cls.reactionType}</b>\n\n${cls.description}${extra}`;
+    await sendFormattedMessage(bot, chatId, message, KB.classify);
+  } catch (err) {
+    logger.error('Classify error:', err);
+    await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML', ...KB.help });
+  }
+}
+
+/**
  * Handle inline queries for quick chemistry lookups
  * @param {Object} bot - Telegram bot instance
  * @param {Object} query - Inline query object
@@ -876,6 +918,7 @@ async function routeMessage(bot, msg) {
       case 'functional': await handleFunctional(bot, msg, [text.trim()]); return;
       case 'stereo': await handleStereo(bot, msg, [text.trim()]); return;
       case 'spectroscopy': await handleSpectroscopy(bot, msg, [text.trim()]); return;
+      case 'classify': await handleClassify(bot, msg, [text.trim()]); return;
       default: break;
     }
   }
@@ -1116,6 +1159,10 @@ async function handleCallbackQuery(bot, query) {
         setAwaiting(chatId, 'spectroscopy');
         await editOrigin(query, '🔬 <b>Spectroscopy</b>\n\nJust type: <code>IR carbonyl</code> or <code>C2H5OH</code>\nExamples: <code>NMR aldehyde</code>, <code>MS 91</code>', KB.spectroscopy);
         break;
+      case 'cmd_classify':
+        setAwaiting(chatId, 'classify');
+        await editOrigin(query, '🔍 <b>Reaction Type Classification</b>\n\nJust type: <code>CH3COOH + NaOH</code>\nExamples: <code>Na + Cl2</code>, <code>H2O2</code>, <code>CH4 + O2</code>', KB.classify);
+        break;
       default:
         // Generic fallback for any cmd_* not explicitly listed
         if (data && data.startsWith('cmd_')) {
@@ -1206,6 +1253,10 @@ function registerHandlers(bot) {
     const args = match[1] ? match[1].trim().split(/\s+/) : [];
     handleSpectroscopy(bot, msg, args);
   });
+  bot.onText(/\/classify(?:@\w+)?(?:\s+(.*))?/, (msg, match) => {
+    const args = match[1] ? match[1].trim().split(/\s+/) : [];
+    handleClassify(bot, msg, args);
+  });
 
   // Inline query handler - classic: query object directly
   bot.on('inline_query', (query) => handleInlineQuery(bot, query));
@@ -1258,6 +1309,7 @@ module.exports = {
   handleMolar, handleBalance, handlePredict, handleElement, handlePh, handleIupac,
   handleAsk, handleSafety, handleSearch, handleOrganic, handleHydrocarbon,
   handleMechanism, handleFunctional, handleStereo, handleSpectroscopy,
+  handleClassify,
   handleStart, handleHelp,
   KB,
 };

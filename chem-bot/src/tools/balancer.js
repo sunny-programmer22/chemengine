@@ -227,6 +227,42 @@ function _finalizeCoeffsRaw(coeffs) {
 }
 
 /**
+ * Finalize coefficients while PRESERVING genuine zero coefficients.
+ * Used when a reactant/product is redundant (coefficient resolves to 0),
+ * e.g. "Ca(OH)2 + CO2 + H2O -> Ca(HCO3)2" → water is not consumed.
+ * Returns null if the raw solution has no exact zero to preserve.
+ * @param {number[]} coeffs
+ * @returns {number[]|null}
+ */
+function _finalizeCoeffsKeepZeros(coeffs) {
+  if (!coeffs || coeffs.length === 0) return null;
+  if (coeffs.some((c) => c < -1e-10)) coeffs = coeffs.map((c) => -c);
+  // Must contain at least one genuine near-zero to be meaningful
+  const zeroIdx = coeffs.findIndex((c) => Math.abs(c) < 1e-9);
+  if (zeroIdx === -1) return null;
+  if (coeffs.some((c) => !isFinite(c))) return null;
+
+  const scaleToInt = (arr) => {
+    for (let denom = 1; denom <= 10000; denom++) {
+      const scaled = arr.map((c) => c * denom);
+      if (scaled.every((s) => Math.abs(s - Math.round(s)) < 1e-6)) {
+        return scaled.map((s) => Math.round(s));
+      }
+    }
+    return arr.map((c) => Math.round(c * 1000));
+  };
+
+  let intCoeffs = scaleToInt(coeffs);
+  // GCD reduce over non-zero coefficients
+  let g = intCoeffs.reduce((acc, c) => _gcd(acc, Math.abs(c)), 0);
+  if (g > 1) intCoeffs = intCoeffs.map((c) => (c === 0 ? 0 : c / g));
+  intCoeffs = intCoeffs.map((c) => Math.round(c));
+  // Ensure non-zero entries positive
+  if (intCoeffs.some((c) => c < 0)) intCoeffs = intCoeffs.map((c) => (c === 0 ? 0 : Math.abs(c)));
+  return intCoeffs;
+}
+
+/**
  * Matrix-based balancer — handles up to 5-6 compounds efficiently.
  * @param {string[]} reactants
  * @param {string[]} products
@@ -300,9 +336,24 @@ function _balanceMatrix(reactants, products) {
       return null;
     }
     for (let i = fixIdx; i < n; i++) coeffs.push(1);
-    const finalized = _finalizeCoeffsRaw(coeffs);
-    if (!finalized) return null;
-    if (!_verifyBalanceFull(finalized, parsedObjs, reactants.length, elements)) return null;
+    let finalized = _finalizeCoeffsRaw(coeffs);
+    if (!finalized) {
+      // Try the zero-preserving finalize: some species are genuinely redundant
+      // (e.g. Ca(OH)2 + 2 CO2 + H2O -> Ca(HCO3)2, where H2O doesn't participate).
+      finalized = _finalizeCoeffsKeepZeros(coeffs);
+      if (!finalized) return null;
+      // Verify with zero allowed
+      if (!_verifyBalanceFull(finalized, parsedObjs, reactants.length, elements)) return null;
+      return finalized;
+    }
+    if (!_verifyBalanceFull(finalized, parsedObjs, reactants.length, elements)) {
+      // Finalize accepted but verification failed: try zero-preserving path
+      const keepZero = _finalizeCoeffsKeepZeros(coeffs);
+      if (keepZero && _verifyBalanceFull(keepZero, parsedObjs, reactants.length, elements)) {
+        return keepZero;
+      }
+      return null;
+    }
     return finalized;
   };
 
@@ -467,17 +518,20 @@ async function balance(equation) {
     return `Could not find integer coefficients (searched up to 20) for: ${original}`;
   }
 
-  // Build the balanced equation string
+  // Build the balanced equation string, dropping species that resolved to 0
+  // (they were inert spectators — e.g. "Ca(OH)2 + 2 CO2 + H2O -> Ca(HCO3)2" → H2O = 0)
   const buildSide = (list, startIdx) =>
     list
       .map((sp, i) => {
         const c = coeffs[startIdx + i];
-        return (c === 1 ? '' : c + ' ') + sp;
+        return { sp, c };
       })
+      .filter(({ c }) => c > 0)
+      .map(({ sp, c }) => (c === 1 ? '' : c + ' ') + sp)
       .join(' + ');
 
-  const reactantStrs = buildSide(reactants, 0);
-  const productStrs = buildSide(products, reactants.length);
+  const reactantStrs = buildSide(reactants, 0) || '∅';
+  const productStrs = buildSide(products, reactants.length) || '∅';
   const balanced = `${reactantStrs} -> ${productStrs}`;
 
   return (

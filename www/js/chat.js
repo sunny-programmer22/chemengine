@@ -46,7 +46,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const textEl = document.createElement('div');
     textEl.className = 'chat-msg-text';
-    textEl.innerHTML = formatMarkdown(text);
+    try {
+      textEl.innerHTML = formatMarkdown(text);
+    } catch (_) {
+      textEl.textContent = String(text); // safest fallback — never let a render bug kill the chat
+    }
 
     content.appendChild(textEl);
     div.appendChild(avatar);
@@ -57,18 +61,27 @@ document.addEventListener('DOMContentLoaded', () => {
     if (save) saveHistory();
   }
 
-  function formatMarkdown(text) {
-    if (!text) return '';
-    // Escape HTML first
-    let escaped = text
+  function escapeHtml(s) {
+    return String(s)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .replace(/`/g, '&#96;');
+  }
+
+  function formatMarkdown(text) {
+    if (text === null || text === undefined) return '';
+    text = String(text);
+
+    // Escape HTML first (including quotes + backticks so they can't break markup or inject)
+    let escaped = escapeHtml(text);
 
     // Code blocks
     escaped = escaped.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
     // Inline code
-    escaped = escaped.replace(/`([^`]+)`/g, '<code>$1</code>');
+    escaped = escaped.replace(/&#96;([^&#96;]+)&#96;/g, '<code>$1</code>');
     // Bold
     escaped = escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     // Italic
@@ -96,11 +109,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!text || !text.trim()) return;
     const msg = text.trim();
     chatInput.value = '';
-    appendMessage(msg, 'user');
-
-    showTyping();
 
     try {
+      appendMessage(msg, 'user');
+      showTyping();
+
       // Determine API URL (same origin or local dev server)
       const apiUrl = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
         ? 'http://localhost:3000/api/chat'
@@ -124,26 +137,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
       appendMessage((data && data.reply) || 'No response received.', 'bot');
     } catch (err) {
-      hideTyping();
+      try { hideTyping(); } catch (_) {}
       appendMessage('⚠️ Could not connect to chat server. Make sure the backend is running or use the Telegram bot at t.me/ReactoLab_bot', 'bot');
     }
   }
 
-  chatSend.addEventListener('click', () => sendMessage(chatInput.value));
-  chatInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage(chatInput.value);
-    }
-  });
-
-  // Quick action buttons
-  document.querySelectorAll('.chat-quick-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const prompt = btn.getAttribute('data-prompt');
-      if (prompt) sendMessage(prompt);
+  // Wire up the handlers inside their own guard so no single bad listener
+  // (or a blocked/inaccessible element) can take down the whole chat.
+  try {
+    chatSend.addEventListener('click', () => sendMessage(chatInput.value));
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage(chatInput.value);
+      }
     });
-  });
+
+    // Quick action buttons
+    document.querySelectorAll('.chat-quick-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const prompt = btn.getAttribute('data-prompt');
+        if (prompt) sendMessage(prompt);
+      });
+    });
+
+    // Focus input so the user can type immediately on mobile/desktop
+    if ('requestAnimationFrame' in window) {
+      requestAnimationFrame(() => { try { chatInput.focus({ preventScroll: true }); } catch (_) {} });
+    }
+  } catch (err) {
+    // Chat handlers failed to attach — surface an inline fallback rather than nothing.
+    try { appendMessage('⚠️ Something went wrong starting the chat. Please reload the page.', 'bot'); } catch (_) {}
+  }
 
   loadHistory();
 });

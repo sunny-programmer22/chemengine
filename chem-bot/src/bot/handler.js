@@ -395,11 +395,22 @@ async function handlePredict(bot, msg, args) {
     return;
   }
 
+  // A bare single formula (no "+" separator, no arrow) is a molar-mass request,
+  // not a reaction prediction. e.g. "CaCO3" -> molar mass, not decomposition.
+  const isSingleFormula = /^[A-Z][a-z]?\d*(?:\([^()]+\)\d*|[A-Z][a-z]?\d*)*$/.test(reactants) && !/[+⇌]|->|→/.test(reactants);
+
   try {
     await bot.sendChatAction(chatId, 'typing');
-    const result = await predictor.predict(reactants);
-    const message = `<b>🔮 Reaction Prediction</b>\n\n${result}`;
-    await sendFormattedMessage(bot, chatId, message, KB.predict);
+    let result;
+    if (isSingleFormula) {
+      result = await molar.calculate(reactants);
+      const message = `<b>⚛️ Molar Mass Calculator</b>\n\n${result}`;
+      await sendFormattedMessage(bot, chatId, message, KB.molar);
+    } else {
+      result = await predictor.predict(reactants);
+      const message = `<b>🔮 Reaction Prediction</b>\n\n${result}`;
+      await sendFormattedMessage(bot, chatId, message, KB.predict);
+    }
   } catch (err) {
     logger.error('Predict error:', err);
     await bot.sendMessage(chatId, formatError(err), { parse_mode: 'HTML', ...KB.help });
@@ -1101,7 +1112,7 @@ async function handleCallbackQuery(bot, query) {
         break;
       case 'cmd_predict':
         setAwaiting(chatId, 'predict');
-        await editOrigin(query, '🔮 <b>Predict Reaction Products</b>\n\nJust type: <code>Na + Cl2</code>\nExample: <code>Zn + HCl</code>', KB.predict);
+        await editOrigin(query, '🔮 <b>Predict Reaction Products</b>\n\nJust type: <code>Na + Cl2</code>\nExample: <code>Zn + HCl</code>\n\n💡 Tip: a single formula (<code>CaCO3</code>) gives molar mass; use <code>+</code> for reaction products.', KB.predict);
         break;
       case 'cmd_molar':
         setAwaiting(chatId, 'molar');

@@ -95,6 +95,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
         const section = e.target.closest('.tab-content');
         if (!section) return;
+        // Never hijack Enter inside the chat — chat.js owns the chat input
+        // and handles Enter itself. Triggering the .btn.primary here would
+        // double-send every chat message (Send fires once here AND once in
+        // chat.js on the same Enter press).
+        if (section.id === 'sec-home') return;
         const primaryBtn = section.querySelector('.btn.primary');
         if (primaryBtn) { e.preventDefault(); primaryBtn.click(); }
       }

@@ -4,7 +4,7 @@
  */
 
 const { logger } = require('../config');
-const { splitMessage, formatError, formatList } = require('./formatters');
+const { splitMessage, formatError } = require('./formatters');
 
 // Placeholder imports for tools (will be implemented later)
 const balancer = require('../tools/balancer');

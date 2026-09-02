@@ -51,6 +51,31 @@ const { isUnsafeQuery, SAFETY_NOTE } = require('../bot/safety');
 // Logger
 const { logger } = require('../config');
 
+// Hand-written human replies — reacto voice, no LLM round-trip needed
+const HUMAN_REPLIES = {
+  'how are you': "doing good! 👋 what are you working on?",
+  'how r u': "doing good! 👋 what are you working on?",
+  'how are u': "doing good! 👋 what are you working on?",
+  'hru': "doing good! 👋 what are you working on?",
+  "what's up": 'not much, just hanging out with some molecules. you?',
+  'whats up': 'not much, just hanging out with some molecules. you?',
+  'sup': 'not much, just hanging out with some molecules. you?',
+  'thanks': 'anytime 😊',
+  'ty': 'anytime 😊',
+  'thx': 'anytime 😊',
+  'thank you': 'anytime 😊',
+  'ok': 'gotcha 👍',
+  'okay': 'gotcha 👍',
+  'cool': 'yeah? cool 😊 need anything else?',
+  'hi': 'hey! 👋 throw a formula or question my way',
+  'hello': 'hey! 👋 throw a formula or question my way',
+  'hey': 'hey! 👋 throw a formula or question my way',
+  'bye': 'see ya! 👋',
+  'goodbye': 'see ya! 👋',
+  'good morning': 'morning! ☕ what are we solving today?',
+  'good evening': 'evening! 🌙 what are we solving today?',
+};
+
 /**
  * Organic chemistry keyword detection and term extraction
  * Re-uses wikipedia utilities but also provides index-local helpers for speed
@@ -808,6 +833,21 @@ async function askChem(question, context = {}) {
     return { ...cached, cached: true };
   }
 
+  // Human small-talk short-circuit — reacto replies, no LLM/online round-trip.
+  // Must run BEFORE classification / tryLocalTools so "how are you" never
+  // triggers a tool or an external lookup.
+  const lc = trimmed.toLowerCase().replace(/[!?.,]+$/g, '').trim();
+  if (HUMAN_REPLIES[lc]) {
+    const result = {
+      source: 'human',
+      answer: HUMAN_REPLIES[lc],
+      taskType: TASK_TYPES.GENERAL,
+      confidence: 1
+    };
+    askCacheSet(cacheKey, result);
+    return result;
+  }
+
   const taskType = classify(trimmed);
 
   // 1) Try local deterministic tools
@@ -911,18 +951,10 @@ async function askChem(question, context = {}) {
     }
   }
 
-  // 5) Final fallback
+  // 5) Final fallback — human Reacto voice, never "I'm not sure how to answer that"
   const result = {
     source: 'fallback',
-    answer: "I'm not sure how to answer that. The LLM is unavailable and my local tools don't recognize this query.\n\n" +
-            "Try tapping one of these buttons instead:\n" +
-            "  ⚛️ Molar Mass — tap ⚛️ Molar Mass and send a formula like H2SO4\n" +
-            "  ⚖️ Balance — tap ⚖️ Balance and send an equation like H2 + O2 -> H2O\n" +
-            "  🔬 Element — tap 🔬 Element and send a name like Fe\n" +
-            "  📖 IUPAC — tap 📖 IUPAC and send a name like acetic acid\n" +
-            "  ⚗️ pH — tap ⚗️ pH and send a formula and concentration like HCl 0.1\n" +
-            "  🔮 Predict — tap 🔮 Predict and send reactants like Na + Cl2\n" +
-            "  ⚠️ Safety — tap ⚠️ Safety and send a formula like H2SO4",
+    answer: "hmm, my head's spinning a bit on that one 😅 mind rephrasing? or try a formula like H2O, an equation like H2 + O2 -> H2O, or tap 📚 Help for ideas.",
     taskType,
     confidence: 0
   };

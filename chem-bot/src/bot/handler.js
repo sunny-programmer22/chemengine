@@ -244,37 +244,11 @@ const TOPIC_QUESTIONS = {
 async function handleStart(bot, msg) {
   const chatId = msg.chat.id;
   const welcomeText = `
-<b>🧪 Welcome to the Chemistry Bot!</b>
+<b>Hey! 👋 I'm Reacto.</b>
 
-I can help you with all things chemistry. Tap a button below to get started:
+Send me a formula, an equation, or just a chemistry question and I'll take it from there.
 
-${formatList([
-  '⚖️ Balance Equations — Tap ⚖️ Balance below',
-  '🔮 Predict Reaction — Tap 🔮 Predict below',
-  '⚛️ Molar Mass — Tap ⚛️ Molar Mass below',
-  '📊 Stoichiometry — Tap 📊 Stoichiometry below',
-  '⚗️ pH Calculator — Tap ⚗️ pH below',
-  '🔬 Element Info — Tap 🔬 Element below',
-  '📖 IUPAC Lookup — Tap 📖 IUPAC below',
-  '🤖 Ask AI — Tap 🤖 Ask AI below',
-  '⚠️ Safety Info — Tap ⚠️ Safety below',
-  '🔍 Chemistry Search — Tap 🔍 Search below',
-  '🧬 Organic Analysis — Tap 🧬 Organic below',
-  '⛽ Hydrocarbon — Tap ⛽ Hydrocarbon below',
-  '⚙️ Mechanism — Tap ⚙️ Mechanism below',
-  '🧩 Functional Groups — Tap 🧩 Functional below',
-  '🔬 Stereo — Tap 🔬 Stereo below',
-  '🌈 Spectroscopy — Tap 🌈 Spectroscopy below',
-  '📚 Help — Tap 📚 Help below'
-])}
-
-<b>Quick Tips:</b>
-• Just type a chemical equation like "H2 + O2 → H2O" to balance it
-• Type a formula like "H2SO4" for instant molar mass
-• Try tapping 🧬 Organic or ⛽ Hydrocarbon for organic help!
-• Or tap any button below — no need to type commands!
-
-<i>Powered by PubChem, Wikidata, and AI</i>
+Type something like <code>H2 + O2 -> H2O</code>, <code>H2SO4</code>, or tap any button below to jump in.
 `;
 
   const keyboard = {
@@ -331,59 +305,17 @@ ${formatList([
 async function handleHelp(bot, msg) {
   const chatId = msg.chat.id;
     const helpText = `
-<b>📚 Chemistry Bot — Tap a Button to Start</b>
+<b>I'm Reacto 🤙</b>
 
-<b>Getting Started:</b>
-${formatList([
-  '🏠 Start — Tap 📚 Help to see the welcome screen',
-  '📚 Help — You are here! Tap any button below'
-])}
+Short version — tap any button below, then type your molecule/equation. No commands needed.
 
-<b>Chemistry Tools:</b>
-${formatList([
-  '⚖️ Balance Equations — Tap ⚖️ Balance then send H2 + O2 → H2O',
-  '🔮 Predict Reaction — Tap 🔮 Predict then send Na + Cl2',
-  '⚛️ Molar Mass — Tap ⚛️ Molar Mass then send H2SO4',
-  '📊 Stoichiometry — Tap 📊 Stoichiometry then send equation + amount',
-  '⚗️ pH Calculator — Tap ⚗️ pH then send HCl 0.1',
-  '🔬 Element Info — Tap 🔬 Element then send Fe or Iron or 26',
-  '📖 IUPAC Lookup — Tap 📖 IUPAC then send acetic acid'
-])}
+<b>Quick tips:</b>
+• <code>H2 + O2 -> H2O</code> — balance an equation
+• <code>H2SO4</code> — molar mass
+• <code>HCl 0.1</code> — pH
+• Tap 🧬 Organic or ⚙️ Mechanism then send <code>SN1</code>
 
-<b>Organic Chemistry:</b>
-${formatList([
-  '🧬 Organic Analysis — Tap 🧬 Organic then send C2H5OH',
-  '⛽ Hydrocarbon — Tap ⛽ Hydrocarbon then send C6H6',
-  '⚙️ Mechanism — Tap ⚙️ Mechanism then send SN1',
-  '🧩 Functional Groups — Tap 🧩 Functional then send CH3COOH',
-  '🔬 Stereo — Tap 🔬 Stereo then send but-2-ene',
-  '🌈 Spectroscopy — Tap 🌈 Spectroscopy then send C2H5OH'
-])}
-
-<b>AI-Powered:</b>
-${formatList([
-  '🤖 Ask AI — Tap 🤖 Ask AI then send any chemistry question',
-  '⚠️ Safety Info — Tap ⚠️ Safety then send H2SO4',
-  '🔍 Chemistry Search — Tap 🔍 Search then send Vitamin C'
-])}
-
-<b>Examples — tap a button first, then type:</b>
-<pre>
-Tap ⚛️ Molar Mass → NaCl
-Tap ⚛️ Molar Mass → Ca(OH)2
-Tap 🔬 Element → gold
-Tap ⚖️ Balance → CH4 + O2 → CO2 + H2O
-Tap 🔮 Predict → Zn + HCl
-Tap 🧬 Organic → C2H5OH
-Tap ⛽ Hydrocarbon → C6H6
-Tap ⚙️ Mechanism → SN1
-Tap 🧩 Functional → CH3COOH
-Tap 🔬 Stereo → lactic acid
-Tap 🌈 Spectroscopy → C2H5OH
-Tap 🤖 Ask AI → What is the mechanism of SN1 reactions?
-</pre>
-
-👇 Tap any button below or just type a formula like H2O!
+That's it! Tap away 👇
 `;
 
   // Persistent ReplyKeyboardMarkup alternative — bottom row buttons (always visible)
@@ -1016,9 +948,9 @@ async function routeMessage(bot, msg) {
   } catch {}
   // Human fallback — never robotic "I'm not sure..." — short, friendly, Reacto style
   const fallbacks = [
-    'hmm not quite got that 😅 try a formula like H2O or tap 📚 Help?',
-    'you got me there lol — send something like NaCl or H2SO4 and I\'ll do the rest!',
-    'ahh didn\'t catch that 😅 try H2 + O2 -> H2O or check 📚 Help for ideas'
+    'ooh, that one went over my head 😅 try a formula like H2O or send something like "H2 + O2 -> H2O"?',
+    'lemme be real — I got nothin for that one 😆 how about a molecule name or equation instead?',
+    'aaand I lost that 😅 maybe a quick formula? like NaCl, or tap 📚 Help for ideas'
   ];
   await bot.sendMessage(chatId, fallbacks[Math.floor(Math.random() * fallbacks.length)], { parse_mode: 'HTML', ...KB.help });
 }
@@ -1053,6 +985,29 @@ async function handleCallbackQuery(bot, query) {
     logger.warn('answerCallbackQuery failed:', err.message);
   }
 
+  // Edit the tapped message in place (callback UX) — never flood a new message
+  async function editOrigin(query, text, extra = {}) {
+    try {
+      return await bot.editMessageText(text, {
+        chat_id: query.message.chat.id,
+        message_id: query.message.message_id,
+        parse_mode: 'HTML',
+        ...extra
+      });
+    } catch (err) {
+      // Telegram API error 400 "message is not modified" is expected when text is unchanged
+      if (String(err && err.message).includes('not modified')) {
+        logger.warn('Edit skipped (message unchanged):', query.data);
+      } else {
+        throw err;
+      }
+    }
+  }
+  async function deleteOrigin(query) {
+    try { await bot.deleteMessage(query.message.chat.id, query.message.message_id); }
+    catch (err) { logger.warn('Delete origin failed:', err.message); }
+  }
+
   const data = query.data;
   const chatId = query.message?.chat?.id;
   // Synthetic msg for handlers that expect msg object
@@ -1065,6 +1020,7 @@ async function handleCallbackQuery(bot, query) {
     const question = TOPIC_QUESTIONS[data];
     if (question) {
       try {
+        await deleteOrigin(query);
         await bot.sendChatAction(chatId, 'typing');
         const result = await llm.askChem(question, query.from);
         const answer = result && typeof result === 'object' ? (result.answer || String(result)) : String(result);
@@ -1079,6 +1035,7 @@ async function handleCallbackQuery(bot, query) {
           topic_mechanism: '⚛️ <b>Mechanisms</b>\n\nJust type: <code>Explain SN1 vs SN2 mechanisms</code>',
           topic_naming: '📖 <b>IUPAC Naming</b>\n\nJust type: <code>How to name organic compounds IUPAC?</code>'
         };
+        await deleteOrigin(query);
         await bot.sendMessage(chatId, fallbackHints[data] || 'Just type your question!', { parse_mode: 'HTML', ...KB.ask });
       }
       return;
@@ -1088,82 +1045,84 @@ async function handleCallbackQuery(bot, query) {
   try {
     switch (data) {
       case 'cmd_start':
+        await deleteOrigin(query);
         await handleStart(bot, syntheticMsg);
         break;
       case 'cmd_help':
+        await deleteOrigin(query);
         await handleHelp(bot, syntheticMsg);
         break;
       case 'cmd_balance':
         setAwaiting(chatId, 'balance');
-        await bot.sendMessage(chatId, '⚖️ <b>Balance Chemical Equations</b>\n\nJust type: <code>H2 + O2 -> H2O</code>', { parse_mode: 'HTML', ...KB.balance });
+        await editOrigin(query, '⚖️ <b>Balance Chemical Equations</b>\n\nJust type: <code>H2 + O2 -> H2O</code>', KB.balance);
         break;
       case 'cmd_predict':
         setAwaiting(chatId, 'predict');
-        await bot.sendMessage(chatId, '🔮 <b>Predict Reaction Products</b>\n\nJust type: <code>Na + Cl2</code>\nExample: <code>Zn + HCl</code>', { parse_mode: 'HTML', ...KB.predict });
+        await editOrigin(query, '🔮 <b>Predict Reaction Products</b>\n\nJust type: <code>Na + Cl2</code>\nExample: <code>Zn + HCl</code>', KB.predict);
         break;
       case 'cmd_molar':
         setAwaiting(chatId, 'molar');
-        await bot.sendMessage(chatId, '⚛️ <b>Molar Mass Calculator</b>\n\nJust type: <code>H2SO4</code>\nExamples: <code>NaCl</code>, <code>Ca(OH)2</code>', { parse_mode: 'HTML', ...KB.molar });
+        await editOrigin(query, '⚛️ <b>Molar Mass Calculator</b>\n\nJust type: <code>H2SO4</code>\nExamples: <code>NaCl</code>, <code>Ca(OH)2</code>', KB.molar);
         break;
       case 'cmd_stoich':
         setAwaiting(chatId, 'stoich');
-        await bot.sendMessage(chatId, '📊 <b>Stoichiometry</b>\n\nJust type: <code>2H2 + O2 -> 2H2O H2O 10 mol</code>', { parse_mode: 'HTML', ...KB.stoich });
+        await editOrigin(query, '📊 <b>Stoichiometry</b>\n\nJust type: <code>2H2 + O2 -> 2H2O H2O 10 mol</code>', KB.stoich);
         break;
       case 'cmd_element':
         setAwaiting(chatId, 'element');
-        await bot.sendMessage(chatId, '🔬 <b>Element Information</b>\n\nJust type: <code>Fe</code> or <code>Iron</code> or <code>26</code>', { parse_mode: 'HTML', ...KB.element });
+        await editOrigin(query, '🔬 <b>Element Information</b>\n\nJust type: <code>Fe</code> or <code>Iron</code> or <code>26</code>', KB.element);
         break;
       case 'cmd_ph':
         setAwaiting(chatId, 'ph');
-        await bot.sendMessage(chatId, '⚗️ <b>pH Calculator</b>\n\nJust type: <code>HCl 0.1</code>\nUsage: <code>&lt;formula&gt; &lt;concentration&gt;</code>', { parse_mode: 'HTML', ...KB.ph });
+        await editOrigin(query, '⚗️ <b>pH Calculator</b>\n\nJust type: <code>HCl 0.1</code>\nUsage: <code>&lt;formula&gt; &lt;concentration&gt;</code>', KB.ph);
         break;
       case 'cmd_iupac':
         setAwaiting(chatId, 'iupac');
-        await bot.sendMessage(chatId, '📖 <b>IUPAC Lookup</b>\n\nJust type: <code>acetic acid</code>', { parse_mode: 'HTML', ...KB.iupac });
+        await editOrigin(query, '📖 <b>IUPAC Lookup</b>\n\nJust type: <code>acetic acid</code>', KB.iupac);
         break;
       case 'cmd_ask':
         setAwaiting(chatId, 'ask');
-        await bot.sendMessage(chatId, '🤖 <b>Ask Chemistry Question</b>\n\nJust type: <code>What is the mechanism of SN1 reactions?</code>', { parse_mode: 'HTML', ...KB.ask });
+        await editOrigin(query, '🤖 <b>Ask Chemistry Question</b>\n\nJust type: <code>What is the mechanism of SN1 reactions?</code>', KB.ask);
         break;
       case 'cmd_safety':
         setAwaiting(chatId, 'safety');
-        await bot.sendMessage(chatId, '⚠️ <b>Safety Information</b>\n\nJust type: <code>H2SO4</code>', { parse_mode: 'HTML', ...KB.safety });
+        await editOrigin(query, '⚠️ <b>Safety Information</b>\n\nJust type: <code>H2SO4</code>', KB.safety);
         break;
       case 'cmd_search':
         setAwaiting(chatId, 'search');
-        await bot.sendMessage(chatId, '🔍 <b>Search Chemistry Databases</b>\n\nJust type: <code>Vitamin C</code>', { parse_mode: 'HTML', ...KB.search });
+        await editOrigin(query, '🔍 <b>Search Chemistry Databases</b>\n\nJust type: <code>Vitamin C</code>', KB.search);
         break;
       case 'cmd_organic':
         setAwaiting(chatId, 'organic');
-        await bot.sendMessage(chatId, '🧬 <b>Organic Analysis</b>\n\nJust type: <code>C2H5OH</code> or <code>benzene</code>\nExamples: <code>CH3COOH</code>, <code>glucose</code>', { parse_mode: 'HTML', ...KB.organic });
+        await editOrigin(query, '🧬 <b>Organic Analysis</b>\n\nJust type: <code>C2H5OH</code> or <code>benzene</code>\nExamples: <code>CH3COOH</code>, <code>glucose</code>', KB.organic);
         break;
       case 'cmd_hydrocarbon':
         setAwaiting(chatId, 'hydrocarbon');
-        await bot.sendMessage(chatId, '⛽ <b>Hydrocarbon Classification</b>\n\nJust type: <code>C6H6</code>\nExamples: <code>CH4</code>, <code>C2H4</code>, <code>C2H2</code>', { parse_mode: 'HTML', ...KB.hydrocarbon });
+        await editOrigin(query, '⛽ <b>Hydrocarbon Classification</b>\n\nJust type: <code>C6H6</code>\nExamples: <code>CH4</code>, <code>C2H4</code>, <code>C2H2</code>', KB.hydrocarbon);
         break;
       case 'cmd_mechanism':
         setAwaiting(chatId, 'mechanism');
-        await bot.sendMessage(chatId, '⚙️ <b>Reaction Mechanisms</b>\n\nJust type: <code>SN1</code>\nExamples: <code>SN2</code>, <code>E1</code>, <code>E2</code>, <code>addition</code>', { parse_mode: 'HTML', ...KB.mechanism });
+        await editOrigin(query, '⚙️ <b>Reaction Mechanisms</b>\n\nJust type: <code>SN1</code>\nExamples: <code>SN2</code>, <code>E1</code>, <code>E2</code>, <code>addition</code>', KB.mechanism);
         break;
       case 'cmd_functional':
         setAwaiting(chatId, 'functional');
-        await bot.sendMessage(chatId, '🧩 <b>Functional Groups</b>\n\nJust type: <code>CH3COOH</code>\nExamples: <code>C2H5OH</code>, <code>benzene</code>', { parse_mode: 'HTML', ...KB.functional });
+        await editOrigin(query, '🧩 <b>Functional Groups</b>\n\nJust type: <code>CH3COOH</code>\nExamples: <code>C2H5OH</code>, <code>benzene</code>', KB.functional);
         break;
       case 'cmd_stereo':
         setAwaiting(chatId, 'stereo');
-        await bot.sendMessage(chatId, '🔬 <b>Stereochemistry</b>\n\nJust type: <code>but-2-ene</code>\nExamples: <code>lactic acid</code>, <code>glucose</code>', { parse_mode: 'HTML', ...KB.stereo });
+        await editOrigin(query, '🔬 <b>Stereochemistry</b>\n\nJust type: <code>but-2-ene</code>\nExamples: <code>lactic acid</code>, <code>glucose</code>', KB.stereo);
         break;
       case 'cmd_spectroscopy':
         setAwaiting(chatId, 'spectroscopy');
-        await bot.sendMessage(chatId, '🔬 <b>Spectroscopy</b>\n\nJust type: <code>IR carbonyl</code> or <code>C2H5OH</code>\nExamples: <code>NMR aldehyde</code>, <code>MS 91</code>', { parse_mode: 'HTML', ...KB.spectroscopy });
+        await editOrigin(query, '🔬 <b>Spectroscopy</b>\n\nJust type: <code>IR carbonyl</code> or <code>C2H5OH</code>\nExamples: <code>NMR aldehyde</code>, <code>MS 91</code>', KB.spectroscopy);
         break;
       default:
         // Generic fallback for any cmd_* not explicitly listed
         if (data && data.startsWith('cmd_')) {
           const cmd = data.replace(/^cmd_/, '');
-          await bot.sendMessage(chatId, `Just type: &lt;your input&gt;\nTap Help to see all commands.`, { parse_mode: 'HTML', ...KB.help });
+          await editOrigin(query, `Just type: &lt;your input&gt;\nTap Help to see all commands.`, KB.help);
         } else {
-          await bot.sendMessage(chatId, 'Unknown action. Tap 📚 Help to see available commands.', { parse_mode: 'HTML', ...KB.help });
+          await editOrigin(query, 'Unknown action. Tap 📚 Help to see available commands.', KB.help);
         }
         break;
     }

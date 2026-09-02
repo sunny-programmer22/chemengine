@@ -55,7 +55,7 @@ async function routeWebMessage(text) {
     const answer = result && typeof result === 'object' ? (result.answer || String(result)) : String(result);
     return { reply: stripFormatting(answer), source: 'ai' };
   } catch (err) {
-    return { reply: 'Sorry, I couldn\'t process that.', source: 'error' };
+    return { reply: 'hmm, that one tripped me up 😅 mind rephrasing? (try "H2 + O2 -> H2O")', source: 'error' };
   }
 }
 

@@ -332,6 +332,16 @@ async function predict(reactantsStr) {
       `${parts.join(' + ')} -> products`,
       'Autocatalysis is a reaction where one of the products acts as the catalyst for its own formation (e.g. the permanganate–oxalate reaction).');
   }
+  if (/\brearrang/i.test(LOWER_CLEAN)) {
+    return _respond('rearrangement (e.g. Beckmann, Wagner–Meerwein)', ['structural isomer'],
+      `${parts.join(' + ')} -> structural isomer`,
+      'A rearrangement re-organises the carbon skeleton or functional group to give a structural isomer (e.g. Beckmann, Wagner–Meerwein, pinacol).');
+  }
+  if (/\bisomeri[sz]/i.test(LOWER_CLEAN)) {
+    return _respond('isomerization', ['structural isomer'],
+      `${parts.join(' + ')} -> structural isomer`,
+      'Isomerisation rearranges atoms within a molecule without changing its formula, producing a structural (or configurational) isomer.');
+  }
 
   // -- 1) Combustion: hydrocarbon + O2 -----------------------------------------
   if (parts.length === 2 && parts[1].toLowerCase() === 'o2') {
